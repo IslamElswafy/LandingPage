@@ -170,6 +170,7 @@ const DynamicBlock = ({
   const getStyleClasses = () => {
     const classes = ["card", "resizable", "draggable"];
 
+    if (block.isManuallyResized) classes.push("manually-resized");
     if (styleSettings.stylePreset) classes.push(styleSettings.stylePreset);
     if (styleSettings.animation) classes.push(styleSettings.animation);
     if (styleSettings.corners) classes.push(styleSettings.corners);
@@ -178,6 +179,22 @@ const DynamicBlock = ({
     if (styleSettings.background) classes.push(styleSettings.background);
 
     return classes.join(" ");
+  };
+
+  const getBlockStyle = () => {
+    const baseStyle = getBackgroundStyle();
+    
+    if (block.isManuallyResized) {
+      return {
+        ...baseStyle,
+        width: block.width ? `${block.width}px` : 'auto',
+        height: block.height ? `${block.height}px` : 'auto',
+        position: 'relative' as const,
+        zIndex: 10,
+      };
+    }
+    
+    return baseStyle;
   };
 
   const getBackgroundStyle = () => {
