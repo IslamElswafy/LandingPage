@@ -212,8 +212,9 @@ const DynamicBlock = ({
 
   return (
     <article
+      ref={blockRef}
       className={getStyleClasses()}
-      style={getBackgroundStyle()}
+      style={getBlockStyle()}
       draggable={enableDrag}
       onDragStart={(e) => onDragStart(e, block.id)}
       onDragEnd={onDragEnd}
@@ -413,6 +414,7 @@ function App() {
       tag: "Innovation",
       backgroundImage:
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop",
+      isManuallyResized: false,
     },
     {
       id: "2",
@@ -420,6 +422,7 @@ function App() {
       tag: "Automation",
       backgroundImage:
         "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
+      isManuallyResized: false,
     },
     {
       id: "3",
@@ -427,6 +430,7 @@ function App() {
       tag: "Analytics",
       backgroundImage:
         "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop",
+      isManuallyResized: false,
     },
     {
       id: "4",
@@ -434,6 +438,7 @@ function App() {
       tag: "Analytics",
       backgroundImage:
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop",
+      isManuallyResized: false,
     },
     {
       id: "5",
@@ -441,6 +446,7 @@ function App() {
       tag: "Analytics",
       backgroundImage:
         "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1200&auto=format&fit=crop",
+      isManuallyResized: false,
     },
     {
       id: "6",
@@ -448,6 +454,7 @@ function App() {
       tag: "Flat",
       backgroundColor: "#000",
       isGradient: false,
+      isManuallyResized: false,
     },
   ]);
 
@@ -465,6 +472,17 @@ function App() {
   const [enableDrag, setEnableDrag] = useState(true);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [dragOverElement, setDragOverElement] = useState<string | null>(null);
+  const [resizeState, setResizeState] = useState<ResizeState>({
+    isResizing: false,
+    currentBlockId: null,
+    direction: '',
+    startX: 0,
+    startY: 0,
+    startWidth: 0,
+    startHeight: 0,
+    startLeft: 0,
+    startTop: 0,
+  });
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, blockId: string) => {
