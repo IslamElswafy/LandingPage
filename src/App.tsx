@@ -45,7 +45,6 @@ interface ResizeState {
 // Hero Carousel Component
 const HeroCarousel = ({ autoRotate }: { autoRotate: boolean }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const images: CarouselImage[] = [
     {
@@ -70,6 +69,16 @@ const HeroCarousel = ({ autoRotate }: { autoRotate: boolean }) => {
     },
   ];
 
+  useEffect(() => {
+    if (!autoRotate) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % images.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [autoRotate, images.length]);
+
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % images.length);
   };
@@ -81,22 +90,6 @@ const HeroCarousel = ({ autoRotate }: { autoRotate: boolean }) => {
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
   };
-
-  useEffect(() => {
-    if (autoRotate) {
-      intervalRef.current = setInterval(nextSlide, 3500);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [autoRotate]);
 
   return (
     <section className="hero rounded shadow" aria-label="Hero gallery">
@@ -183,17 +176,17 @@ const DynamicBlock = ({
 
   const getBlockStyle = () => {
     const baseStyle = getBackgroundStyle();
-    
+
     if (block.isManuallyResized) {
       return {
         ...baseStyle,
-        width: block.width ? `${block.width}px` : 'auto',
-        height: block.height ? `${block.height}px` : 'auto',
-        position: 'relative' as const,
+        width: block.width ? `${block.width}px` : "auto",
+        height: block.height ? `${block.height}px` : "auto",
+        position: "relative" as const,
         zIndex: 10,
       };
     }
-    
+
     return baseStyle;
   };
 
@@ -475,7 +468,7 @@ function App() {
   const [resizeState, setResizeState] = useState<ResizeState>({
     isResizing: false,
     currentBlockId: null,
-    direction: '',
+    direction: "",
     startX: 0,
     startY: 0,
     startWidth: 0,
@@ -546,8 +539,16 @@ function App() {
   };
 
   const handleDoubleClick = (blockId: string) => {
-    // Reset card size to auto - this would require more complex state management
-    console.log("Reset card size for:", blockId);
+    setBlocks(prev => prev.map(block => 
+      block.id === blockId 
+        ? { 
+            ...block, 
+            isManuallyResized: false, 
+            width: undefined, 
+            height: undefined 
+          }
+        : block
+    ));
   };
 
   const handleResizeStart = (
@@ -557,8 +558,30 @@ function App() {
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Start resize for:", blockId, "direction:", direction);
-    // Implement resize logic here
+    
+    const element = e.currentTarget.parentElement;
+    if (!element) return;
+
+    const rect = element.getBoundingClientRect();
+    
+    setResizeState({
+      isResizing: true,
+      currentBlockId: blockId,
+      direction,
+      startX: e.clientX,
+      startY: e.clientY,
+      startWidth: rect.width,
+      startHeight: rect.height,
+      startLeft: rect.left,
+      startTop: rect.top,
+    });
+
+    // Mark block as manually resized
+    setBlocks(prev => prev.map(block => 
+      block.id === blockId 
+        ? { ...block, isManuallyResized: true }
+        : block
+    ));
   };
 
   const handleStyleChange = (key: keyof StyleSettings, value: string) => {
@@ -569,14 +592,91 @@ function App() {
   };
 
   const handleResetAllCards = () => {
-    // Reset all cards to auto-sizing
-    console.log("Reset all cards");
+    setBlocks(prev => prev.map(block => ({
+      ...block,
+      isManuallyResized: false,
+      width: undefined,
+      height: undefined,
+    })));
   };
+
+  // Mouse event handlers for resize
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizeState.isResizing || !resizeState.currentBlockId) return;
+
+      const deltaX = e.clientX - resizeState.startX;
+      const deltaY = e.clientY - resizeState.startY;
+
+      let newWidth = resizeState.startWidth;
+      let newHeight = resizeState.startHeight;
+
+      // Calculate new dimensions based on resize direction
+      switch (resizeState.direction) {
+        case 'e':
+          newWidth = Math.max(100, resizeState.startWidth + deltaX);
+          break;
+        case 'w':
+          newWidth = Math.max(100, resizeState.startWidth - deltaX);
+          break;
+        case 's':
+          newHeight = Math.max(100, resizeState.startHeight + deltaY);
+          break;
+        case 'n':
+          newHeight = Math.max(100, resizeState.startHeight - deltaY);
+          break;
+        case 'se':
+          newWidth = Math.max(100, resizeState.startWidth + deltaX);
+          newHeight = Math.max(100, resizeState.startHeight + deltaY);
+          break;
+        case 'sw':
+          newWidth = Math.max(100, resizeState.startWidth - deltaX);
+          newHeight = Math.max(100, resizeState.startHeight + deltaY);
+          break;
+        case 'ne':
+          newWidth = Math.max(100, resizeState.startWidth + deltaX);
+          newHeight = Math.max(100, resizeState.startHeight - deltaY);
+          break;
+        case 'nw':
+          newWidth = Math.max(100, resizeState.startWidth - deltaX);
+          newHeight = Math.max(100, resizeState.startHeight - deltaY);
+          break;
+      }
+
+      // Update block dimensions
+      setBlocks(prev => prev.map(block => 
+        block.id === resizeState.currentBlockId 
+          ? { ...block, width: newWidth, height: newHeight }
+          : block
+      ));
+    };
+
+    const handleMouseUp = () => {
+      if (resizeState.isResizing) {
+        setResizeState(prev => ({ ...prev, isResizing: false }));
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    };
+
+    if (resizeState.isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = `${resizeState.direction}-resize`;
+      document.body.style.userSelect = 'none';
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+    }
+  }, [resizeState]);
 
   return (
     <div className="container">
       <header>
-        <div className="brand">🌿 HoneyCo</div>
         <nav>
           <a href="#" className="active">
             Home
@@ -588,18 +688,6 @@ function App() {
       </header>
 
       <HeroCarousel autoRotate={autoRotate} />
-
-      <AdminControls
-        styleSettings={styleSettings}
-        onStyleChange={handleStyleChange}
-        autoRotate={autoRotate}
-        onAutoRotateChange={setAutoRotate}
-        showHandles={showHandles}
-        onShowHandlesChange={setShowHandles}
-        enableDrag={enableDrag}
-        onEnableDragChange={setEnableDrag}
-        onResetAllCards={handleResetAllCards}
-      />
 
       <section className="grid" id="grid">
         {blocks.map((block) => (
@@ -621,7 +709,17 @@ function App() {
         ))}
       </section>
 
-      <footer>© 2025 HoneyCo. All rights reserved.</footer>
+      <AdminControls
+        styleSettings={styleSettings}
+        onStyleChange={handleStyleChange}
+        autoRotate={autoRotate}
+        onAutoRotateChange={setAutoRotate}
+        showHandles={showHandles}
+        onShowHandlesChange={setShowHandles}
+        enableDrag={enableDrag}
+        onEnableDragChange={setEnableDrag}
+        onResetAllCards={handleResetAllCards}
+      />
     </div>
   );
 }
