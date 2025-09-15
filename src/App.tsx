@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
+import SimpleRichEditor from "./components/SimpleRichEditor";
+import CleanLandingPage from "./components/CleanLandingPage";
 
 // Types
 interface BlockData {
@@ -15,6 +17,9 @@ interface BlockData {
   y?: number;
   isManuallyResized?: boolean;
   styleSettings?: StyleSettings;
+  content?: string;
+  contentImage?: string;
+  contentType?: "text" | "image" | "both";
 }
 
 interface CarouselImage {
@@ -81,10 +86,14 @@ const HeroCarousel = ({
   autoRotate,
   isVisible,
   onToggleVisibility,
+  images: propImages,
+  onImagesChange,
 }: {
   autoRotate: boolean;
   isVisible: boolean;
   onToggleVisibility: () => void;
+  images?: CarouselImage[];
+  onImagesChange?: (images: CarouselImage[]) => void;
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showLinkInput, setShowLinkInput] = useState(false);
@@ -93,33 +102,14 @@ const HeroCarousel = ({
   const [editingImageIndex, setEditingImageIndex] = useState<number | null>(
     null
   );
-  const [images, setImages] = useState<CarouselImage[]>([
-    {
-      src: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop",
-      alt: "Golden liquid drop creating ripples",
-      link: "https://unsplash.com/photos/golden-liquid-drop-creating-ripples",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1600&auto=format&fit=crop",
-      alt: "Forest river winding through landscape",
-      link: "https://unsplash.com/photos/forest-river-winding-through-landscape",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=1600&auto=format&fit=crop",
-      alt: "Golden liquid drop creating ripples",
-      link: "https://unsplash.com/photos/another-golden-liquid-drop",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1600&auto=format&fit=crop",
-      alt: "Forest river from above",
-      link: "https://unsplash.com/photos/forest-river-from-above",
-    },
-    {
-      src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop",
-      alt: "Forest landscape",
-      link: "https://unsplash.com/photos/forest-landscape",
-    },
-  ]);
+  const [images, setImages] = useState<CarouselImage[]>(propImages || []);
+
+  // Sync with propImages
+  useEffect(() => {
+    if (propImages) {
+      setImages(propImages);
+    }
+  }, [propImages]);
 
   useEffect(() => {
     if (!autoRotate) return;
@@ -170,14 +160,16 @@ const HeroCarousel = ({
       };
 
       if (editingImageIndex !== null) {
-        setImages((prev) =>
-          prev.map((img, index) =>
-            index === editingImageIndex ? imageWithLink : img
-          )
+        const newImages = images.map((img, index) =>
+          index === editingImageIndex ? imageWithLink : img
         );
+        setImages(newImages);
+        onImagesChange?.(newImages);
         setEditingImageIndex(null);
       } else {
-        setImages((prev) => [...prev, imageWithLink]);
+        const newImages = [...images, imageWithLink];
+        setImages(newImages);
+        onImagesChange?.(newImages);
       }
 
       setPendingImage(null);
@@ -188,7 +180,9 @@ const HeroCarousel = ({
 
   const handleLinkCancel = () => {
     if (editingImageIndex === null && pendingImage) {
-      setImages((prev) => [...prev, pendingImage]);
+      const newImages = [...images, pendingImage];
+      setImages(newImages);
+      onImagesChange?.(newImages);
     }
     setPendingImage(null);
     setShowLinkInput(false);
@@ -205,7 +199,9 @@ const HeroCarousel = ({
   };
 
   const deleteImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    const newImages = images.filter((_, i) => i !== index);
+    setImages(newImages);
+    onImagesChange?.(newImages);
     if (currentSlide >= images.length - 1) {
       setCurrentSlide(Math.max(0, images.length - 2));
     }
@@ -377,6 +373,8 @@ const DynamicBlock = ({
   onImageDelete,
   onBlockSelect,
   isSelected,
+  onReadMore,
+  onDeleteBlock,
 }: {
   block: BlockData;
   defaultStyleSettings: StyleSettings;
@@ -398,6 +396,8 @@ const DynamicBlock = ({
   onImageDelete: (blockId: string) => void;
   onBlockSelect: (blockId: string) => void;
   isSelected: boolean;
+  onReadMore: (blockId: string) => void;
+  onDeleteBlock: (blockId: string) => void;
 }) => {
   const blockRef = useRef<HTMLElement>(null);
 
@@ -480,9 +480,15 @@ const DynamicBlock = ({
       onClick={() => onBlockSelect(block.id)}
     >
       <span className="tag">{block.tag}</span>
-      <a href="#" className="cta">
+      <button
+        className="cta"
+        onClick={(e) => {
+          e.stopPropagation();
+          onReadMore(block.id);
+        }}
+      >
         Read More
-      </a>
+      </button>
 
       {/* Block Image Controls */}
       <div className="block-image-controls">
@@ -508,6 +514,16 @@ const DynamicBlock = ({
             🗑️
           </button>
         )}
+        <button
+          className="delete-block-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteBlock(block.id);
+          }}
+          title="Delete this block"
+        >
+          ❌
+        </button>
       </div>
 
       {/* Resize handles */}
@@ -548,6 +564,241 @@ const DynamicBlock = ({
         </>
       )}
     </article>
+  );
+};
+
+// Block Content Viewer Modal Component
+const BlockContentViewModal = ({
+  block,
+  isOpen,
+  onClose,
+  onEdit,
+}: {
+  block: BlockData | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onEdit: () => void;
+}) => {
+  if (!isOpen || !block) return null;
+
+  const formatContent = (content: string) => {
+    // If content contains HTML tags (from Tiptap), return as is
+    if (content.includes("<")) {
+      return content;
+    }
+
+    // Otherwise, apply basic markdown formatting for backward compatibility
+    return content
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      .replace(/\n/g, "<br/>");
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="block-viewer-modal">
+        <button className="modal-close" onClick={onClose}>
+          ×
+        </button>
+
+        <div className="modal-header">
+          <h2>{block.tag}</h2>
+          <button className="edit-content-btn" onClick={onEdit}>
+            ✏️ Edit Content
+          </button>
+        </div>
+
+        <div className="content-viewer">
+          {!block.content && !block.contentImage ? (
+            <div className="no-content">
+              <p>No content available for this block.</p>
+              <button className="add-content-btn" onClick={onEdit}>
+                Add Content
+              </button>
+            </div>
+          ) : (
+            <>
+              {(block.contentType === "image" ||
+                block.contentType === "both") &&
+                block.contentImage && (
+                  <div className="content-image">
+                    <img
+                      src={block.contentImage}
+                      alt={`${block.tag} content`}
+                    />
+                  </div>
+                )}
+
+              {(block.contentType === "text" || block.contentType === "both") &&
+                block.content && (
+                  <div
+                    className="content-text"
+                    dangerouslySetInnerHTML={{
+                      __html: formatContent(block.content),
+                    }}
+                  />
+                )}
+            </>
+          )}
+        </div>
+
+        <div className="modal-actions">
+          <button className="close-btn" onClick={onClose}>
+            CLOSE
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Block Content Modal Component
+const BlockContentModal = ({
+  block,
+  isOpen,
+  onClose,
+  onSave,
+}: {
+  block: BlockData | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (
+    blockId: string,
+    content: string,
+    contentImage: string,
+    contentType: "text" | "image" | "both"
+  ) => void;
+}) => {
+  const [content, setContent] = useState("");
+  const [contentImage, setContentImage] = useState("");
+  const [contentType, setContentType] = useState<"text" | "image" | "both">(
+    "text"
+  );
+
+  useEffect(() => {
+    if (block && isOpen) {
+      setContent(block.content || "");
+      setContentImage(block.contentImage || "");
+      setContentType(block.contentType || "text");
+    }
+  }, [block, isOpen]);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        setContentImage(imageUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+    event.target.value = "";
+  };
+
+  const handleSave = () => {
+    if (block) {
+      onSave(block.id, content, contentImage, contentType);
+      onClose();
+    }
+  };
+
+  const handleCancel = () => {
+    setContent("");
+    setContentImage("");
+    setContentType("text");
+    onClose();
+  };
+
+  if (!isOpen || !block) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="block-content-modal">
+        <button className="modal-close" onClick={onClose}>
+          ×
+        </button>
+
+        <div className="modal-header">
+          <h2>{block.tag} - Content Editor</h2>
+        </div>
+
+        <div className="content-editor">
+          <div className="content-type-selector">
+            <label>Content Type:</label>
+            <select
+              value={contentType}
+              onChange={(e) =>
+                setContentType(e.target.value as "text" | "image" | "both")
+              }
+              className="content-type-select"
+            >
+              <option value="text">Text Only</option>
+              <option value="image">Image Only</option>
+              <option value="both">Text and Image</option>
+            </select>
+          </div>
+
+          {(contentType === "text" || contentType === "both") && (
+            <div className="text-editor-section">
+              <label htmlFor="content-text">Content Text:</label>
+              <SimpleRichEditor
+                content={content}
+                onChange={setContent}
+                placeholder="Enter your content here..."
+                className="content-rich-editor"
+              />
+            </div>
+          )}
+
+          {(contentType === "image" || contentType === "both") && (
+            <div className="image-editor-section">
+              <label>Content Image:</label>
+              <div className="image-upload-area">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: "none" }}
+                  id="content-image-upload"
+                />
+                <label
+                  htmlFor="content-image-upload"
+                  className="image-upload-btn"
+                >
+                  📷 Upload Image
+                </label>
+                {contentImage && (
+                  <div className="image-preview">
+                    <img
+                      src={contentImage}
+                      alt="Content preview"
+                      className="preview-image"
+                    />
+                    <button
+                      onClick={() => setContentImage("")}
+                      className="remove-image-btn"
+                      title="Remove image"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="modal-actions">
+          <button className="save-btn" onClick={handleSave}>
+            SAVE CONTENT
+          </button>
+          <button className="cancel-btn" onClick={handleCancel}>
+            CANCEL
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -1133,6 +1384,9 @@ function App() {
       backgroundImage:
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
+      content:
+        "**Innovation** is at the heart of everything we do. We constantly push the boundaries of what's possible, bringing you cutting-edge solutions that transform the way you work and live.\n\nOur innovative approach includes:\n- Revolutionary technology\n- User-centered design\n- Sustainable practices\n- Continuous improvement",
+      contentType: "text" as const,
     },
     {
       id: "2",
@@ -1141,6 +1395,9 @@ function App() {
       backgroundImage:
         "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
+      content:
+        "*Streamline your workflow* with our powerful automation tools. Say goodbye to repetitive tasks and hello to increased productivity and efficiency.",
+      contentType: "text" as const,
     },
     {
       id: "3",
@@ -1193,6 +1450,34 @@ function App() {
   const [currentView, setCurrentView] = useState<"home" | "contact" | "about">(
     "home"
   );
+  const [isLiveView, setIsLiveView] = useState(false);
+  const [heroImages, setHeroImages] = useState<CarouselImage[]>([
+    {
+      src: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop",
+      alt: "Golden liquid drop creating ripples",
+      link: "https://unsplash.com/photos/golden-liquid-drop-creating-ripples",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1600&auto=format&fit=crop",
+      alt: "Forest river winding through landscape",
+      link: "https://unsplash.com/photos/forest-river-winding-through-landscape",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=1600&auto=format&fit=crop",
+      alt: "Golden liquid drop creating ripples",
+      link: "https://unsplash.com/photos/another-golden-liquid-drop",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1600&auto=format&fit=crop",
+      alt: "Forest river from above",
+      link: "https://unsplash.com/photos/forest-river-from-above",
+    },
+    {
+      src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop",
+      alt: "Forest landscape",
+      link: "https://unsplash.com/photos/forest-landscape",
+    },
+  ]);
   const [visitorStats, setVisitorStats] = useState<VisitorStats>({
     totalVisitors: 12847,
     todayVisitors: 234,
@@ -1248,6 +1533,10 @@ function App() {
   const [doubleCheckMessages, setDoubleCheckMessages] = useState<Set<number>>(
     new Set()
   );
+  const [blockModalOpen, setBlockModalOpen] = useState(false);
+  const [blockViewModalOpen, setBlockViewModalOpen] = useState(false);
+  const [selectedBlockForModal, setSelectedBlockForModal] =
+    useState<BlockData | null>(null);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([
     {
       id: 27,
@@ -1552,6 +1841,19 @@ function App() {
     );
   };
 
+  const handleDeleteBlock = (blockId: string) => {
+    if (
+      confirm(
+        "Are you sure you want to delete this block? This action cannot be undone."
+      )
+    ) {
+      setBlocks((prev) => prev.filter((block) => block.id !== blockId));
+      if (selectedBlockId === blockId) {
+        setSelectedBlockId(null);
+      }
+    }
+  };
+
   const handleDeleteAllBlocks = () => {
     if (
       confirm(
@@ -1644,6 +1946,45 @@ function App() {
   const handleCloseModal = () => {
     setReplyModalOpen(false);
     setSelectedMessage(null);
+  };
+
+  // Block modal handlers
+  const handleReadMore = (blockId: string) => {
+    const block = blocks.find((b) => b.id === blockId);
+    if (block) {
+      setSelectedBlockForModal(block);
+      setBlockViewModalOpen(true);
+    }
+  };
+
+  const handleEditContent = () => {
+    setBlockViewModalOpen(false);
+    setBlockModalOpen(true);
+  };
+
+  const handleBlockContentSave = (
+    blockId: string,
+    content: string,
+    contentImage: string,
+    contentType: "text" | "image" | "both"
+  ) => {
+    setBlocks((prev) =>
+      prev.map((block) =>
+        block.id === blockId
+          ? { ...block, content, contentImage, contentType }
+          : block
+      )
+    );
+  };
+
+  const handleCloseBlockModal = () => {
+    setBlockModalOpen(false);
+    setSelectedBlockForModal(null);
+  };
+
+  const handleCloseViewModal = () => {
+    setBlockViewModalOpen(false);
+    setSelectedBlockForModal(null);
   };
 
   // Mouse event handlers for resize
@@ -1755,6 +2096,44 @@ function App() {
             </button>
           </nav>
           <div className="header-actions">
+            {!isLiveView && (
+              <button
+                className="save-btn"
+                onClick={() => setIsLiveView(true)}
+                style={{
+                  background: "#007AFF",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginRight: "12px",
+                }}
+              >
+                💾 Save & View Live
+              </button>
+            )}
+            {isLiveView && (
+              <button
+                className="edit-btn"
+                onClick={() => setIsLiveView(false)}
+                style={{
+                  background: "#FF3B30",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginRight: "12px",
+                }}
+              >
+                ✏️ Edit Page
+              </button>
+            )}
             <button className="search-btn" aria-label="Search">
               <svg
                 width="18"
@@ -1787,54 +2166,74 @@ function App() {
       </header>
 
       {currentView === "home" ? (
-        <>
-          <HeroCarousel
-            autoRotate={autoRotate}
-            isVisible={heroVisible}
-            onToggleVisibility={() => setHeroVisible(!heroVisible)}
-          />
-
-          <section className="grid" id="grid">
-            {blocks.map((block) => (
-              <DynamicBlock
-                key={block.id}
-                block={block}
-                defaultStyleSettings={styleSettings}
-                showHandles={showHandles}
-                enableDrag={enableDrag}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDoubleClick={handleDoubleClick}
-                onResizeStart={handleResizeStart}
-                onImageUpload={handleImageUpload}
-                onImageDelete={handleImageDelete}
-                onBlockSelect={handleBlockSelection}
-                isSelected={selectedBlockId === block.id}
-              />
-            ))}
-          </section>
-
-          <AdminControls
+        isLiveView ? (
+          <CleanLandingPage
+            blocks={blocks}
             styleSettings={styleSettings}
-            onStyleChange={handleStyleChange}
             autoRotate={autoRotate}
-            onAutoRotateChange={setAutoRotate}
-            showHandles={showHandles}
-            onShowHandlesChange={setShowHandles}
-            enableDrag={enableDrag}
-            onEnableDragChange={setEnableDrag}
-            onResetAllCards={handleResetAllCards}
-            onDeleteAllBlocks={handleDeleteAllBlocks}
-            onAddNewBlock={handleAddNewBlock}
-            selectedBlockId={selectedBlockId}
-            selectedBlock={blocks.find((b) => b.id === selectedBlockId) || null}
-            onSelectedBlockStyleChange={handleSelectedBlockStyleChange}
+            heroVisible={heroVisible}
+            heroImages={heroImages}
+            onReadMore={handleReadMore}
+            onCloseModal={handleCloseViewModal}
+            selectedBlockForModal={selectedBlockForModal}
+            blockViewModalOpen={blockViewModalOpen}
           />
-        </>
+        ) : (
+          <>
+            <HeroCarousel
+              autoRotate={autoRotate}
+              isVisible={heroVisible}
+              onToggleVisibility={() => setHeroVisible(!heroVisible)}
+              images={heroImages}
+              onImagesChange={setHeroImages}
+            />
+
+            <section className="grid" id="grid">
+              {blocks.map((block) => (
+                <DynamicBlock
+                  key={block.id}
+                  block={block}
+                  defaultStyleSettings={styleSettings}
+                  showHandles={showHandles}
+                  enableDrag={enableDrag}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDoubleClick={handleDoubleClick}
+                  onResizeStart={handleResizeStart}
+                  onImageUpload={handleImageUpload}
+                  onImageDelete={handleImageDelete}
+                  onBlockSelect={handleBlockSelection}
+                  isSelected={selectedBlockId === block.id}
+                  onReadMore={handleReadMore}
+                  onDeleteBlock={handleDeleteBlock}
+                />
+              ))}
+            </section>
+
+            <AdminControls
+              styleSettings={styleSettings}
+              onStyleChange={handleStyleChange}
+              autoRotate={autoRotate}
+              onAutoRotateChange={setAutoRotate}
+              showHandles={showHandles}
+              onShowHandlesChange={setShowHandles}
+              enableDrag={enableDrag}
+              onEnableDragChange={setEnableDrag}
+              onResetAllCards={handleResetAllCards}
+              onDeleteAllBlocks={handleDeleteAllBlocks}
+              onAddNewBlock={handleAddNewBlock}
+              selectedBlockId={selectedBlockId}
+              selectedBlock={
+                blocks.find((b) => b.id === selectedBlockId) || null
+              }
+              onSelectedBlockStyleChange={handleSelectedBlockStyleChange}
+            />
+          </>
+        )
       ) : currentView === "about" ? (
         <VisitorStatistics stats={visitorStats} />
       ) : (
@@ -1853,6 +2252,20 @@ function App() {
         isOpen={replyModalOpen}
         onClose={handleCloseModal}
         onSendReply={handleSendReply}
+      />
+
+      <BlockContentViewModal
+        block={selectedBlockForModal}
+        isOpen={blockViewModalOpen}
+        onClose={handleCloseViewModal}
+        onEdit={handleEditContent}
+      />
+
+      <BlockContentModal
+        block={selectedBlockForModal}
+        isOpen={blockModalOpen}
+        onClose={handleCloseBlockModal}
+        onSave={handleBlockContentSave}
       />
     </div>
   );

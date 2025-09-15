@@ -979,6 +979,8 @@ header:not(.apple-header) nav a:hover {
   font-size: 14px;
   text-decoration: none;
   color: #fff;
+  border: none;
+  cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
@@ -1518,4 +1520,322 @@ footer {
   .visitors-table {
     overflow-x: auto;
   }
+}
+
+/* Block Content Modal Styles */
+.block-content-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.block-content-modal .modal-header {
+  padding: 24px 24px 0 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.block-content-modal .modal-header h2 {
+  margin: 0 0 16px 0;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.content-editor {
+  padding: 0 24px;
+  space-y: 20px;
+}
+
+.content-type-selector {
+  margin-bottom: 20px;
+}
+
+.content-type-selector label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.content-type-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: white;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.text-editor-section,
+.image-editor-section {
+  margin-bottom: 20px;
+}
+
+.text-editor-section label,
+.image-editor-section label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.content-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.content-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.editor-toolbar {
+  margin-top: 8px;
+}
+
+.editor-toolbar small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.image-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.2s ease;
+}
+
+.image-upload-area:hover {
+  border-color: var(--accent);
+}
+
+.image-upload-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.image-upload-btn:hover {
+  background: #2563eb;
+}
+
+.image-preview {
+  margin-top: 16px;
+  position: relative;
+  display: inline-block;
+}
+
+.preview-image {
+  max-width: 300px;
+  max-height: 200px;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-image-btn:hover {
+  background: #dc2626;
+}
+
+.block-content-modal .modal-actions {
+  padding: 20px 24px 24px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.block-content-modal .save-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.block-content-modal .save-btn:hover {
+  background: #2563eb;
+}
+
+.block-content-modal .cancel-btn {
+  background: white;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.block-content-modal .cancel-btn:hover {
+  background: #f9fafb;
+  color: var(--ink);
+}
+
+/* Block Content Viewer Modal Styles */
+.block-viewer-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.block-viewer-modal .modal-header {
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.block-viewer-modal .modal-header h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.edit-content-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.edit-content-btn:hover {
+  background: #2563eb;
+}
+
+.content-viewer {
+  padding: 24px;
+  min-height: 200px;
+}
+
+.no-content {
+  text-align: center;
+  color: var(--muted);
+  padding: 40px 20px;
+}
+
+.no-content p {
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.add-content-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.add-content-btn:hover {
+  background: #2563eb;
+}
+
+.content-image {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.content-image img {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.content-text {
+  line-height: 1.6;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.content-text strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.content-text em {
+  font-style: italic;
+  color: var(--muted);
+}
+
+.block-viewer-modal .modal-actions {
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.block-viewer-modal .close-btn {
+  background: white;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.block-viewer-modal .close-btn:hover {
+  background: #f9fafb;
+  color: var(--ink);
 }

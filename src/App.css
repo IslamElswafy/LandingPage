@@ -61,7 +61,8 @@
 }
 
 .upload-btn-block,
-.delete-btn-block {
+.delete-btn-block,
+.delete-block-btn {
   background: rgba(0, 0, 0, 0.7);
   border: none;
   border-radius: 50%;
@@ -79,12 +80,17 @@
 }
 
 .upload-btn-block:hover,
-.delete-btn-block:hover {
+.delete-btn-block:hover,
+.delete-block-btn:hover {
   background: rgba(0, 0, 0, 0.9);
   transform: scale(1.1);
 }
 
 .delete-btn-block:hover {
+  background: rgba(220, 53, 69, 0.9);
+}
+
+.delete-block-btn:hover {
   background: rgba(220, 53, 69, 0.9);
 }
 
@@ -148,4 +154,260 @@
 .warning-message p,
 .selected-block-info p {
   margin: 4px 0;
+}
+
+/* Tiptap Rich Text Editor Styles */
+.tiptap-editor {
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.tiptap-editor .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  border-radius: 8px 8px 0 0;
+}
+
+.tiptap-editor .toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 8px;
+  border-right: 1px solid #e0e0e0;
+}
+
+.tiptap-editor .toolbar-group:last-child {
+  border-right: none;
+}
+
+.tiptap-editor .toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tiptap-editor .toolbar-btn:hover {
+  background: #e9ecef;
+  border-color: #ccc;
+}
+
+.tiptap-editor .toolbar-btn.is-active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.tiptap-editor .color-picker {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.tiptap-editor .editor-content {
+  min-height: 200px;
+  padding: 16px;
+}
+
+.tiptap-editor .ProseMirror {
+  outline: none;
+  min-height: 150px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #999;
+  pointer-events: none;
+  height: 0;
+}
+
+.tiptap-editor .ProseMirror h1,
+.tiptap-editor .ProseMirror h2,
+.tiptap-editor .ProseMirror h3 {
+  margin: 1em 0 0.5em 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tiptap-editor .ProseMirror h1 {
+  font-size: 1.5em;
+}
+
+.tiptap-editor .ProseMirror h2 {
+  font-size: 1.3em;
+}
+
+.tiptap-editor .ProseMirror h3 {
+  font-size: 1.1em;
+}
+
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.tiptap-editor .ProseMirror blockquote {
+  border-left: 4px solid #ddd;
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #666;
+  font-style: italic;
+}
+
+.tiptap-editor .ProseMirror strong {
+  font-weight: 600;
+}
+
+.tiptap-editor .ProseMirror em {
+  font-style: italic;
+}
+
+.tiptap-editor .ProseMirror s {
+  text-decoration: line-through;
+}
+
+/* Simple Rich Editor Styles */
+.simple-rich-editor {
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.simple-rich-editor .editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+  border-radius: 8px 8px 0 0;
+}
+
+.simple-rich-editor .toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 8px;
+  border-right: 1px solid #e0e0e0;
+}
+
+.simple-rich-editor .toolbar-group:last-child {
+  border-right: none;
+}
+
+.simple-rich-editor .toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.simple-rich-editor .toolbar-btn:hover {
+  background: #e9ecef;
+  border-color: #ccc;
+}
+
+.simple-rich-editor .toolbar-btn.is-active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.simple-rich-editor .editor-content:empty::before {
+  content: attr(data-placeholder);
+  color: #999;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.simple-rich-editor .editor-content:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.simple-rich-editor .editor-content {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: normal !important;
+  writing-mode: horizontal-tb !important;
+}
+
+.simple-rich-editor .editor-content * {
+  direction: ltr !important;
+  unicode-bidi: normal !important;
+}
+
+.simple-rich-editor .editor-content h1,
+.simple-rich-editor .editor-content h2,
+.simple-rich-editor .editor-content h3 {
+  margin: 1em 0 0.5em 0;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.simple-rich-editor .editor-content h1 {
+  font-size: 1.5em;
+}
+
+.simple-rich-editor .editor-content h2 {
+  font-size: 1.3em;
+}
+
+.simple-rich-editor .editor-content h3 {
+  font-size: 1.1em;
+}
+
+.simple-rich-editor .editor-content ul,
+.simple-rich-editor .editor-content ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.simple-rich-editor .editor-content strong {
+  font-weight: 600;
+}
+
+.simple-rich-editor .editor-content em {
+  font-style: italic;
+}
+
+.simple-rich-editor .editor-content u {
+  text-decoration: underline;
 }
