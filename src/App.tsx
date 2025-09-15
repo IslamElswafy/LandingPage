@@ -19,6 +19,7 @@ interface BlockData {
 interface CarouselImage {
   src: string;
   alt: string;
+  link?: string;
 }
 
 interface StyleSettings {
@@ -43,37 +44,55 @@ interface ResizeState {
 }
 
 // Hero Carousel Component
-const HeroCarousel = ({ autoRotate }: { autoRotate: boolean }) => {
+const HeroCarousel = ({
+  autoRotate,
+  isVisible,
+  onToggleVisibility,
+}: {
+  autoRotate: boolean;
+  isVisible: boolean;
+  onToggleVisibility: () => void;
+}) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-
-  const images: CarouselImage[] = [
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [pendingImage, setPendingImage] = useState<CarouselImage | null>(null);
+  const [linkInputValue, setLinkInputValue] = useState("");
+  const [editingImageIndex, setEditingImageIndex] = useState<number | null>(
+    null
+  );
+  const [images, setImages] = useState<CarouselImage[]>([
     {
       src: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop",
       alt: "Golden liquid drop creating ripples",
+      link: "https://unsplash.com/photos/golden-liquid-drop-creating-ripples",
     },
     {
       src: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1600&auto=format&fit=crop",
       alt: "Forest river winding through landscape",
+      link: "https://unsplash.com/photos/forest-river-winding-through-landscape",
     },
     {
       src: "https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=1600&auto=format&fit=crop",
       alt: "Golden liquid drop creating ripples",
+      link: "https://unsplash.com/photos/another-golden-liquid-drop",
     },
     {
       src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1600&auto=format&fit=crop",
       alt: "Forest river from above",
+      link: "https://unsplash.com/photos/forest-river-from-above",
     },
     {
       src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop",
       alt: "Forest landscape",
+      link: "https://unsplash.com/photos/forest-landscape",
     },
-  ];
+  ]);
 
   useEffect(() => {
     if (!autoRotate) return;
-    
+
     const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % images.length);
+      setCurrentSlide((prev) => (prev + 1) % images.length);
     }, 3000);
 
     return () => clearInterval(interval);
@@ -91,16 +110,157 @@ const HeroCarousel = ({ autoRotate }: { autoRotate: boolean }) => {
     setCurrentSlide(index);
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        const newImage: CarouselImage = {
+          src: imageUrl,
+          alt: file.name.split(".")[0] || "Uploaded image",
+        };
+        setPendingImage(newImage);
+        setShowLinkInput(true);
+        setLinkInputValue("");
+      };
+      reader.readAsDataURL(file);
+    }
+    event.target.value = "";
+  };
+
+  const handleLinkSubmit = () => {
+    if (pendingImage) {
+      const imageWithLink = {
+        ...pendingImage,
+        link: linkInputValue || undefined,
+      };
+
+      if (editingImageIndex !== null) {
+        setImages((prev) =>
+          prev.map((img, index) =>
+            index === editingImageIndex ? imageWithLink : img
+          )
+        );
+        setEditingImageIndex(null);
+      } else {
+        setImages((prev) => [...prev, imageWithLink]);
+      }
+
+      setPendingImage(null);
+      setShowLinkInput(false);
+      setLinkInputValue("");
+    }
+  };
+
+  const handleLinkCancel = () => {
+    if (editingImageIndex === null && pendingImage) {
+      setImages((prev) => [...prev, pendingImage]);
+    }
+    setPendingImage(null);
+    setShowLinkInput(false);
+    setLinkInputValue("");
+    setEditingImageIndex(null);
+  };
+
+  const handleEditLink = (index: number) => {
+    const image = images[index];
+    setPendingImage(image);
+    setLinkInputValue(image.link || "");
+    setEditingImageIndex(index);
+    setShowLinkInput(true);
+  };
+
+  const deleteImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    if (currentSlide >= images.length - 1) {
+      setCurrentSlide(Math.max(0, images.length - 2));
+    }
+  };
+
+  if (!isVisible) {
+    return (
+      <section className="hero-hidden" aria-label="Hero gallery hidden">
+        <button
+          className="show-hero-btn"
+          onClick={onToggleVisibility}
+          aria-label="Show hero carousel"
+          title="Show hero carousel"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span>Show Hero Carousel</span>
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section className="hero rounded shadow" aria-label="Hero gallery">
+      <button
+        className="hide-hero-btn"
+        onClick={onToggleVisibility}
+        aria-label="Hide hero carousel"
+        title="Hide hero carousel"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+          <line x1="1" y1="1" x2="23" y2="23" />
+        </svg>
+      </button>
       <div className="slides" role="region">
         {images.map((image, index) => (
-          <img
+          <div
             key={index}
-            src={image.src}
-            alt={image.alt}
-            className={index === currentSlide ? "active" : ""}
-          />
+            className={`slide ${index === currentSlide ? "active" : ""}`}
+          >
+            {image.link ? (
+              <a
+                href={image.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="image-link"
+              >
+                <img src={image.src} alt={image.alt} className="slide-image" />
+              </a>
+            ) : (
+              <img src={image.src} alt={image.alt} className="slide-image" />
+            )}
+            <div className="slide-controls">
+              <button
+                className="edit-link-btn"
+                aria-label={`Edit link for image ${index + 1}`}
+                onClick={() => handleEditLink(index)}
+                title="Edit link"
+              >
+                🔗
+              </button>
+              <button
+                className="delete-btn"
+                aria-label={`Delete image ${index + 1}`}
+                onClick={() => deleteImage(index)}
+                title="Delete this image"
+              >
+                ×
+              </button>
+            </div>
+          </div>
         ))}
       </div>
       <button
@@ -113,16 +273,55 @@ const HeroCarousel = ({ autoRotate }: { autoRotate: boolean }) => {
       <button className="ctrl next" aria-label="Next slide" onClick={nextSlide}>
         ›
       </button>
-      <div className="dots" aria-label="Slide navigation">
-        {images.map((_, index) => (
-          <button
-            key={index}
-            className={`dot ${index === currentSlide ? "active" : ""}`}
-            aria-label={`Go to slide ${index + 1}`}
-            onClick={() => goToSlide(index)}
+      <div className="carousel-controls">
+        <div className="dots" aria-label="Slide navigation">
+          {images.map((_, index) => (
+            <button
+              key={index}
+              className={`dot ${index === currentSlide ? "active" : ""}`}
+              aria-label={`Go to slide ${index + 1}`}
+              onClick={() => goToSlide(index)}
+            />
+          ))}
+        </div>
+        <div className="upload-controls">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            style={{ display: "none" }}
+            id="image-upload"
           />
-        ))}
+          <label htmlFor="image-upload" className="upload-btn">
+            + Add Image
+          </label>
+        </div>
       </div>
+
+      {showLinkInput && (
+        <div className="link-input-overlay">
+          <div className="link-input-dialog">
+            <h3>{editingImageIndex !== null ? "Edit Link" : "Add Link"}</h3>
+            <p>Enter a URL for this image (optional):</p>
+            <input
+              type="url"
+              value={linkInputValue}
+              onChange={(e) => setLinkInputValue(e.target.value)}
+              placeholder="https://example.com"
+              className="link-input"
+              autoFocus
+            />
+            <div className="dialog-buttons">
+              <button onClick={handleLinkSubmit} className="submit-btn">
+                {editingImageIndex !== null ? "Update" : "Add Image"}
+              </button>
+              <button onClick={handleLinkCancel} className="cancel-btn">
+                {editingImageIndex !== null ? "Cancel" : "Skip Link"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
@@ -463,6 +662,7 @@ function App() {
   const [autoRotate, setAutoRotate] = useState(false);
   const [showHandles, setShowHandles] = useState(false);
   const [enableDrag, setEnableDrag] = useState(true);
+  const [heroVisible, setHeroVisible] = useState(true);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [dragOverElement, setDragOverElement] = useState<string | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState>({
@@ -539,16 +739,18 @@ function App() {
   };
 
   const handleDoubleClick = (blockId: string) => {
-    setBlocks(prev => prev.map(block => 
-      block.id === blockId 
-        ? { 
-            ...block, 
-            isManuallyResized: false, 
-            width: undefined, 
-            height: undefined 
-          }
-        : block
-    ));
+    setBlocks((prev) =>
+      prev.map((block) =>
+        block.id === blockId
+          ? {
+              ...block,
+              isManuallyResized: false,
+              width: undefined,
+              height: undefined,
+            }
+          : block
+      )
+    );
   };
 
   const handleResizeStart = (
@@ -558,12 +760,12 @@ function App() {
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const element = e.currentTarget.parentElement;
     if (!element) return;
 
     const rect = element.getBoundingClientRect();
-    
+
     setResizeState({
       isResizing: true,
       currentBlockId: blockId,
@@ -577,11 +779,11 @@ function App() {
     });
 
     // Mark block as manually resized
-    setBlocks(prev => prev.map(block => 
-      block.id === blockId 
-        ? { ...block, isManuallyResized: true }
-        : block
-    ));
+    setBlocks((prev) =>
+      prev.map((block) =>
+        block.id === blockId ? { ...block, isManuallyResized: true } : block
+      )
+    );
   };
 
   const handleStyleChange = (key: keyof StyleSettings, value: string) => {
@@ -592,12 +794,14 @@ function App() {
   };
 
   const handleResetAllCards = () => {
-    setBlocks(prev => prev.map(block => ({
-      ...block,
-      isManuallyResized: false,
-      width: undefined,
-      height: undefined,
-    })));
+    setBlocks((prev) =>
+      prev.map((block) => ({
+        ...block,
+        isManuallyResized: false,
+        width: undefined,
+        height: undefined,
+      }))
+    );
   };
 
   // Mouse event handlers for resize
@@ -613,81 +817,130 @@ function App() {
 
       // Calculate new dimensions based on resize direction
       switch (resizeState.direction) {
-        case 'e':
+        case "e":
           newWidth = Math.max(100, resizeState.startWidth + deltaX);
           break;
-        case 'w':
+        case "w":
           newWidth = Math.max(100, resizeState.startWidth - deltaX);
           break;
-        case 's':
+        case "s":
           newHeight = Math.max(100, resizeState.startHeight + deltaY);
           break;
-        case 'n':
+        case "n":
           newHeight = Math.max(100, resizeState.startHeight - deltaY);
           break;
-        case 'se':
+        case "se":
           newWidth = Math.max(100, resizeState.startWidth + deltaX);
           newHeight = Math.max(100, resizeState.startHeight + deltaY);
           break;
-        case 'sw':
+        case "sw":
           newWidth = Math.max(100, resizeState.startWidth - deltaX);
           newHeight = Math.max(100, resizeState.startHeight + deltaY);
           break;
-        case 'ne':
+        case "ne":
           newWidth = Math.max(100, resizeState.startWidth + deltaX);
           newHeight = Math.max(100, resizeState.startHeight - deltaY);
           break;
-        case 'nw':
+        case "nw":
           newWidth = Math.max(100, resizeState.startWidth - deltaX);
           newHeight = Math.max(100, resizeState.startHeight - deltaY);
           break;
       }
 
       // Update block dimensions
-      setBlocks(prev => prev.map(block => 
-        block.id === resizeState.currentBlockId 
-          ? { ...block, width: newWidth, height: newHeight }
-          : block
-      ));
+      setBlocks((prev) =>
+        prev.map((block) =>
+          block.id === resizeState.currentBlockId
+            ? { ...block, width: newWidth, height: newHeight }
+            : block
+        )
+      );
     };
 
     const handleMouseUp = () => {
       if (resizeState.isResizing) {
-        setResizeState(prev => ({ ...prev, isResizing: false }));
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
+        setResizeState((prev) => ({ ...prev, isResizing: false }));
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
       }
     };
 
     if (resizeState.isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
       document.body.style.cursor = `${resizeState.direction}-resize`;
-      document.body.style.userSelect = 'none';
+      document.body.style.userSelect = "none";
 
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
       };
     }
   }, [resizeState]);
 
   return (
     <div className="container">
-      <header>
-        <nav>
-          <a href="#" className="active">
-            Home
-          </a>
-          <a href="#">Products</a>
-          <a href="#">About</a>
-          <a href="#">Contact</a>
-        </nav>
+      <header className="apple-header">
+        <div className="header-content">
+          <div className="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+            </svg>
+          </div>
+          <nav className="main-nav">
+            <a href="#" className="nav-link">
+              Home
+            </a>
+
+            <a href="#" className="nav-link">
+              About
+            </a>
+            <a href="#" className="nav-link">
+              Contact
+            </a>
+            <a href="#" className="nav-link">
+              Contact
+            </a>
+          </nav>
+          <div className="header-actions">
+            <button className="search-btn" aria-label="Search">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+            </button>
+            <button className="cart-btn" aria-label="Shopping bag">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </header>
 
-      <HeroCarousel autoRotate={autoRotate} />
+      <HeroCarousel
+        autoRotate={autoRotate}
+        isVisible={heroVisible}
+        onToggleVisibility={() => setHeroVisible(!heroVisible)}
+      />
 
       <section className="grid" id="grid">
         {blocks.map((block) => (
