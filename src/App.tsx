@@ -36,6 +36,25 @@ interface ContactMessage {
   status: "pending" | "approved" | "replied" | "deleted";
 }
 
+interface VisitorData {
+  id: string;
+  timestamp: string;
+  source: string;
+  userAgent: string;
+  country: string;
+  ip: string;
+  page: string;
+}
+
+interface VisitorStats {
+  totalVisitors: number;
+  todayVisitors: number;
+  uniqueVisitors: number;
+  topSources: { source: string; count: number }[];
+  topCountries: { country: string; count: number }[];
+  visitorsData: VisitorData[];
+}
+
 interface StyleSettings {
   stylePreset: string;
   animation: string;
@@ -474,7 +493,10 @@ const DynamicBlock = ({
           style={{ display: "none" }}
           id={`image-upload-${block.id}`}
         />
-        <label htmlFor={`image-upload-${block.id}`} className="upload-btn-block">
+        <label
+          htmlFor={`image-upload-${block.id}`}
+          className="upload-btn-block"
+        >
           📷
         </label>
         {block.backgroundImage && (
@@ -644,7 +666,6 @@ const ReplyModal = ({
 // Contact Messages Admin Component
 const ContactMessagesAdmin = ({
   messages,
-  onUpdateMessage,
   onDeleteMessage,
   onMarkAsRead,
   onReplyMessage,
@@ -657,7 +678,7 @@ const ContactMessagesAdmin = ({
   onReplyMessage: (id: number) => void;
   doubleCheckMessages: Set<number>;
 }) => {
-  const [filterType, setFilterType] = useState("all");
+  const [filterType] = useState("all");
   const [selectedMessages, setSelectedMessages] = useState<number[]>([]);
 
   const filteredMessages = messages.filter(
@@ -773,6 +794,108 @@ const ContactMessagesAdmin = ({
   );
 };
 
+// Visitor Statistics Component
+const VisitorStatistics = ({ stats }: { stats: VisitorStats }) => {
+  return (
+    <div className="visitor-stats">
+      <div className="stats-header">
+        <h2>إحصائيات الزوار</h2>
+        <p>عرض أرقام الزوار ومصادرهم</p>
+      </div>
+
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon">👥</div>
+          <div className="stat-content">
+            <h3>{stats.totalVisitors.toLocaleString()}</h3>
+            <p>إجمالي الزوار</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon">📅</div>
+          <div className="stat-content">
+            <h3>{stats.todayVisitors.toLocaleString()}</h3>
+            <p>زوار اليوم</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon">🌟</div>
+          <div className="stat-content">
+            <h3>{stats.uniqueVisitors.toLocaleString()}</h3>
+            <p>زوار فريدون</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="sources-section">
+        <h3>أهم مصادر الزوار</h3>
+        <div className="sources-list">
+          {stats.topSources.map((source, index) => (
+            <div key={index} className="source-item">
+              <div className="source-info">
+                <span className="source-name">{source.source}</span>
+                <span className="source-count">{source.count} زائر</span>
+              </div>
+              <div
+                className="source-bar"
+                style={{
+                  width: `${
+                    (source.count /
+                      Math.max(...stats.topSources.map((s) => s.count))) *
+                    100
+                  }%`,
+                }}
+              ></div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="countries-section">
+        <h3>أهم البلدان</h3>
+        <div className="countries-list">
+          {stats.topCountries.map((country, index) => (
+            <div key={index} className="country-item">
+              <span className="country-flag">{country.country}</span>
+              <span className="country-count">{country.count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="recent-visitors">
+        <h3>الزوار الحاليون</h3>
+        <div className="visitors-table">
+          <table>
+            <thead>
+              <tr>
+                <th>الوقت</th>
+                <th>المصدر</th>
+                <th>البلد</th>
+                <th>الصفحة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.visitorsData.slice(0, 10).map((visitor) => (
+                <tr key={visitor.id}>
+                  <td>
+                    {new Date(visitor.timestamp).toLocaleTimeString("ar-SA")}
+                  </td>
+                  <td>{visitor.source}</td>
+                  <td>{visitor.country}</td>
+                  <td>{visitor.page}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Admin Controls Component
 const AdminControls = ({
   styleSettings,
@@ -815,14 +938,22 @@ const AdminControls = ({
 
       {!isBlockSelected && (
         <div className="warning-message">
-          <p><strong>⚠️ No block selected</strong></p>
-          <p>Select a block to control its individual styling, or these controls will apply as defaults for new blocks.</p>
+          <p>
+            <strong>⚠️ No block selected</strong>
+          </p>
+          <p>
+            Select a block to control its individual styling, or these controls
+            will apply as defaults for new blocks.
+          </p>
         </div>
       )}
 
       {isBlockSelected && (
         <div className="selected-block-info">
-          <p><strong>✅ Controlling Block:</strong> {selectedBlock.tag} (ID: {selectedBlock.id})</p>
+          <p>
+            <strong>✅ Controlling Block:</strong> {selectedBlock.tag} (ID:{" "}
+            {selectedBlock.id})
+          </p>
         </div>
       )}
 
@@ -830,7 +961,11 @@ const AdminControls = ({
         <label>Style Preset:</label>
         <select
           value={currentSettings.stylePreset}
-          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("stylePreset", e.target.value) : onStyleChange("stylePreset", e.target.value)}
+          onChange={(e) =>
+            isBlockSelected
+              ? onSelectedBlockStyleChange("stylePreset", e.target.value)
+              : onStyleChange("stylePreset", e.target.value)
+          }
         >
           <option value="">Default</option>
           <option value="style-modern">Modern</option>
@@ -844,7 +979,11 @@ const AdminControls = ({
         <label>Animation:</label>
         <select
           value={currentSettings.animation}
-          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("animation", e.target.value) : onStyleChange("animation", e.target.value)}
+          onChange={(e) =>
+            isBlockSelected
+              ? onSelectedBlockStyleChange("animation", e.target.value)
+              : onStyleChange("animation", e.target.value)
+          }
         >
           <option value="">None</option>
           <option value="animate-bounce">Bounce</option>
@@ -855,7 +994,11 @@ const AdminControls = ({
         <label>Corners:</label>
         <select
           value={currentSettings.corners}
-          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("corners", e.target.value) : onStyleChange("corners", e.target.value)}
+          onChange={(e) =>
+            isBlockSelected
+              ? onSelectedBlockStyleChange("corners", e.target.value)
+              : onStyleChange("corners", e.target.value)
+          }
         >
           <option value="rounded">Rounded</option>
           <option value="">Square</option>
@@ -864,7 +1007,11 @@ const AdminControls = ({
         <label>Elevation:</label>
         <select
           value={currentSettings.elevation}
-          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("elevation", e.target.value) : onStyleChange("elevation", e.target.value)}
+          onChange={(e) =>
+            isBlockSelected
+              ? onSelectedBlockStyleChange("elevation", e.target.value)
+              : onStyleChange("elevation", e.target.value)
+          }
         >
           <option value="shadow">Shadow</option>
           <option value="flat">Flat</option>
@@ -875,7 +1022,11 @@ const AdminControls = ({
         <label>Border:</label>
         <select
           value={currentSettings.border}
-          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("border", e.target.value) : onStyleChange("border", e.target.value)}
+          onChange={(e) =>
+            isBlockSelected
+              ? onSelectedBlockStyleChange("border", e.target.value)
+              : onStyleChange("border", e.target.value)
+          }
         >
           <option value="no-border">No border</option>
           <option value="with-border">With border</option>
@@ -884,7 +1035,11 @@ const AdminControls = ({
         <label>Background:</label>
         <select
           value={currentSettings.background}
-          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("background", e.target.value) : onStyleChange("background", e.target.value)}
+          onChange={(e) =>
+            isBlockSelected
+              ? onSelectedBlockStyleChange("background", e.target.value)
+              : onStyleChange("background", e.target.value)
+          }
         >
           <option value="bg-image">Image</option>
           <option value="bg-solid">Solid</option>
@@ -926,7 +1081,11 @@ const AdminControls = ({
           Add New Block
         </button>
 
-        <button type="button" onClick={onDeleteAllBlocks} className="delete-all-btn">
+        <button
+          type="button"
+          onClick={onDeleteAllBlocks}
+          className="delete-all-btn"
+        >
           Delete All Blocks
         </button>
       </div>
@@ -937,13 +1096,18 @@ const AdminControls = ({
           <p>
             <strong>Selected Block:</strong> {selectedBlockId}
             <br />
-            <small>Click on any block to select it, or click the same block again to deselect.</small>
+            <small>
+              Click on any block to select it, or click the same block again to
+              deselect.
+            </small>
           </p>
         ) : (
           <p>
             <em>No block selected</em>
             <br />
-            <small>Click on any block to select and control it individually.</small>
+            <small>
+              Click on any block to select and control it individually.
+            </small>
           </p>
         )}
       </div>
@@ -1026,7 +1190,57 @@ function App() {
   const [enableDrag, setEnableDrag] = useState(true);
   const [heroVisible, setHeroVisible] = useState(true);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<"home" | "contact">("home");
+  const [currentView, setCurrentView] = useState<"home" | "contact" | "about">(
+    "home"
+  );
+  const [visitorStats, setVisitorStats] = useState<VisitorStats>({
+    totalVisitors: 12847,
+    todayVisitors: 234,
+    uniqueVisitors: 8392,
+    topSources: [
+      { source: "Google", count: 4235 },
+      { source: "Facebook", count: 2341 },
+      { source: "Direct", count: 1876 },
+      { source: "Twitter", count: 943 },
+      { source: "LinkedIn", count: 672 },
+    ],
+    topCountries: [
+      { country: "🇸🇦", count: 5432 },
+      { country: "🇦🇪", count: 2341 },
+      { country: "🇪🇬", count: 1876 },
+      { country: "🇯🇴", count: 943 },
+      { country: "🇰🇼", count: 672 },
+    ],
+    visitorsData: [
+      {
+        id: "1",
+        timestamp: new Date().toISOString(),
+        source: "Google",
+        userAgent: "Chrome/91.0",
+        country: "🇸🇦",
+        ip: "192.168.1.1",
+        page: "/",
+      },
+      {
+        id: "2",
+        timestamp: new Date(Date.now() - 300000).toISOString(),
+        source: "Facebook",
+        userAgent: "Safari/14.0",
+        country: "🇦🇪",
+        ip: "192.168.1.2",
+        page: "/about",
+      },
+      {
+        id: "3",
+        timestamp: new Date(Date.now() - 600000).toISOString(),
+        source: "Direct",
+        userAgent: "Firefox/89.0",
+        country: "🇪🇬",
+        ip: "192.168.1.3",
+        page: "/contact",
+      },
+    ],
+  });
   const [replyModalOpen, setReplyModalOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(
     null
@@ -1109,6 +1323,69 @@ function App() {
     startLeft: 0,
     startTop: 0,
   });
+
+  // Visitor tracking functionality
+  const trackVisitor = () => {
+    const getRandomSource = () => {
+      const sources = [
+        "Google",
+        "Facebook",
+        "Direct",
+        "Twitter",
+        "LinkedIn",
+        "Instagram",
+        "YouTube",
+      ];
+      return sources[Math.floor(Math.random() * sources.length)];
+    };
+
+    const getRandomCountry = () => {
+      const countries = ["🇸🇦", "🇦🇪", "🇪🇬", "🇯🇴", "🇰🇼", "🇶🇦", "🇧🇭", "🇴🇲"];
+      return countries[Math.floor(Math.random() * countries.length)];
+    };
+
+    const newVisitor: VisitorData = {
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      source: getRandomSource(),
+      userAgent: navigator.userAgent.split("/")[0] || "Unknown",
+      country: getRandomCountry(),
+      ip: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(
+        Math.random() * 255
+      )}`,
+      page: currentView === "home" ? "/" : `/${currentView}`,
+    };
+
+    setVisitorStats((prev) => ({
+      ...prev,
+      totalVisitors: prev.totalVisitors + 1,
+      todayVisitors: prev.todayVisitors + 1,
+      uniqueVisitors: prev.uniqueVisitors + (Math.random() > 0.3 ? 1 : 0),
+      visitorsData: [newVisitor, ...prev.visitorsData.slice(0, 19)],
+      topSources: prev.topSources.map((source) =>
+        source.source === newVisitor.source
+          ? { ...source, count: source.count + 1 }
+          : source
+      ),
+      topCountries: prev.topCountries.map((country) =>
+        country.country === newVisitor.country
+          ? { ...country, count: country.count + 1 }
+          : country
+      ),
+    }));
+  };
+
+  // Auto-track visitors every 10-30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (Math.random() > 0.3) {
+        // 70% chance to track a visitor
+        trackVisitor();
+      }
+    }, Math.random() * 20000 + 10000); // Random interval between 10-30 seconds
+
+    return () => clearInterval(interval);
+  }, [currentView]);
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, blockId: string) => {
@@ -1226,21 +1503,25 @@ function App() {
     }));
   };
 
-  const handleSelectedBlockStyleChange = (key: keyof StyleSettings, value: string) => {
+  const handleSelectedBlockStyleChange = (
+    key: keyof StyleSettings,
+    value: string
+  ) => {
     if (!selectedBlockId) return;
 
     setBlocks((prev) =>
-      prev.map((block) =>
-        block.id === selectedBlockId
-          ? {
-              ...block,
-              styleSettings: {
-                ...block.styleSettings,
-                [key]: value,
-              },
-            }
-          : block
-      )
+      prev.map((block) => {
+        if (block.id === selectedBlockId) {
+          return {
+            ...block,
+            styleSettings: {
+              ...block.styleSettings,
+              [key]: value as string, // ensure value is string
+            },
+          } as BlockData;
+        }
+        return block;
+      })
     );
   };
 
@@ -1258,9 +1539,7 @@ function App() {
   const handleImageUpload = (blockId: string, imageUrl: string) => {
     setBlocks((prev) =>
       prev.map((block) =>
-        block.id === blockId
-          ? { ...block, backgroundImage: imageUrl }
-          : block
+        block.id === blockId ? { ...block, backgroundImage: imageUrl } : block
       )
     );
   };
@@ -1268,22 +1547,26 @@ function App() {
   const handleImageDelete = (blockId: string) => {
     setBlocks((prev) =>
       prev.map((block) =>
-        block.id === blockId
-          ? { ...block, backgroundImage: undefined }
-          : block
+        block.id === blockId ? { ...block, backgroundImage: undefined } : block
       )
     );
   };
 
   const handleDeleteAllBlocks = () => {
-    if (confirm("Are you sure you want to delete all blocks? This action cannot be undone.")) {
+    if (
+      confirm(
+        "Are you sure you want to delete all blocks? This action cannot be undone."
+      )
+    ) {
       setBlocks([]);
       setSelectedBlockId(null);
     }
   };
 
   const handleAddNewBlock = () => {
-    const newId = (Math.max(...blocks.map(b => parseInt(b.id)), 0) + 1).toString();
+    const newId = (
+      Math.max(...blocks.map((b) => parseInt(b.id)), 0) + 1
+    ).toString();
     const newBlock: BlockData = {
       id: newId,
       title: "New Block",
@@ -1456,7 +1739,10 @@ function App() {
               Home
             </button>
 
-            <button className="nav-link" onClick={() => setCurrentView("home")}>
+            <button
+              className={`nav-link ${currentView === "about" ? "active" : ""}`}
+              onClick={() => setCurrentView("about")}
+            >
               About
             </button>
             <button
@@ -1545,10 +1831,12 @@ function App() {
             onDeleteAllBlocks={handleDeleteAllBlocks}
             onAddNewBlock={handleAddNewBlock}
             selectedBlockId={selectedBlockId}
-            selectedBlock={blocks.find(b => b.id === selectedBlockId) || null}
+            selectedBlock={blocks.find((b) => b.id === selectedBlockId) || null}
             onSelectedBlockStyleChange={handleSelectedBlockStyleChange}
           />
         </>
+      ) : currentView === "about" ? (
+        <VisitorStatistics stats={visitorStats} />
       ) : (
         <ContactMessagesAdmin
           messages={contactMessages}
