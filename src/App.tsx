@@ -11,11 +11,14 @@ interface BlockData {
   backgroundImage?: string;
   backgroundColor?: string;
   isGradient?: boolean;
+  gradientColors?: string[];
+  gradientDirection?: string;
   width?: number;
   height?: number;
   x?: number;
   y?: number;
   isManuallyResized?: boolean;
+  isFullWidth?: boolean;
   styleSettings?: StyleSettings;
   content?: string;
   contentImage?: string;
@@ -423,6 +426,7 @@ const DynamicBlock = ({
     const styleSettings = block.styleSettings || defaultStyleSettings;
 
     if (block.isManuallyResized) classes.push("manually-resized");
+    if (block.isFullWidth) classes.push("full-width");
     if (isSelected) classes.push("selected");
     if (styleSettings.stylePreset) classes.push(styleSettings.stylePreset);
     if (styleSettings.animation) classes.push(styleSettings.animation);
@@ -454,9 +458,15 @@ const DynamicBlock = ({
     const styleSettings = block.styleSettings || defaultStyleSettings;
     if (styleSettings.background === "bg-image" && block.backgroundImage) {
       return { backgroundImage: `url('${block.backgroundImage}')` };
-    } else if (styleSettings.background === "bg-gradient" && block.isGradient) {
+    } else if (styleSettings.background === "bg-gradient") {
+      const colors = block.gradientColors || ["#667eea", "#764ba2"];
+      const direction = block.gradientDirection || "135deg";
+      const gradientStyle = `linear-gradient(${direction}, ${colors.join(
+        ", "
+      )})`;
+      console.log("Applying gradient:", gradientStyle, "for block:", block.id);
       return {
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: gradientStyle,
       };
     } else if (styleSettings.background === "bg-solid") {
       return { backgroundColor: block.backgroundColor || "#111" };
@@ -1163,6 +1173,7 @@ const AdminControls = ({
   selectedBlockId,
   selectedBlock,
   onSelectedBlockStyleChange,
+  setBlocks,
 }: {
   styleSettings: StyleSettings;
   onStyleChange: (key: keyof StyleSettings, value: string) => void;
@@ -1178,6 +1189,7 @@ const AdminControls = ({
   selectedBlockId: string | null;
   selectedBlock: BlockData | null;
   onSelectedBlockStyleChange: (key: keyof StyleSettings, value: string) => void;
+  setBlocks: React.Dispatch<React.SetStateAction<BlockData[]>>;
 }) => {
   const currentSettings = selectedBlock?.styleSettings || styleSettings;
   const isBlockSelected = !!selectedBlock;
@@ -1297,6 +1309,190 @@ const AdminControls = ({
           <option value="bg-gradient">Gradient</option>
         </select>
 
+        {/* Solid Color Input */}
+        {currentSettings.background === "bg-solid" && (
+          <div className="color-control-group">
+            <label>Solid Color:</label>
+            <div className="color-input-container">
+              <input
+                type="color"
+                value={selectedBlock?.backgroundColor || "#111111"}
+                onChange={(e) => {
+                  if (isBlockSelected && selectedBlock) {
+                    setBlocks((prev) =>
+                      prev.map((block) =>
+                        block.id === selectedBlock.id
+                          ? { ...block, backgroundColor: e.target.value }
+                          : block
+                      )
+                    );
+                  }
+                }}
+                className="color-input"
+              />
+              <input
+                type="text"
+                value={selectedBlock?.backgroundColor || "#111111"}
+                onChange={(e) => {
+                  if (isBlockSelected && selectedBlock) {
+                    setBlocks((prev) =>
+                      prev.map((block) =>
+                        block.id === selectedBlock.id
+                          ? { ...block, backgroundColor: e.target.value }
+                          : block
+                      )
+                    );
+                  }
+                }}
+                className="color-text-input"
+                placeholder="#111111"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Gradient Color Inputs */}
+        {currentSettings.background === "bg-gradient" && (
+          <div className="gradient-control-group">
+            <label>Gradient Colors:</label>
+            <div className="gradient-inputs">
+              <div className="gradient-color-input">
+                <label>Color 1:</label>
+                <div className="color-input-container">
+                  <input
+                    type="color"
+                    value={selectedBlock?.gradientColors?.[0] || "#667eea"}
+                    onChange={(e) => {
+                      if (isBlockSelected && selectedBlock) {
+                        const currentColors = selectedBlock.gradientColors || [
+                          "#667eea",
+                          "#764ba2",
+                        ];
+                        const newColors = [
+                          e.target.value,
+                          currentColors[1] || "#764ba2",
+                        ];
+                        setBlocks((prev) =>
+                          prev.map((block) =>
+                            block.id === selectedBlock.id
+                              ? { ...block, gradientColors: newColors }
+                              : block
+                          )
+                        );
+                      }
+                    }}
+                    className="color-input"
+                  />
+                  <input
+                    type="text"
+                    value={selectedBlock?.gradientColors?.[0] || "#667eea"}
+                    onChange={(e) => {
+                      if (isBlockSelected && selectedBlock) {
+                        const currentColors = selectedBlock.gradientColors || [
+                          "#667eea",
+                          "#764ba2",
+                        ];
+                        const newColors = [
+                          e.target.value,
+                          currentColors[1] || "#764ba2",
+                        ];
+                        setBlocks((prev) =>
+                          prev.map((block) =>
+                            block.id === selectedBlock.id
+                              ? { ...block, gradientColors: newColors }
+                              : block
+                          )
+                        );
+                      }
+                    }}
+                    className="color-text-input"
+                    placeholder="#667eea"
+                  />
+                </div>
+              </div>
+              <div className="gradient-color-input">
+                <label>Color 2:</label>
+                <div className="color-input-container">
+                  <input
+                    type="color"
+                    value={selectedBlock?.gradientColors?.[1] || "#764ba2"}
+                    onChange={(e) => {
+                      if (isBlockSelected && selectedBlock) {
+                        const currentColors = selectedBlock.gradientColors || [
+                          "#667eea",
+                          "#764ba2",
+                        ];
+                        const newColors = [
+                          currentColors[0] || "#667eea",
+                          e.target.value,
+                        ];
+                        setBlocks((prev) =>
+                          prev.map((block) =>
+                            block.id === selectedBlock.id
+                              ? { ...block, gradientColors: newColors }
+                              : block
+                          )
+                        );
+                      }
+                    }}
+                    className="color-input"
+                  />
+                  <input
+                    type="text"
+                    value={selectedBlock?.gradientColors?.[1] || "#764ba2"}
+                    onChange={(e) => {
+                      if (isBlockSelected && selectedBlock) {
+                        const currentColors = selectedBlock.gradientColors || [
+                          "#667eea",
+                          "#764ba2",
+                        ];
+                        const newColors = [
+                          currentColors[0] || "#667eea",
+                          e.target.value,
+                        ];
+                        setBlocks((prev) =>
+                          prev.map((block) =>
+                            block.id === selectedBlock.id
+                              ? { ...block, gradientColors: newColors }
+                              : block
+                          )
+                        );
+                      }
+                    }}
+                    className="color-text-input"
+                    placeholder="#764ba2"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="gradient-direction">
+              <label>Direction:</label>
+              <select
+                value={selectedBlock?.gradientDirection || "135deg"}
+                onChange={(e) => {
+                  if (isBlockSelected && selectedBlock) {
+                    setBlocks((prev) =>
+                      prev.map((block) =>
+                        block.id === selectedBlock.id
+                          ? { ...block, gradientDirection: e.target.value }
+                          : block
+                      )
+                    );
+                  }
+                }}
+                className="gradient-direction-select"
+              >
+                <option value="0deg">Horizontal (0°)</option>
+                <option value="90deg">Vertical (90°)</option>
+                <option value="135deg">Diagonal (135°)</option>
+                <option value="45deg">Diagonal (45°)</option>
+                <option value="180deg">Reverse Horizontal (180°)</option>
+                <option value="270deg">Reverse Vertical (270°)</option>
+              </select>
+            </div>
+          </div>
+        )}
+
         <label>
           <input
             type="checkbox"
@@ -1367,7 +1563,16 @@ const AdminControls = ({
         <strong>Admin Note:</strong> Can add pictures background or flat or
         solid color or gradient other things as admin and these can be
         discussed.
-        <strong>Tip:</strong> Double-click any card to reset its size to auto.
+      </p>
+      <p>
+        <strong>Resizing Tips:</strong>
+        <br />
+        • Drag resize handles to adjust width and height
+        <br />
+        • Widen a block to 85% of container width to make it full-width
+        <br />
+        • Full-width blocks push other blocks to new rows
+        <br />• Double-click any card to reset its size to auto
       </p>
     </div>
   );
@@ -1429,7 +1634,26 @@ function App() {
       tag: "Flat",
       backgroundColor: "#000",
       isGradient: false,
+      gradientColors: ["#000000", "#333333"],
+      gradientDirection: "135deg",
       isManuallyResized: false,
+    },
+    {
+      id: "7",
+      title: "Gradient Test",
+      tag: "Gradient",
+      isGradient: true,
+      gradientColors: ["#ff6b6b", "#4ecdc4"],
+      gradientDirection: "45deg",
+      isManuallyResized: false,
+      styleSettings: {
+        stylePreset: "",
+        animation: "",
+        corners: "rounded",
+        elevation: "shadow",
+        border: "no-border",
+        background: "bg-gradient",
+      },
     },
   ]);
 
@@ -1744,6 +1968,7 @@ function App() {
           ? {
               ...block,
               isManuallyResized: false,
+              isFullWidth: false,
               width: undefined,
               height: undefined,
             }
@@ -1801,13 +2026,31 @@ function App() {
     setBlocks((prev) =>
       prev.map((block) => {
         if (block.id === selectedBlockId) {
-          return {
+          const updatedBlock = {
             ...block,
             styleSettings: {
               ...block.styleSettings,
               [key]: value as string, // ensure value is string
             },
           } as BlockData;
+
+          // Set isGradient property based on background type
+          if (key === "background") {
+            if (value === "bg-gradient") {
+              updatedBlock.isGradient = true;
+              // Initialize gradient colors if not set
+              if (!updatedBlock.gradientColors) {
+                updatedBlock.gradientColors = ["#667eea", "#764ba2"];
+              }
+              if (!updatedBlock.gradientDirection) {
+                updatedBlock.gradientDirection = "135deg";
+              }
+            } else {
+              updatedBlock.isGradient = false;
+            }
+          }
+
+          return updatedBlock;
         }
         return block;
       })
@@ -1819,6 +2062,7 @@ function App() {
       prev.map((block) => ({
         ...block,
         isManuallyResized: false,
+        isFullWidth: false,
         width: undefined,
         height: undefined,
       }))
@@ -1874,6 +2118,9 @@ function App() {
       title: "New Block",
       tag: "New Block",
       backgroundColor: "#333",
+      isGradient: false,
+      gradientColors: ["#333333", "#666666"],
+      gradientDirection: "135deg",
       isManuallyResized: false,
     };
     setBlocks((prev) => [...prev, newBlock]);
@@ -2001,10 +2248,10 @@ function App() {
       // Calculate new dimensions based on resize direction
       switch (resizeState.direction) {
         case "e":
-          newWidth = Math.max(100, resizeState.startWidth + deltaX);
+          newWidth = Math.max(150, resizeState.startWidth + deltaX);
           break;
         case "w":
-          newWidth = Math.max(100, resizeState.startWidth - deltaX);
+          newWidth = Math.max(150, resizeState.startWidth - deltaX);
           break;
         case "s":
           newHeight = Math.max(100, resizeState.startHeight + deltaY);
@@ -2013,28 +2260,41 @@ function App() {
           newHeight = Math.max(100, resizeState.startHeight - deltaY);
           break;
         case "se":
-          newWidth = Math.max(100, resizeState.startWidth + deltaX);
+          newWidth = Math.max(150, resizeState.startWidth + deltaX);
           newHeight = Math.max(100, resizeState.startHeight + deltaY);
           break;
         case "sw":
-          newWidth = Math.max(100, resizeState.startWidth - deltaX);
+          newWidth = Math.max(150, resizeState.startWidth - deltaX);
           newHeight = Math.max(100, resizeState.startHeight + deltaY);
           break;
         case "ne":
-          newWidth = Math.max(100, resizeState.startWidth + deltaX);
+          newWidth = Math.max(150, resizeState.startWidth + deltaX);
           newHeight = Math.max(100, resizeState.startHeight - deltaY);
           break;
         case "nw":
-          newWidth = Math.max(100, resizeState.startWidth - deltaX);
+          newWidth = Math.max(150, resizeState.startWidth - deltaX);
           newHeight = Math.max(100, resizeState.startHeight - deltaY);
           break;
       }
+
+      // Get container width for full-width detection
+      const container = document.querySelector(".grid");
+      const containerWidth = container ? container.clientWidth : 1100;
+      const fullWidthThreshold = containerWidth * 0.85; // 85% of container width
+
+      // Determine if block should be full-width
+      const shouldBeFullWidth = newWidth >= fullWidthThreshold;
 
       // Update block dimensions
       setBlocks((prev) =>
         prev.map((block) =>
           block.id === resizeState.currentBlockId
-            ? { ...block, width: newWidth, height: newHeight }
+            ? {
+                ...block,
+                width: shouldBeFullWidth ? containerWidth : newWidth,
+                height: newHeight,
+                isFullWidth: shouldBeFullWidth,
+              }
             : block
         )
       );
@@ -2231,6 +2491,7 @@ function App() {
                 blocks.find((b) => b.id === selectedBlockId) || null
               }
               onSelectedBlockStyleChange={handleSelectedBlockStyleChange}
+              setBlocks={setBlocks}
             />
           </>
         )

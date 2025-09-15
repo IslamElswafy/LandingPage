@@ -411,3 +411,92 @@
 .simple-rich-editor .editor-content u {
   text-decoration: underline;
 }
+
+/* Color Input Controls */
+.color-control-group {
+  margin: 1em 0;
+  padding: 0.5em;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+
+.color-control-group label {
+  display: block;
+  margin-bottom: 0.5em;
+  font-weight: 500;
+  color: #333;
+}
+
+.color-input-container {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+}
+
+.color-input {
+  width: 40px;
+  height: 32px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.color-text-input {
+  flex: 1;
+  padding: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: monospace;
+}
+
+.gradient-control-group {
+  margin: 1em 0;
+  padding: 0.5em;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+
+.gradient-control-group label {
+  display: block;
+  margin-bottom: 0.5em;
+  font-weight: 500;
+  color: #333;
+}
+
+.gradient-inputs {
+  display: flex;
+  gap: 1em;
+  margin-bottom: 1em;
+}
+
+.gradient-color-input {
+  flex: 1;
+}
+
+.gradient-color-input label {
+  font-size: 0.9em;
+  margin-bottom: 0.3em;
+}
+
+.gradient-direction {
+  margin-top: 1em;
+}
+
+.gradient-direction label {
+  display: block;
+  margin-bottom: 0.5em;
+  font-weight: 500;
+  color: #333;
+}
+
+.gradient-direction-select {
+  width: 100%;
+  padding: 0.5em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}

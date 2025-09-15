@@ -904,11 +904,11 @@ header:not(.apple-header) nav a:hover {
   transform: translateY(-1px);
 }
 
-/* Dynamic blocks grid */
+/* Dynamic blocks grid - Flexbox for better width control */
 .grid {
   margin-top: 28px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--gap);
   align-items: start;
 }
@@ -916,14 +916,12 @@ header:not(.apple-header) nav a:hover {
 /* Responsive grid adjustments */
 @media (max-width: 768px) {
   .grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px;
   }
 }
 
 @media (max-width: 480px) {
   .grid {
-    grid-template-columns: 1fr;
     gap: 8px;
   }
 }
@@ -937,22 +935,74 @@ header:not(.apple-header) nav a:hover {
   color: #fff;
   background: #111;
   border: 1px solid transparent;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s, width 0.2s ease;
   background-size: cover;
   background-position: center;
   cursor: pointer;
-  width: 100%;
   box-sizing: border-box;
   border-radius: var(--radius);
+  /* Default flex properties for auto-sizing cards */
+  flex: 1 1 220px;
+  min-width: 220px;
+  max-width: none;
 }
 
-/* Override grid behavior for manually resized cards */
+/* Manually resized cards override flex behavior */
 .card.manually-resized {
-  grid-column: span 1;
-  width: auto !important;
-  min-width: 150px;
-  max-width: 500px;
+  flex: none !important;
+  min-width: 150px !important;
   border: 2px dashed rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Full-width cards that break to new row */
+.card.full-width {
+  flex: 1 1 100%;
+  width: 100%;
+  max-width: 100%;
+  border: 2px dashed rgba(34, 197, 94, 0.5) !important;
+  position: relative;
+}
+
+.card.full-width::before {
+  content: "FULL WIDTH";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(34, 197, 94, 0.9);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  z-index: 100;
+  animation: fullWidthBadge 0.3s ease;
+}
+
+@keyframes fullWidthBadge {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Responsive card sizing */
+@media (max-width: 768px) {
+  .card {
+    flex: 1 1 180px;
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
 }
 
 /* Enhanced resize handle visibility for manually resized cards */
@@ -996,6 +1046,8 @@ header:not(.apple-header) nav a:hover {
 .resizable {
   position: relative;
   overflow: visible;
+  /* Ensure resize handles are above other content */
+  z-index: 1;
 }
 
 .resize-handle {
