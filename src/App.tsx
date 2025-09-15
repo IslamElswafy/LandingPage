@@ -14,6 +14,7 @@ interface BlockData {
   x?: number;
   y?: number;
   isManuallyResized?: boolean;
+  styleSettings?: StyleSettings;
 }
 
 interface CarouselImage {
@@ -342,7 +343,7 @@ const HeroCarousel = ({
 // Dynamic Block Component
 const DynamicBlock = ({
   block,
-  styleSettings,
+  defaultStyleSettings,
   showHandles,
   enableDrag,
   onDragStart,
@@ -353,9 +354,13 @@ const DynamicBlock = ({
   onDragLeave,
   onDoubleClick,
   onResizeStart,
+  onImageUpload,
+  onImageDelete,
+  onBlockSelect,
+  isSelected,
 }: {
   block: BlockData;
-  styleSettings: StyleSettings;
+  defaultStyleSettings: StyleSettings;
   showHandles: boolean;
   enableDrag: boolean;
   onDragStart: (e: React.DragEvent, blockId: string) => void;
@@ -370,12 +375,36 @@ const DynamicBlock = ({
     blockId: string,
     direction: string
   ) => void;
+  onImageUpload: (blockId: string, imageUrl: string) => void;
+  onImageDelete: (blockId: string) => void;
+  onBlockSelect: (blockId: string) => void;
+  isSelected: boolean;
 }) => {
   const blockRef = useRef<HTMLElement>(null);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        onImageUpload(block.id, imageUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+    event.target.value = "";
+  };
+
+  const handleImageDelete = () => {
+    onImageDelete(block.id);
+  };
+
   const getStyleClasses = () => {
     const classes = ["card", "resizable", "draggable"];
+    const styleSettings = block.styleSettings || defaultStyleSettings;
 
     if (block.isManuallyResized) classes.push("manually-resized");
+    if (isSelected) classes.push("selected");
     if (styleSettings.stylePreset) classes.push(styleSettings.stylePreset);
     if (styleSettings.animation) classes.push(styleSettings.animation);
     if (styleSettings.corners) classes.push(styleSettings.corners);
@@ -403,6 +432,7 @@ const DynamicBlock = ({
   };
 
   const getBackgroundStyle = () => {
+    const styleSettings = block.styleSettings || defaultStyleSettings;
     if (styleSettings.background === "bg-image" && block.backgroundImage) {
       return { backgroundImage: `url('${block.backgroundImage}')` };
     } else if (styleSettings.background === "bg-gradient" && block.isGradient) {
@@ -428,11 +458,35 @@ const DynamicBlock = ({
       onDragEnter={onDragEnter}
       onDragLeave={onDragLeave}
       onDoubleClick={() => onDoubleClick(block.id)}
+      onClick={() => onBlockSelect(block.id)}
     >
       <span className="tag">{block.tag}</span>
       <a href="#" className="cta">
         Read More
       </a>
+
+      {/* Block Image Controls */}
+      <div className="block-image-controls">
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          style={{ display: "none" }}
+          id={`image-upload-${block.id}`}
+        />
+        <label htmlFor={`image-upload-${block.id}`} className="upload-btn-block">
+          📷
+        </label>
+        {block.backgroundImage && (
+          <button
+            className="delete-btn-block"
+            onClick={handleImageDelete}
+            title="Delete background image"
+          >
+            🗑️
+          </button>
+        )}
+      </div>
 
       {/* Resize handles */}
       {showHandles && (
@@ -730,6 +784,11 @@ const AdminControls = ({
   enableDrag,
   onEnableDragChange,
   onResetAllCards,
+  onDeleteAllBlocks,
+  onAddNewBlock,
+  selectedBlockId,
+  selectedBlock,
+  onSelectedBlockStyleChange,
 }: {
   styleSettings: StyleSettings;
   onStyleChange: (key: keyof StyleSettings, value: string) => void;
@@ -740,17 +799,38 @@ const AdminControls = ({
   enableDrag: boolean;
   onEnableDragChange: (value: boolean) => void;
   onResetAllCards: () => void;
+  onDeleteAllBlocks: () => void;
+  onAddNewBlock: () => void;
+  selectedBlockId: string | null;
+  selectedBlock: BlockData | null;
+  onSelectedBlockStyleChange: (key: keyof StyleSettings, value: string) => void;
 }) => {
+  const currentSettings = selectedBlock?.styleSettings || styleSettings;
+  const isBlockSelected = !!selectedBlock;
+
   return (
     <div className="panel">
       <h3>Dynamic Block Controls</h3>
       <p>These blocks must be dynamic and auto-resize - a small challenge!</p>
 
+      {!isBlockSelected && (
+        <div className="warning-message">
+          <p><strong>⚠️ No block selected</strong></p>
+          <p>Select a block to control its individual styling, or these controls will apply as defaults for new blocks.</p>
+        </div>
+      )}
+
+      {isBlockSelected && (
+        <div className="selected-block-info">
+          <p><strong>✅ Controlling Block:</strong> {selectedBlock.tag} (ID: {selectedBlock.id})</p>
+        </div>
+      )}
+
       <div className="control-group">
         <label>Style Preset:</label>
         <select
-          value={styleSettings.stylePreset}
-          onChange={(e) => onStyleChange("stylePreset", e.target.value)}
+          value={currentSettings.stylePreset}
+          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("stylePreset", e.target.value) : onStyleChange("stylePreset", e.target.value)}
         >
           <option value="">Default</option>
           <option value="style-modern">Modern</option>
@@ -763,8 +843,8 @@ const AdminControls = ({
 
         <label>Animation:</label>
         <select
-          value={styleSettings.animation}
-          onChange={(e) => onStyleChange("animation", e.target.value)}
+          value={currentSettings.animation}
+          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("animation", e.target.value) : onStyleChange("animation", e.target.value)}
         >
           <option value="">None</option>
           <option value="animate-bounce">Bounce</option>
@@ -774,8 +854,8 @@ const AdminControls = ({
 
         <label>Corners:</label>
         <select
-          value={styleSettings.corners}
-          onChange={(e) => onStyleChange("corners", e.target.value)}
+          value={currentSettings.corners}
+          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("corners", e.target.value) : onStyleChange("corners", e.target.value)}
         >
           <option value="rounded">Rounded</option>
           <option value="">Square</option>
@@ -783,8 +863,8 @@ const AdminControls = ({
 
         <label>Elevation:</label>
         <select
-          value={styleSettings.elevation}
-          onChange={(e) => onStyleChange("elevation", e.target.value)}
+          value={currentSettings.elevation}
+          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("elevation", e.target.value) : onStyleChange("elevation", e.target.value)}
         >
           <option value="shadow">Shadow</option>
           <option value="flat">Flat</option>
@@ -794,8 +874,8 @@ const AdminControls = ({
       <div className="control-group">
         <label>Border:</label>
         <select
-          value={styleSettings.border}
-          onChange={(e) => onStyleChange("border", e.target.value)}
+          value={currentSettings.border}
+          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("border", e.target.value) : onStyleChange("border", e.target.value)}
         >
           <option value="no-border">No border</option>
           <option value="with-border">With border</option>
@@ -803,8 +883,8 @@ const AdminControls = ({
 
         <label>Background:</label>
         <select
-          value={styleSettings.background}
-          onChange={(e) => onStyleChange("background", e.target.value)}
+          value={currentSettings.background}
+          onChange={(e) => isBlockSelected ? onSelectedBlockStyleChange("background", e.target.value) : onStyleChange("background", e.target.value)}
         >
           <option value="bg-image">Image</option>
           <option value="bg-solid">Solid</option>
@@ -841,6 +921,31 @@ const AdminControls = ({
         <button type="button" onClick={onResetAllCards}>
           Reset All Cards
         </button>
+
+        <button type="button" onClick={onAddNewBlock} className="add-block-btn">
+          Add New Block
+        </button>
+
+        <button type="button" onClick={onDeleteAllBlocks} className="delete-all-btn">
+          Delete All Blocks
+        </button>
+      </div>
+
+      <div className="control-group">
+        <h4>Block Selection</h4>
+        {selectedBlockId ? (
+          <p>
+            <strong>Selected Block:</strong> {selectedBlockId}
+            <br />
+            <small>Click on any block to select it, or click the same block again to deselect.</small>
+          </p>
+        ) : (
+          <p>
+            <em>No block selected</em>
+            <br />
+            <small>Click on any block to select and control it individually.</small>
+          </p>
+        )}
       </div>
 
       <p>
@@ -920,6 +1025,7 @@ function App() {
   const [showHandles, setShowHandles] = useState(false);
   const [enableDrag, setEnableDrag] = useState(true);
   const [heroVisible, setHeroVisible] = useState(true);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<"home" | "contact">("home");
   const [replyModalOpen, setReplyModalOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(
@@ -1120,6 +1226,24 @@ function App() {
     }));
   };
 
+  const handleSelectedBlockStyleChange = (key: keyof StyleSettings, value: string) => {
+    if (!selectedBlockId) return;
+
+    setBlocks((prev) =>
+      prev.map((block) =>
+        block.id === selectedBlockId
+          ? {
+              ...block,
+              styleSettings: {
+                ...block.styleSettings,
+                [key]: value,
+              },
+            }
+          : block
+      )
+    );
+  };
+
   const handleResetAllCards = () => {
     setBlocks((prev) =>
       prev.map((block) => ({
@@ -1129,6 +1253,50 @@ function App() {
         height: undefined,
       }))
     );
+  };
+
+  const handleImageUpload = (blockId: string, imageUrl: string) => {
+    setBlocks((prev) =>
+      prev.map((block) =>
+        block.id === blockId
+          ? { ...block, backgroundImage: imageUrl }
+          : block
+      )
+    );
+  };
+
+  const handleImageDelete = (blockId: string) => {
+    setBlocks((prev) =>
+      prev.map((block) =>
+        block.id === blockId
+          ? { ...block, backgroundImage: undefined }
+          : block
+      )
+    );
+  };
+
+  const handleDeleteAllBlocks = () => {
+    if (confirm("Are you sure you want to delete all blocks? This action cannot be undone.")) {
+      setBlocks([]);
+      setSelectedBlockId(null);
+    }
+  };
+
+  const handleAddNewBlock = () => {
+    const newId = (Math.max(...blocks.map(b => parseInt(b.id)), 0) + 1).toString();
+    const newBlock: BlockData = {
+      id: newId,
+      title: "New Block",
+      tag: "New Block",
+      backgroundColor: "#333",
+      isManuallyResized: false,
+    };
+    setBlocks((prev) => [...prev, newBlock]);
+    setSelectedBlockId(newId);
+  };
+
+  const handleBlockSelection = (blockId: string) => {
+    setSelectedBlockId(selectedBlockId === blockId ? null : blockId);
   };
 
   // Contact messages handlers
@@ -1345,7 +1513,7 @@ function App() {
               <DynamicBlock
                 key={block.id}
                 block={block}
-                styleSettings={styleSettings}
+                defaultStyleSettings={styleSettings}
                 showHandles={showHandles}
                 enableDrag={enableDrag}
                 onDragStart={handleDragStart}
@@ -1356,6 +1524,10 @@ function App() {
                 onDragLeave={handleDragLeave}
                 onDoubleClick={handleDoubleClick}
                 onResizeStart={handleResizeStart}
+                onImageUpload={handleImageUpload}
+                onImageDelete={handleImageDelete}
+                onBlockSelect={handleBlockSelection}
+                isSelected={selectedBlockId === block.id}
               />
             ))}
           </section>
@@ -1370,6 +1542,11 @@ function App() {
             enableDrag={enableDrag}
             onEnableDragChange={setEnableDrag}
             onResetAllCards={handleResetAllCards}
+            onDeleteAllBlocks={handleDeleteAllBlocks}
+            onAddNewBlock={handleAddNewBlock}
+            selectedBlockId={selectedBlockId}
+            selectedBlock={blocks.find(b => b.id === selectedBlockId) || null}
+            onSelectedBlockStyleChange={handleSelectedBlockStyleChange}
           />
         </>
       ) : (
