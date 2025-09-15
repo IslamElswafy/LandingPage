@@ -22,6 +22,19 @@ interface CarouselImage {
   link?: string;
 }
 
+interface ContactMessage {
+  id: number;
+  country: string;
+  type: string;
+  name: string;
+  email: string;
+  mobile: string;
+  subject: string;
+  message: string;
+  date: string;
+  status: "pending" | "approved" | "replied" | "deleted";
+}
+
 interface StyleSettings {
   stylePreset: string;
   animation: string;
@@ -462,6 +475,250 @@ const DynamicBlock = ({
   );
 };
 
+// Reply Modal Component
+const ReplyModal = ({
+  message,
+  isOpen,
+  onClose,
+  onSendReply,
+}: {
+  message: ContactMessage | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSendReply: (replyTitle: string, replyBody: string) => void;
+}) => {
+  const [replyTitle, setReplyTitle] = useState("");
+  const [replyBody, setReplyBody] = useState("");
+
+  useEffect(() => {
+    if (message && isOpen) {
+      setReplyTitle(`Re: ${message.subject}`);
+      setReplyBody("");
+    }
+  }, [message, isOpen]);
+
+  const handleSend = () => {
+    if (replyTitle.trim() && replyBody.trim()) {
+      onSendReply(replyTitle, replyBody);
+      setReplyTitle("");
+      setReplyBody("");
+      onClose();
+    }
+  };
+
+  const handleCancel = () => {
+    setReplyTitle("");
+    setReplyBody("");
+    onClose();
+  };
+
+  if (!isOpen || !message) return null;
+
+  return (
+    <div className="modal-overlay">
+      <div className="reply-modal">
+        <button className="modal-close" onClick={onClose}>
+          ▲
+        </button>
+
+        <div className="modal-header">
+          <h2>Reply</h2>
+        </div>
+
+        <div className="message-details">
+          <div className="detail-row">
+            <span className="detail-label">Type:</span>
+            <span className="type-tag">{message.type}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Name:</span>
+            <span className="detail-value">{message.name}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Email:</span>
+            <span className="detail-value">{message.email}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Mobile:</span>
+            <span className="detail-value">{message.mobile}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Body:</span>
+            <span className="detail-value">{message.message}</span>
+          </div>
+        </div>
+
+        <div className="reply-section">
+          <h3>Reply</h3>
+          <div className="form-group">
+            <label htmlFor="reply-title">Title</label>
+            <input
+              id="reply-title"
+              type="text"
+              value={replyTitle}
+              onChange={(e) => setReplyTitle(e.target.value)}
+              placeholder="Re: ........."
+              className="reply-input"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="reply-body">Body</label>
+            <textarea
+              id="reply-body"
+              value={replyBody}
+              onChange={(e) => setReplyBody(e.target.value)}
+              placeholder="Type your reply here..."
+              className="reply-textarea"
+              rows={6}
+            />
+          </div>
+        </div>
+
+        <div className="modal-actions">
+          <button className="send-btn" onClick={handleSend}>
+            SEND
+          </button>
+          <button className="cancel-btn" onClick={handleCancel}>
+            CANCEL
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Contact Messages Admin Component
+const ContactMessagesAdmin = ({
+  messages,
+  onUpdateMessage,
+  onDeleteMessage,
+  onMarkAsRead,
+  onReplyMessage,
+  doubleCheckMessages,
+}: {
+  messages: ContactMessage[];
+  onUpdateMessage: (id: number, status: string) => void;
+  onDeleteMessage: (id: number) => void;
+  onMarkAsRead: (id: number) => void;
+  onReplyMessage: (id: number) => void;
+  doubleCheckMessages: Set<number>;
+}) => {
+  const [filterType, setFilterType] = useState("all");
+  const [selectedMessages, setSelectedMessages] = useState<number[]>([]);
+
+  const filteredMessages = messages.filter(
+    (msg) =>
+      filterType === "all" ||
+      msg.type.toLowerCase() === filterType.toLowerCase()
+  );
+
+  const handleSelectAll = () => {
+    if (selectedMessages.length === filteredMessages.length) {
+      setSelectedMessages([]);
+    } else {
+      setSelectedMessages(filteredMessages.map((msg) => msg.id));
+    }
+  };
+
+  const handleSelectMessage = (id: number) => {
+    setSelectedMessages((prev) =>
+      prev.includes(id) ? prev.filter((msgId) => msgId !== id) : [...prev, id]
+    );
+  };
+
+  return (
+    <div className="contact-admin">
+      <div className="admin-header">
+        <div className="breadcrumbs">
+          <span>Contact Us</span>
+        </div>
+      </div>
+
+      <div className="admin-content">
+        <div className="tabs">
+          <button className="tab active">Messages</button>
+        </div>
+
+        <div className="messages-table">
+          <table>
+            <thead>
+              <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedMessages.length === filteredMessages.length &&
+                      filteredMessages.length > 0
+                    }
+                    onChange={handleSelectAll}
+                  />
+                </th>
+                <th>ID</th>
+                <th>Country</th>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>Subject</th>
+                <th>Message</th>
+                <th>Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMessages.map((message) => (
+                <tr key={message.id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedMessages.includes(message.id)}
+                      onChange={() => handleSelectMessage(message.id)}
+                    />
+                  </td>
+                  <td>{message.id}</td>
+                  <td>
+                    <div className="country-flag">🇸🇦</div>
+                  </td>
+                  <td>{message.type}</td>
+                  <td>{message.name}</td>
+                  <td>{message.mobile}</td>
+                  <td>{message.subject}</td>
+                  <td>{message.message}</td>
+                  <td>{message.date}</td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        className="action-btn delete"
+                        onClick={() => onDeleteMessage(message.id)}
+                        title="Delete"
+                      >
+                        🗑
+                      </button>
+                      <button
+                        className="action-btn mark-read"
+                        onClick={() => onMarkAsRead(message.id)}
+                        title="Mark as Read"
+                      >
+                        {doubleCheckMessages.has(message.id) ? "✓✓" : "✓"}
+                      </button>
+                      <button
+                        className="action-btn reply"
+                        onClick={() => onReplyMessage(message.id)}
+                        title="Reply"
+                      >
+                        ↩
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Admin Controls Component
 const AdminControls = ({
   styleSettings,
@@ -663,6 +920,76 @@ function App() {
   const [showHandles, setShowHandles] = useState(false);
   const [enableDrag, setEnableDrag] = useState(true);
   const [heroVisible, setHeroVisible] = useState(true);
+  const [currentView, setCurrentView] = useState<"home" | "contact">("home");
+  const [replyModalOpen, setReplyModalOpen] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(
+    null
+  );
+  const [doubleCheckMessages, setDoubleCheckMessages] = useState<Set<number>>(
+    new Set()
+  );
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([
+    {
+      id: 27,
+      country: "🇸🇦",
+      type: "Other",
+      name: "فهد سعود",
+      email: "fahad@wjl.sa",
+      mobile: "+966599919866",
+      subject: "...",
+      message: ".........",
+      date: "23 August 2025",
+      status: "pending",
+    },
+    {
+      id: 26,
+      country: "🇸🇦",
+      type: "Other",
+      name: "فهد سعود",
+      email: "fahad2@wjl.sa",
+      mobile: "+966599919866",
+      subject: "higigi",
+      message: "yyyyuyuyuyuyyuyjyjgjhhj",
+      date: "21 August 2025",
+      status: "pending",
+    },
+    {
+      id: 25,
+      country: "🇸🇦",
+      type: "Other",
+      name: "فهد سعود",
+      email: "fahad3@wjl.sa",
+      mobile: "+966599919866",
+      subject: "hkgfh",
+      message: "vhghfjgfhgvcjgfhhfhhhf",
+      date: "21 August 2025",
+      status: "pending",
+    },
+    {
+      id: 24,
+      country: "🇸🇦",
+      type: "Support",
+      name: "أحمد محمد",
+      email: "ahmed@example.com",
+      mobile: "+966501234567",
+      subject: "Technical Issue",
+      message: "I am experiencing problems with the system",
+      date: "20 August 2025",
+      status: "pending",
+    },
+    {
+      id: 23,
+      country: "🇸🇦",
+      type: "Complaint",
+      name: "سارة أحمد",
+      email: "sara@example.com",
+      mobile: "+966509876543",
+      subject: "Service Complaint",
+      message: "The service was not as expected",
+      date: "19 August 2025",
+      status: "approved",
+    },
+  ]);
   const [draggedElement, setDraggedElement] = useState<string | null>(null);
   const [dragOverElement, setDragOverElement] = useState<string | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState>({
@@ -804,6 +1131,70 @@ function App() {
     );
   };
 
+  // Contact messages handlers
+  const handleUpdateMessage = (id: number, status: string) => {
+    setContactMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === id ? { ...msg, status: status as any } : msg
+      )
+    );
+  };
+
+  const handleDeleteMessage = (id: number) => {
+    setContactMessages((prev) => prev.filter((msg) => msg.id !== id));
+  };
+
+  const handleMarkAsRead = (id: number) => {
+    // Toggle double check state
+    setDoubleCheckMessages((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id); // Remove from double check (back to single ✓)
+      } else {
+        newSet.add(id); // Add to double check (show ✓✓)
+      }
+      return newSet;
+    });
+
+    // Mark as approved
+    setContactMessages((prev) =>
+      prev.map((msg) => (msg.id === id ? { ...msg, status: "approved" } : msg))
+    );
+
+    // Log the action
+    console.log(`Message ${id} marked as read - icon toggled!`);
+  };
+
+  const handleReplyMessage = (id: number) => {
+    const message = contactMessages.find((msg) => msg.id === id);
+    if (message) {
+      setSelectedMessage(message);
+      setReplyModalOpen(true);
+    }
+  };
+
+  const handleSendReply = (replyTitle: string, replyBody: string) => {
+    if (selectedMessage) {
+      console.log("Sending reply to message:", selectedMessage.id);
+      console.log("Reply title:", replyTitle);
+      console.log("Reply body:", replyBody);
+
+      // Update message status to replied
+      setContactMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === selectedMessage.id ? { ...msg, status: "replied" } : msg
+        )
+      );
+
+      alert(`Reply sent successfully to ${selectedMessage.name}!`);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setReplyModalOpen(false);
+    setSelectedMessage(null);
+  };
+
   // Mouse event handlers for resize
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -890,19 +1281,24 @@ function App() {
             </svg>
           </div>
           <nav className="main-nav">
-            <a href="#" className="nav-link">
+            <button
+              className={`nav-link ${currentView === "home" ? "active" : ""}`}
+              onClick={() => setCurrentView("home")}
+            >
               Home
-            </a>
+            </button>
 
-            <a href="#" className="nav-link">
+            <button className="nav-link" onClick={() => setCurrentView("home")}>
               About
-            </a>
-            <a href="#" className="nav-link">
+            </button>
+            <button
+              className={`nav-link ${
+                currentView === "contact" ? "active" : ""
+              }`}
+              onClick={() => setCurrentView("contact")}
+            >
               Contact
-            </a>
-            <a href="#" className="nav-link">
-              Contact
-            </a>
+            </button>
           </nav>
           <div className="header-actions">
             <button className="search-btn" aria-label="Search">
@@ -936,42 +1332,62 @@ function App() {
         </div>
       </header>
 
-      <HeroCarousel
-        autoRotate={autoRotate}
-        isVisible={heroVisible}
-        onToggleVisibility={() => setHeroVisible(!heroVisible)}
-      />
-
-      <section className="grid" id="grid">
-        {blocks.map((block) => (
-          <DynamicBlock
-            key={block.id}
-            block={block}
-            styleSettings={styleSettings}
-            showHandles={showHandles}
-            enableDrag={enableDrag}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            onDoubleClick={handleDoubleClick}
-            onResizeStart={handleResizeStart}
+      {currentView === "home" ? (
+        <>
+          <HeroCarousel
+            autoRotate={autoRotate}
+            isVisible={heroVisible}
+            onToggleVisibility={() => setHeroVisible(!heroVisible)}
           />
-        ))}
-      </section>
 
-      <AdminControls
-        styleSettings={styleSettings}
-        onStyleChange={handleStyleChange}
-        autoRotate={autoRotate}
-        onAutoRotateChange={setAutoRotate}
-        showHandles={showHandles}
-        onShowHandlesChange={setShowHandles}
-        enableDrag={enableDrag}
-        onEnableDragChange={setEnableDrag}
-        onResetAllCards={handleResetAllCards}
+          <section className="grid" id="grid">
+            {blocks.map((block) => (
+              <DynamicBlock
+                key={block.id}
+                block={block}
+                styleSettings={styleSettings}
+                showHandles={showHandles}
+                enableDrag={enableDrag}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDoubleClick={handleDoubleClick}
+                onResizeStart={handleResizeStart}
+              />
+            ))}
+          </section>
+
+          <AdminControls
+            styleSettings={styleSettings}
+            onStyleChange={handleStyleChange}
+            autoRotate={autoRotate}
+            onAutoRotateChange={setAutoRotate}
+            showHandles={showHandles}
+            onShowHandlesChange={setShowHandles}
+            enableDrag={enableDrag}
+            onEnableDragChange={setEnableDrag}
+            onResetAllCards={handleResetAllCards}
+          />
+        </>
+      ) : (
+        <ContactMessagesAdmin
+          messages={contactMessages}
+          onUpdateMessage={handleUpdateMessage}
+          onDeleteMessage={handleDeleteMessage}
+          onMarkAsRead={handleMarkAsRead}
+          onReplyMessage={handleReplyMessage}
+          doubleCheckMessages={doubleCheckMessages}
+        />
+      )}
+
+      <ReplyModal
+        message={selectedMessage}
+        isOpen={replyModalOpen}
+        onClose={handleCloseModal}
+        onSendReply={handleSendReply}
       />
     </div>
   );
