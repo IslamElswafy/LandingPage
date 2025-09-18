@@ -84,6 +84,408 @@ interface ResizeState {
   startTop: number;
 }
 
+// Brands Slider Component
+const BrandsSlider = () => {
+  // Real brand logos - single row
+  const brands = [
+    {
+      name: "Microsoft",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Microsoft_logo.svg/2048px-Microsoft_logo.svg.png",
+    },
+    {
+      name: "Google",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/2560px-Google_2015_logo.svg.png",
+    },
+    {
+      name: "Apple",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/1667px-Apple_logo_black.svg.png",
+    },
+    {
+      name: "Amazon",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png",
+    },
+    {
+      name: "Netflix",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/2560px-Netflix_2015_logo.svg.png",
+    },
+    {
+      name: "Tesla",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Tesla_T_symbol.svg/1200px-Tesla_T_symbol.svg.png",
+    },
+    {
+      name: "Meta",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/2560px-Meta_Platforms_Inc._logo.svg.png",
+    },
+    {
+      name: "Adobe",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Adobe_Corporate_Logo.svg/2560px-Adobe_Corporate_Logo.svg.png",
+    },
+    {
+      name: "IBM",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/IBM_logo.svg/2560px-IBM_logo.svg.png",
+    },
+    {
+      name: "Intel",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/2560px-Intel_logo_%282006-2020%29.svg.png",
+    },
+    {
+      name: "Nike",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/2560px-Logo_NIKE.svg.png",
+    },
+    {
+      name: "Samsung",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Samsung_Logo.svg/2560px-Samsung_Logo.svg.png",
+    },
+    {
+      name: "Oracle",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Oracle_logo.svg/2560px-Oracle_logo.svg.png",
+    },
+    {
+      name: "Uber",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Uber_logo_2018.svg/2560px-Uber_logo_2018.svg.png",
+    },
+  ];
+
+  return (
+    <section
+      style={{
+        padding: "40px 0",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1400px",
+          margin: "0 auto",
+          padding: "0 20px",
+        }}
+      >
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            overflow: "hidden",
+            mask: "linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)",
+            WebkitMask:
+              "linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              animation: "scroll 30s linear infinite",
+              gap: "60px",
+              alignItems: "center",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.animationPlayState = "paused";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.animationPlayState = "running";
+            }}
+          >
+            {/* First set of brands */}
+            {brands.map((brand, index) => (
+              <div
+                key={`first-${index}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "160px",
+                  height: "60px",
+                  transition: "all 0.3s ease",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              >
+                <img
+                  src={brand.logo}
+                  alt={brand.name}
+                  style={{
+                    maxWidth: "140px",
+                    maxHeight: "50px",
+                    objectFit: "contain",
+                    filter: "grayscale(1) opacity(0.6)",
+                    transition: "filter 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.filter = "grayscale(0) opacity(1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.filter = "grayscale(1) opacity(0.6)";
+                  }}
+                />
+              </div>
+            ))}
+
+            {/* Duplicate set for seamless loop */}
+            {brands.map((brand, index) => (
+              <div
+                key={`second-${index}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "160px",
+                  height: "60px",
+                  transition: "all 0.3s ease",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              >
+                <img
+                  src={brand.logo}
+                  alt={brand.name}
+                  style={{
+                    maxWidth: "140px",
+                    maxHeight: "50px",
+                    objectFit: "contain",
+                    filter: "grayscale(1) opacity(0.6)",
+                    transition: "filter 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.filter = "grayscale(0) opacity(1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.filter = "grayscale(1) opacity(0.6)";
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <style>
+        {`
+          @keyframes scroll {
+            0% {
+              transform: translateX(0);
+            }
+            100% {
+              transform: translateX(-50%);
+            }
+          }
+          
+          @media (max-width: 768px) {
+            .brands-slider {
+              padding: 20px 0 !important;
+            }
+          }
+        `}
+      </style>
+    </section>
+  );
+};
+
+// Footer Component
+const Footer = () => {
+  return (
+    <footer
+      style={{
+        backgroundColor: "#1d1d1f",
+        color: "#f5f5f7",
+        padding: "40px 0 20px 0",
+        borderTop: "1px solid #424245",
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+          padding: "0 20px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "20px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+            </svg>
+            <span
+              style={{
+                fontSize: "1.2rem",
+                fontWeight: "600",
+              }}
+            >
+              Company
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "30px",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            {["Home", "About", "Services", "Contact"].map((link) => (
+              <a
+                key={link}
+                href="#"
+                style={{
+                  color: "#a1a1a6",
+                  textDecoration: "none",
+                  fontSize: "0.95rem",
+                  transition: "color 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#007AFF";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#a1a1a6";
+                }}
+              >
+                {link}
+              </a>
+            ))}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "15px",
+              alignItems: "center",
+            }}
+          >
+            {/* Social Icons */}
+            <a
+              href="#"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "36px",
+                height: "36px",
+                backgroundColor: "#2d2d30",
+                borderRadius: "8px",
+                color: "#f5f5f7",
+                textDecoration: "none",
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#007AFF";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#2d2d30";
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+              </svg>
+            </a>
+            <a
+              href="#"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "36px",
+                height: "36px",
+                backgroundColor: "#2d2d30",
+                borderRadius: "8px",
+                color: "#f5f5f7",
+                textDecoration: "none",
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#0077B5";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#2d2d30";
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+              </svg>
+            </a>
+            <a
+              href="#"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "36px",
+                height: "36px",
+                backgroundColor: "#2d2d30",
+                borderRadius: "8px",
+                color: "#f5f5f7",
+                textDecoration: "none",
+                transition: "all 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#333";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#2d2d30";
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <div
+          style={{
+            borderTop: "1px solid #424245",
+            marginTop: "30px",
+            paddingTop: "20px",
+            textAlign: "center",
+            color: "#a1a1a6",
+            fontSize: "0.9rem",
+          }}
+        >
+          © 2024 Company Name. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  );
+};
+
 // Hero Carousel Component
 const HeroCarousel = ({
   autoRotate,
@@ -374,7 +776,7 @@ const DynamicBlock = ({
   onResizeStart,
   onImageUpload,
   onImageDelete,
-  onBlockSelect,
+  onBlockClick,
   isSelected,
   onReadMore,
   onDeleteBlock,
@@ -398,6 +800,7 @@ const DynamicBlock = ({
   onImageUpload: (blockId: string, imageUrl: string) => void;
   onImageDelete: (blockId: string) => void;
   onBlockSelect: (blockId: string) => void;
+  onBlockClick: (blockId: string) => void;
   isSelected: boolean;
   onReadMore: (blockId: string) => void;
   onDeleteBlock: (blockId: string) => void;
@@ -487,7 +890,7 @@ const DynamicBlock = ({
       onDragEnter={onDragEnter}
       onDragLeave={onDragLeave}
       onDoubleClick={() => onDoubleClick(block.id)}
-      onClick={() => onBlockSelect(block.id)}
+      onClick={() => onBlockClick(block.id)}
     >
       <span className="tag">{block.tag}</span>
       <button
@@ -1157,8 +1560,10 @@ const VisitorStatistics = ({ stats }: { stats: VisitorStats }) => {
   );
 };
 
-// Admin Controls Component
-const AdminControls = ({
+// Admin Controls Popup Component
+const AdminControlsPopup = ({
+  isOpen,
+  onClose,
   styleSettings,
   onStyleChange,
   autoRotate,
@@ -1175,6 +1580,8 @@ const AdminControls = ({
   onSelectedBlockStyleChange,
   setBlocks,
 }: {
+  isOpen: boolean;
+  onClose: () => void;
   styleSettings: StyleSettings;
   onStyleChange: (key: keyof StyleSettings, value: string) => void;
   autoRotate: boolean;
@@ -1194,188 +1601,143 @@ const AdminControls = ({
   const currentSettings = selectedBlock?.styleSettings || styleSettings;
   const isBlockSelected = !!selectedBlock;
 
+  if (!isOpen) return null;
+
   return (
-    <div className="panel">
-      <h3>Dynamic Block Controls</h3>
-      <p>These blocks must be dynamic and auto-resize - a small challenge!</p>
-
-      {!isBlockSelected && (
-        <div className="warning-message">
-          <p>
-            <strong>⚠️ No block selected</strong>
-          </p>
-          <p>
-            Select a block to control its individual styling, or these controls
-            will apply as defaults for new blocks.
-          </p>
+    <div className="admin-popup-overlay" onClick={onClose}>
+      <div className="admin-popup-content" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-popup-header">
+          <h3>Block Editor</h3>
+          <button className="admin-popup-close" onClick={onClose}>
+            ✕
+          </button>
         </div>
-      )}
 
-      {isBlockSelected && (
-        <div className="selected-block-info">
-          <p>
-            <strong>✅ Controlling Block:</strong> {selectedBlock.tag} (ID:{" "}
-            {selectedBlock.id})
-          </p>
-        </div>
-      )}
-
-      <div className="control-group">
-        <label>Style Preset:</label>
-        <select
-          value={currentSettings.stylePreset}
-          onChange={(e) =>
-            isBlockSelected
-              ? onSelectedBlockStyleChange("stylePreset", e.target.value)
-              : onStyleChange("stylePreset", e.target.value)
-          }
-        >
-          <option value="">Default</option>
-          <option value="style-modern">Modern</option>
-          <option value="style-minimal">Minimal</option>
-          <option value="style-glass">Glass</option>
-          <option value="style-neon">Neon</option>
-          <option value="style-gradient">Gradient</option>
-          <option value="style-dark">Dark</option>
-        </select>
-
-        <label>Animation:</label>
-        <select
-          value={currentSettings.animation}
-          onChange={(e) =>
-            isBlockSelected
-              ? onSelectedBlockStyleChange("animation", e.target.value)
-              : onStyleChange("animation", e.target.value)
-          }
-        >
-          <option value="">None</option>
-          <option value="animate-bounce">Bounce</option>
-          <option value="animate-pulse">Pulse</option>
-          <option value="animate-rotate">Rotate</option>
-        </select>
-
-        <label>Corners:</label>
-        <select
-          value={currentSettings.corners}
-          onChange={(e) =>
-            isBlockSelected
-              ? onSelectedBlockStyleChange("corners", e.target.value)
-              : onStyleChange("corners", e.target.value)
-          }
-        >
-          <option value="rounded">Rounded</option>
-          <option value="">Square</option>
-        </select>
-
-        <label>Elevation:</label>
-        <select
-          value={currentSettings.elevation}
-          onChange={(e) =>
-            isBlockSelected
-              ? onSelectedBlockStyleChange("elevation", e.target.value)
-              : onStyleChange("elevation", e.target.value)
-          }
-        >
-          <option value="shadow">Shadow</option>
-          <option value="flat">Flat</option>
-        </select>
-      </div>
-
-      <div className="control-group">
-        <label>Border:</label>
-        <select
-          value={currentSettings.border}
-          onChange={(e) =>
-            isBlockSelected
-              ? onSelectedBlockStyleChange("border", e.target.value)
-              : onStyleChange("border", e.target.value)
-          }
-        >
-          <option value="no-border">No border</option>
-          <option value="with-border">With border</option>
-        </select>
-
-        <label>Background:</label>
-        <select
-          value={currentSettings.background}
-          onChange={(e) =>
-            isBlockSelected
-              ? onSelectedBlockStyleChange("background", e.target.value)
-              : onStyleChange("background", e.target.value)
-          }
-        >
-          <option value="bg-image">Image</option>
-          <option value="bg-solid">Solid</option>
-          <option value="bg-gradient">Gradient</option>
-        </select>
-
-        {/* Solid Color Input */}
-        {currentSettings.background === "bg-solid" && (
-          <div className="color-control-group">
-            <label>Solid Color:</label>
-            <div className="color-input-container">
-              <input
-                type="color"
-                value={selectedBlock?.backgroundColor || "#111111"}
-                onChange={(e) => {
-                  if (isBlockSelected && selectedBlock) {
-                    setBlocks((prev) =>
-                      prev.map((block) =>
-                        block.id === selectedBlock.id
-                          ? { ...block, backgroundColor: e.target.value }
-                          : block
-                      )
-                    );
-                  }
-                }}
-                className="color-input"
-              />
-              <input
-                type="text"
-                value={selectedBlock?.backgroundColor || "#111111"}
-                onChange={(e) => {
-                  if (isBlockSelected && selectedBlock) {
-                    setBlocks((prev) =>
-                      prev.map((block) =>
-                        block.id === selectedBlock.id
-                          ? { ...block, backgroundColor: e.target.value }
-                          : block
-                      )
-                    );
-                  }
-                }}
-                className="color-text-input"
-                placeholder="#111111"
-              />
+        <div className="admin-popup-body">
+          {!isBlockSelected && (
+            <div className="warning-message">
+              <p>
+                <strong>⚠️ No block selected</strong>
+              </p>
+              <p>
+                Select a block to control its individual styling, or these
+                controls will apply as defaults for new blocks.
+              </p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Gradient Color Inputs */}
-        {currentSettings.background === "bg-gradient" && (
-          <div className="gradient-control-group">
-            <label>Gradient Colors:</label>
-            <div className="gradient-inputs">
-              <div className="gradient-color-input">
-                <label>Color 1:</label>
+          {isBlockSelected && (
+            <div className="selected-block-info">
+              <p>
+                <strong>✅ Controlling Block:</strong> {selectedBlock.tag} (ID:{" "}
+                {selectedBlock.id})
+              </p>
+            </div>
+          )}
+
+          <div className="control-group">
+            <label>Style Preset:</label>
+            <select
+              value={currentSettings.stylePreset}
+              onChange={(e) =>
+                isBlockSelected
+                  ? onSelectedBlockStyleChange("stylePreset", e.target.value)
+                  : onStyleChange("stylePreset", e.target.value)
+              }
+            >
+              <option value="">Default</option>
+              <option value="style-modern">Modern</option>
+              <option value="style-minimal">Minimal</option>
+              <option value="style-glass">Glass</option>
+              <option value="style-neon">Neon</option>
+              <option value="style-gradient">Gradient</option>
+              <option value="style-dark">Dark</option>
+            </select>
+
+            <label>Animation:</label>
+            <select
+              value={currentSettings.animation}
+              onChange={(e) =>
+                isBlockSelected
+                  ? onSelectedBlockStyleChange("animation", e.target.value)
+                  : onStyleChange("animation", e.target.value)
+              }
+            >
+              <option value="">None</option>
+              <option value="animate-bounce">Bounce</option>
+              <option value="animate-pulse">Pulse</option>
+              <option value="animate-rotate">Rotate</option>
+            </select>
+
+            <label>Corners:</label>
+            <select
+              value={currentSettings.corners}
+              onChange={(e) =>
+                isBlockSelected
+                  ? onSelectedBlockStyleChange("corners", e.target.value)
+                  : onStyleChange("corners", e.target.value)
+              }
+            >
+              <option value="rounded">Rounded</option>
+              <option value="">Square</option>
+            </select>
+
+            <label>Elevation:</label>
+            <select
+              value={currentSettings.elevation}
+              onChange={(e) =>
+                isBlockSelected
+                  ? onSelectedBlockStyleChange("elevation", e.target.value)
+                  : onStyleChange("elevation", e.target.value)
+              }
+            >
+              <option value="shadow">Shadow</option>
+              <option value="flat">Flat</option>
+            </select>
+          </div>
+
+          <div className="control-group">
+            <label>Border:</label>
+            <select
+              value={currentSettings.border}
+              onChange={(e) =>
+                isBlockSelected
+                  ? onSelectedBlockStyleChange("border", e.target.value)
+                  : onStyleChange("border", e.target.value)
+              }
+            >
+              <option value="no-border">No border</option>
+              <option value="with-border">With border</option>
+            </select>
+
+            <label>Background:</label>
+            <select
+              value={currentSettings.background}
+              onChange={(e) =>
+                isBlockSelected
+                  ? onSelectedBlockStyleChange("background", e.target.value)
+                  : onStyleChange("background", e.target.value)
+              }
+            >
+              <option value="bg-image">Image</option>
+              <option value="bg-solid">Solid</option>
+              <option value="bg-gradient">Gradient</option>
+            </select>
+
+            {/* Solid Color Input */}
+            {currentSettings.background === "bg-solid" && (
+              <div className="color-control-group">
+                <label>Solid Color:</label>
                 <div className="color-input-container">
                   <input
                     type="color"
-                    value={selectedBlock?.gradientColors?.[0] || "#667eea"}
+                    value={selectedBlock?.backgroundColor || "#111111"}
                     onChange={(e) => {
                       if (isBlockSelected && selectedBlock) {
-                        const currentColors = selectedBlock.gradientColors || [
-                          "#667eea",
-                          "#764ba2",
-                        ];
-                        const newColors = [
-                          e.target.value,
-                          currentColors[1] || "#764ba2",
-                        ];
                         setBlocks((prev) =>
                           prev.map((block) =>
                             block.id === selectedBlock.id
-                              ? { ...block, gradientColors: newColors }
+                              ? { ...block, backgroundColor: e.target.value }
                               : block
                           )
                         );
@@ -1385,195 +1747,258 @@ const AdminControls = ({
                   />
                   <input
                     type="text"
-                    value={selectedBlock?.gradientColors?.[0] || "#667eea"}
+                    value={selectedBlock?.backgroundColor || "#111111"}
                     onChange={(e) => {
                       if (isBlockSelected && selectedBlock) {
-                        const currentColors = selectedBlock.gradientColors || [
-                          "#667eea",
-                          "#764ba2",
-                        ];
-                        const newColors = [
-                          e.target.value,
-                          currentColors[1] || "#764ba2",
-                        ];
                         setBlocks((prev) =>
                           prev.map((block) =>
                             block.id === selectedBlock.id
-                              ? { ...block, gradientColors: newColors }
+                              ? { ...block, backgroundColor: e.target.value }
                               : block
                           )
                         );
                       }
                     }}
                     className="color-text-input"
-                    placeholder="#667eea"
+                    placeholder="#111111"
                   />
                 </div>
               </div>
-              <div className="gradient-color-input">
-                <label>Color 2:</label>
-                <div className="color-input-container">
-                  <input
-                    type="color"
-                    value={selectedBlock?.gradientColors?.[1] || "#764ba2"}
+            )}
+
+            {/* Gradient Color Inputs */}
+            {currentSettings.background === "bg-gradient" && (
+              <div className="gradient-control-group">
+                <label>Gradient Colors:</label>
+                <div className="gradient-inputs">
+                  <div className="gradient-color-input">
+                    <label>Color 1:</label>
+                    <div className="color-input-container">
+                      <input
+                        type="color"
+                        value={selectedBlock?.gradientColors?.[0] || "#667eea"}
+                        onChange={(e) => {
+                          if (isBlockSelected && selectedBlock) {
+                            const currentColors =
+                              selectedBlock.gradientColors || [
+                                "#667eea",
+                                "#764ba2",
+                              ];
+                            const newColors = [
+                              e.target.value,
+                              currentColors[1] || "#764ba2",
+                            ];
+                            setBlocks((prev) =>
+                              prev.map((block) =>
+                                block.id === selectedBlock.id
+                                  ? { ...block, gradientColors: newColors }
+                                  : block
+                              )
+                            );
+                          }
+                        }}
+                        className="color-input"
+                      />
+                      <input
+                        type="text"
+                        value={selectedBlock?.gradientColors?.[0] || "#667eea"}
+                        onChange={(e) => {
+                          if (isBlockSelected && selectedBlock) {
+                            const currentColors =
+                              selectedBlock.gradientColors || [
+                                "#667eea",
+                                "#764ba2",
+                              ];
+                            const newColors = [
+                              e.target.value,
+                              currentColors[1] || "#764ba2",
+                            ];
+                            setBlocks((prev) =>
+                              prev.map((block) =>
+                                block.id === selectedBlock.id
+                                  ? { ...block, gradientColors: newColors }
+                                  : block
+                              )
+                            );
+                          }
+                        }}
+                        className="color-text-input"
+                        placeholder="#667eea"
+                      />
+                    </div>
+                  </div>
+                  <div className="gradient-color-input">
+                    <label>Color 2:</label>
+                    <div className="color-input-container">
+                      <input
+                        type="color"
+                        value={selectedBlock?.gradientColors?.[1] || "#764ba2"}
+                        onChange={(e) => {
+                          if (isBlockSelected && selectedBlock) {
+                            const currentColors =
+                              selectedBlock.gradientColors || [
+                                "#667eea",
+                                "#764ba2",
+                              ];
+                            const newColors = [
+                              currentColors[0] || "#667eea",
+                              e.target.value,
+                            ];
+                            setBlocks((prev) =>
+                              prev.map((block) =>
+                                block.id === selectedBlock.id
+                                  ? { ...block, gradientColors: newColors }
+                                  : block
+                              )
+                            );
+                          }
+                        }}
+                        className="color-input"
+                      />
+                      <input
+                        type="text"
+                        value={selectedBlock?.gradientColors?.[1] || "#764ba2"}
+                        onChange={(e) => {
+                          if (isBlockSelected && selectedBlock) {
+                            const currentColors =
+                              selectedBlock.gradientColors || [
+                                "#667eea",
+                                "#764ba2",
+                              ];
+                            const newColors = [
+                              currentColors[0] || "#667eea",
+                              e.target.value,
+                            ];
+                            setBlocks((prev) =>
+                              prev.map((block) =>
+                                block.id === selectedBlock.id
+                                  ? { ...block, gradientColors: newColors }
+                                  : block
+                              )
+                            );
+                          }
+                        }}
+                        className="color-text-input"
+                        placeholder="#764ba2"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="gradient-direction">
+                  <label>Direction:</label>
+                  <select
+                    value={selectedBlock?.gradientDirection || "135deg"}
                     onChange={(e) => {
                       if (isBlockSelected && selectedBlock) {
-                        const currentColors = selectedBlock.gradientColors || [
-                          "#667eea",
-                          "#764ba2",
-                        ];
-                        const newColors = [
-                          currentColors[0] || "#667eea",
-                          e.target.value,
-                        ];
                         setBlocks((prev) =>
                           prev.map((block) =>
                             block.id === selectedBlock.id
-                              ? { ...block, gradientColors: newColors }
+                              ? { ...block, gradientDirection: e.target.value }
                               : block
                           )
                         );
                       }
                     }}
-                    className="color-input"
-                  />
-                  <input
-                    type="text"
-                    value={selectedBlock?.gradientColors?.[1] || "#764ba2"}
-                    onChange={(e) => {
-                      if (isBlockSelected && selectedBlock) {
-                        const currentColors = selectedBlock.gradientColors || [
-                          "#667eea",
-                          "#764ba2",
-                        ];
-                        const newColors = [
-                          currentColors[0] || "#667eea",
-                          e.target.value,
-                        ];
-                        setBlocks((prev) =>
-                          prev.map((block) =>
-                            block.id === selectedBlock.id
-                              ? { ...block, gradientColors: newColors }
-                              : block
-                          )
-                        );
-                      }
-                    }}
-                    className="color-text-input"
-                    placeholder="#764ba2"
-                  />
+                    className="gradient-direction-select"
+                  >
+                    <option value="0deg">Horizontal (0°)</option>
+                    <option value="90deg">Vertical (90°)</option>
+                    <option value="135deg">Diagonal (135°)</option>
+                    <option value="45deg">Diagonal (45°)</option>
+                    <option value="180deg">Reverse Horizontal (180°)</option>
+                    <option value="270deg">Reverse Vertical (270°)</option>
+                  </select>
                 </div>
               </div>
-            </div>
-            <div className="gradient-direction">
-              <label>Direction:</label>
-              <select
-                value={selectedBlock?.gradientDirection || "135deg"}
-                onChange={(e) => {
-                  if (isBlockSelected && selectedBlock) {
-                    setBlocks((prev) =>
-                      prev.map((block) =>
-                        block.id === selectedBlock.id
-                          ? { ...block, gradientDirection: e.target.value }
-                          : block
-                      )
-                    );
-                  }
-                }}
-                className="gradient-direction-select"
-              >
-                <option value="0deg">Horizontal (0°)</option>
-                <option value="90deg">Vertical (90°)</option>
-                <option value="135deg">Diagonal (135°)</option>
-                <option value="45deg">Diagonal (45°)</option>
-                <option value="180deg">Reverse Horizontal (180°)</option>
-                <option value="270deg">Reverse Vertical (270°)</option>
-              </select>
-            </div>
+            )}
+
+            <label>
+              <input
+                type="checkbox"
+                checked={autoRotate}
+                onChange={(e) => onAutoRotateChange(e.target.checked)}
+              />
+              Auto-rotate hero
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={showHandles}
+                onChange={(e) => onShowHandlesChange(e.target.checked)}
+              />
+              Show resize handles
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={enableDrag}
+                onChange={(e) => onEnableDragChange(e.target.checked)}
+              />
+              Enable drag & drop
+            </label>
+
+            <button type="button" onClick={onResetAllCards}>
+              Reset All Cards
+            </button>
+
+            <button
+              type="button"
+              onClick={onAddNewBlock}
+              className="add-block-btn"
+            >
+              Add New Block
+            </button>
+
+            <button
+              type="button"
+              onClick={onDeleteAllBlocks}
+              className="delete-all-btn"
+            >
+              Delete All Blocks
+            </button>
           </div>
-        )}
 
-        <label>
-          <input
-            type="checkbox"
-            checked={autoRotate}
-            onChange={(e) => onAutoRotateChange(e.target.checked)}
-          />
-          Auto-rotate hero
-        </label>
+          <div className="control-group">
+            <h4>Block Selection</h4>
+            {selectedBlockId ? (
+              <p>
+                <strong>Selected Block:</strong> {selectedBlockId}
+                <br />
+                <small>
+                  Click on any block to select it, or click the same block again
+                  to deselect.
+                </small>
+              </p>
+            ) : (
+              <p>
+                <em>No block selected</em>
+                <br />
+                <small>
+                  Click on any block to select and control it individually.
+                </small>
+              </p>
+            )}
+          </div>
 
-        <label>
-          <input
-            type="checkbox"
-            checked={showHandles}
-            onChange={(e) => onShowHandlesChange(e.target.checked)}
-          />
-          Show resize handles
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={enableDrag}
-            onChange={(e) => onEnableDragChange(e.target.checked)}
-          />
-          Enable drag & drop
-        </label>
-
-        <button type="button" onClick={onResetAllCards}>
-          Reset All Cards
-        </button>
-
-        <button type="button" onClick={onAddNewBlock} className="add-block-btn">
-          Add New Block
-        </button>
-
-        <button
-          type="button"
-          onClick={onDeleteAllBlocks}
-          className="delete-all-btn"
-        >
-          Delete All Blocks
-        </button>
-      </div>
-
-      <div className="control-group">
-        <h4>Block Selection</h4>
-        {selectedBlockId ? (
           <p>
-            <strong>Selected Block:</strong> {selectedBlockId}
-            <br />
-            <small>
-              Click on any block to select it, or click the same block again to
-              deselect.
-            </small>
+            <strong>Admin Note:</strong> Can add pictures background or flat or
+            solid color or gradient other things as admin and these can be
+            discussed.
           </p>
-        ) : (
           <p>
-            <em>No block selected</em>
+            <strong>Resizing Tips:</strong>
             <br />
-            <small>
-              Click on any block to select and control it individually.
-            </small>
+            • Drag resize handles to adjust width and height
+            <br />
+            • Widen a block to 85% of container width to make it full-width
+            <br />
+            • Full-width blocks push other blocks to new rows
+            <br />• Double-click any card to reset its size to auto
           </p>
-        )}
+        </div>
       </div>
-
-      <p>
-        <strong>Admin Note:</strong> Can add pictures background or flat or
-        solid color or gradient other things as admin and these can be
-        discussed.
-      </p>
-      <p>
-        <strong>Resizing Tips:</strong>
-        <br />
-        • Drag resize handles to adjust width and height
-        <br />
-        • Widen a block to 85% of container width to make it full-width
-        <br />
-        • Full-width blocks push other blocks to new rows
-        <br />• Double-click any card to reset its size to auto
-      </p>
     </div>
   );
 };
@@ -1759,6 +2184,7 @@ function App() {
   );
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [blockViewModalOpen, setBlockViewModalOpen] = useState(false);
+  const [adminPopupOpen, setAdminPopupOpen] = useState(false);
   const [selectedBlockForModal, setSelectedBlockForModal] =
     useState<BlockData | null>(null);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([
@@ -2131,6 +2557,11 @@ function App() {
     setSelectedBlockId(selectedBlockId === blockId ? null : blockId);
   };
 
+  const handleBlockClick = (blockId: string) => {
+    setSelectedBlockId(blockId);
+    setAdminPopupOpen(true);
+  };
+
   // Contact messages handlers
   const handleUpdateMessage = (id: number, status: string) => {
     setContactMessages((prev) =>
@@ -2467,6 +2898,7 @@ function App() {
                   onImageUpload={handleImageUpload}
                   onImageDelete={handleImageDelete}
                   onBlockSelect={handleBlockSelection}
+                  onBlockClick={handleBlockClick}
                   isSelected={selectedBlockId === block.id}
                   onReadMore={handleReadMore}
                   onDeleteBlock={handleDeleteBlock}
@@ -2474,7 +2906,9 @@ function App() {
               ))}
             </section>
 
-            <AdminControls
+            <AdminControlsPopup
+              isOpen={adminPopupOpen}
+              onClose={() => setAdminPopupOpen(false)}
               styleSettings={styleSettings}
               onStyleChange={handleStyleChange}
               autoRotate={autoRotate}
@@ -2507,6 +2941,10 @@ function App() {
           doubleCheckMessages={doubleCheckMessages}
         />
       )}
+
+      {/* Brands Slider and Footer - visible on all views */}
+      <BrandsSlider />
+      <Footer />
 
       <ReplyModal
         message={selectedMessage}

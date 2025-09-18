@@ -500,3 +500,126 @@
   border-radius: 4px;
   font-size: 14px;
 }
+
+/* Admin Popup Styles */
+.admin-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.admin-popup-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 600px;
+  overflow: hidden;
+  animation: popupSlideIn 0.3s ease-out;
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.admin-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.admin-popup-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.admin-popup-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.admin-popup-close:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.admin-popup-body {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.admin-popup-body .control-group {
+  margin-bottom: 20px;
+}
+
+.admin-popup-body .warning-message {
+  background: #fef3cd;
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-popup-body .selected-block-info {
+  background: #d1fae5;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-popup-body .warning-message p,
+.admin-popup-body .selected-block-info p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.admin-popup-body .warning-message p:first-child,
+.admin-popup-body .selected-block-info p:first-child {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .admin-popup-content {
+    width: 95vw;
+    margin: 20px;
+  }
+  
+  .admin-popup-body {
+    padding: 16px;
+  }
+  
+  .admin-popup-header {
+    padding: 16px 20px;
+  }
+}

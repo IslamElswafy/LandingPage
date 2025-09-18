@@ -52,7 +52,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = () => {
     // Prevent RTL behavior on key press
     if (editorRef.current) {
       editorRef.current.style.direction = "ltr";
