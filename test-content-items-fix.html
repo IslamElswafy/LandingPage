@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Items Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .test-title {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .test-description {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .test-steps {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .test-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .test-steps li {
+            margin: 5px 0;
+        }
+        .expected-result {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .debug-info {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .error-fix {
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Content Items Fix Test</h1>
+        
+        <div class="error-fix">
+            <h3>🐛 Issue Fixed</h3>
+            <p><strong>Problem:</strong> "Add New Item" did not save content items</p>
+            <p><strong>Root Cause:</strong> The validation logic was checking for plain text content, but SimpleRichEditor returns HTML content even when empty</p>
+            <p><strong>Solution:</strong> Updated validation to strip HTML tags and check for meaningful text content</p>
+        </div>
+
+        <div class="debug-info">
+            <h3>🔍 Debug Information</h3>
+            <p>Open browser console (F12) to see debug logs:</p>
+            <ul>
+                <li><code>Loading block data:</code> - Shows what data is loaded when opening a block</li>
+                <li><code>Adding item:</code> - Shows item data when trying to add</li>
+                <li><code>Has text content:</code> - Shows validation result</li>
+                <li><code>Adding text/image item:</code> - Shows successful item creation</li>
+                <li><code>Saving block content:</code> - Shows data being saved</li>
+                <li><code>Rendering content items:</code> - Shows items being displayed</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2 class="test-title">Test 1: Text Content Validation Fix</h2>
+            <p class="test-description">Test that text items with rich formatting are properly saved</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Open the landing page application</li>
+                    <li>Click on any block to open the content editor</li>
+                    <li>Scroll down to the "Content Items" section</li>
+                    <li>Click the "+ Add Item" button</li>
+                    <li>Select "Text" from the type dropdown</li>
+                    <li>Use the rich text editor to add some formatted content:
+                        <ul>
+                            <li>Type some text</li>
+                            <li>Make some text <strong>bold</strong></li>
+                            <li>Make some text <em>italic</em></li>
+                            <li>Add a bullet list</li>
+                        </ul>
+                    </li>
+                    <li>Click "Add Item"</li>
+                    <li>Check browser console for debug logs</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> The formatted text item should be added to the list and visible immediately. Console should show successful validation and item creation.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Test 2: Empty Content Validation</h2>
+            <p class="test-description">Test that empty content shows proper error message</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Click "+ Add Item"</li>
+                    <li>Select "Text" type</li>
+                    <li>Leave the rich text editor empty (don't type anything)</li>
+                    <li>Click "Add Item"</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> Should show red error message: "Please enter some text content before adding the item." No item should be added.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Test 3: Image Content Validation</h2>
+            <p class="test-description">Test image item validation and error handling</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Click "+ Add Item"</li>
+                    <li>Select "Image" type</li>
+                    <li>Don't upload any image</li>
+                    <li>Click "Add Item"</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> Should show red error message: "Please select an image before adding the item." No item should be added.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Test 4: Save and Persistence</h2>
+            <p class="test-description">Test that content items are properly saved and persist</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Add several content items (both text and images)</li>
+                    <li>Click "SAVE CONTENT"</li>
+                    <li>Close the editor modal</li>
+                    <li>Click on the same block again to open the editor</li>
+                    <li>Check that all items are still there</li>
+                    <li>Click on the block to open the viewer modal</li>
+                    <li>Verify items are displayed in the viewer</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> All content items should be preserved after saving and reopening. Console should show the items being loaded and saved.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Test 5: Rich Text Formatting Preservation</h2>
+            <p class="test-description">Test that rich text formatting is preserved throughout the process</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Add a text item with rich formatting:
+                        <ul>
+                            <li>Headings (H1, H2, H3)</li>
+                            <li>Bold and italic text</li>
+                            <li>Bullet and numbered lists</li>
+                            <li>Blockquotes</li>
+                            <li>Code blocks</li>
+                        </ul>
+                    </li>
+                    <li>Save the content</li>
+                    <li>Reopen the editor and verify formatting is preserved</li>
+                    <li>Open the viewer and verify formatting displays correctly</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> All rich text formatting should be preserved in both the editor and viewer modes.
+            </div>
+        </div>
+
+        <div class="debug-info">
+            <h3>🔧 Technical Details</h3>
+            <p><strong>Validation Logic:</strong> The fix now strips HTML tags using regex <code>/&lt;[^&gt;]*&gt;/g</code> and checks for meaningful text content.</p>
+            <p><strong>Error Handling:</strong> Added proper error messages and state management for user feedback.</p>
+            <p><strong>Debug Logging:</strong> Added comprehensive console logging for troubleshooting.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Content Items Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .test-title {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .test-description {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .test-steps {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .test-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .test-steps li {
+            margin: 5px 0;
+        }
+        .expected-result {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .feature-highlight {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .debug-info {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>✏️ Edit Content Items Test</h1>
+        
+        <div class="feature-highlight">
+            <h3>🆕 New Feature: Edit Saved Items</h3>
+            <p>You can now edit existing content items without deleting and recreating them. This includes:</p>
+            <ul>
+                <li>✏️ <strong>Edit Button:</strong> Click the blue "Edit" button next to any item</li>
+                <li>🔄 <strong>Change Type:</strong> Switch between text and image types</li>
+                <li>📝 <strong>Rich Text Editing:</strong> Use the full rich text editor for text items</li>
+                <li>🖼️ <strong>Image Replacement:</strong> Upload new images for image items</li>
+                <li>💾 <strong>Update & Save:</strong> Changes are saved immediately</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2 class="test-title">Test 1: Edit Text Item</h2>
+            <p class="test-description">Test editing an existing text item with rich formatting</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Open the landing page application</li>
+                    <li>Open any block's content editor</li>
+                    <li>Add a text item with some content</li>
+                    <li>Click the blue "✏️ Edit" button next to the text item</li>
+                    <li>Verify the edit form appears with the current content loaded</li>
+                    <li>Modify the text using the rich text editor:
+                        <ul>
+                            <li>Add bold and italic text</li>
+                            <li>Create a bullet list</li>
+                            <li>Add headings</li>
+                        </ul>
+                    </li>
+                    <li>Click "Update Item"</li>
+                    <li>Verify the changes are reflected in the item list</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> The text item should be updated with the new formatting, and the edit form should close automatically.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Test 2: Edit Image Item</h2>
+            <p class="test-description">Test editing an existing image item</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Add an image item to a block</li>
+                    <li>Click the blue "✏️ Edit" button next to the image item</li>
+                    <li>Verify the edit form shows the current image</li>
+                    <li>Upload a different image using "📷 Upload Image"</li>
+                    <li>Click "Update Item"</li>
+                    <li>Verify the new image is displayed</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> The image item should be updated with the new image, and the edit form should close.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Test 3: Change Item Type</h2>
+            <p class="test-description">Test changing an item from text to image or vice versa</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Add a text item with some content</li>
+                    <li>Click "✏️ Edit" on the text item</li>
+                    <li>Change the type dropdown from "Text" to "Image"</li>
+                    <li>Upload an image</li>
+                    <li>Click "Update Item"</li>
+                    <li>Verify the item is now an image item</li>
+                    <li>Try the reverse: edit an image item and change to text</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> The item type should change successfully, and the appropriate editor should be shown based on the selected type.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Test 4: Cancel Edit</h2>
+            <p class="test-description">Test canceling the edit operation</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Add a text item with some content</li>
+                    <li>Click "✏️ Edit" on the item</li>
+                    <li>Make some changes to the content</li>
+                    <li>Click "Cancel" instead of "Update Item"</li>
+                    <li>Verify the edit form closes</li>
+                    <li>Verify the original content is unchanged</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> The edit form should close and no changes should be made to the original item.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Test 5: Edit Validation</h2>
+            <p class="test-description">Test validation when editing items</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Add a text item with content</li>
+                    <li>Click "✏️ Edit" on the item</li>
+                    <li>Clear all the text content (make it empty)</li>
+                    <li>Click "Update Item"</li>
+                    <li>Verify an error message appears</li>
+                    <li>Try the same with an image item (remove the image)</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> Error messages should appear for empty content, and the item should not be updated.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Test 6: Multiple Items Edit</h2>
+            <p class="test-description">Test editing multiple items in sequence</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Add several items (mix of text and images)</li>
+                    <li>Edit the first item and save changes</li>
+                    <li>Edit the second item and save changes</li>
+                    <li>Edit the third item and save changes</li>
+                    <li>Verify all changes are preserved</li>
+                    <li>Save the entire block content</li>
+                    <li>Reopen the block and verify all edits are still there</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> All individual edits should be preserved, and the final save should maintain all changes.
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">Test 7: Rich Text Formatting in Edit</h2>
+            <p class="test-description">Test that rich text formatting is preserved during editing</p>
+            <div class="test-steps">
+                <ol>
+                    <li>Add a text item with rich formatting:
+                        <ul>
+                            <li>Headings (H1, H2, H3)</li>
+                            <li>Bold and italic text</li>
+                            <li>Bullet and numbered lists</li>
+                            <li>Blockquotes</li>
+                            <li>Code blocks</li>
+                        </ul>
+                    </li>
+                    <li>Click "✏️ Edit" on the item</li>
+                    <li>Verify all formatting is preserved in the editor</li>
+                    <li>Add more formatting</li>
+                    <li>Click "Update Item"</li>
+                    <li>Verify the updated formatting is displayed</li>
+                </ol>
+            </div>
+            <div class="expected-result">
+                <strong>Expected Result:</strong> All rich text formatting should be preserved and editable, with new formatting being added correctly.
+            </div>
+        </div>
+
+        <div class="debug-info">
+            <h3>🔍 Debug Information</h3>
+            <p>Open browser console (F12) to see debug logs for editing operations:</p>
+            <ul>
+                <li><code>Updating item:</code> - Shows item data when updating</li>
+                <li><code>Has text content:</code> - Shows validation result for text items</li>
+                <li><code>Saving block content:</code> - Shows final save operation</li>
+            </ul>
+        </div>
+
+        <div class="feature-highlight">
+            <h3>🎨 UI Features</h3>
+            <ul>
+                <li><strong>Blue Edit Button:</strong> Clearly visible next to each item</li>
+                <li><strong>Blue Edit Form:</strong> Distinctive styling to show edit mode</li>
+                <li><strong>Rich Text Editor:</strong> Full formatting capabilities in edit mode</li>
+                <li><strong>Image Preview:</strong> Shows current image when editing</li>
+                <li><strong>Error Messages:</strong> Clear feedback for validation errors</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

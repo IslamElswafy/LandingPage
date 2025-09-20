@@ -1,9 +1,18 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import "./App.css";
 import SimpleRichEditor from "./components/SimpleRichEditor";
 import CleanLandingPage from "./components/CleanLandingPage";
 
 // Types
+interface ContentItem {
+  id: string;
+  type: "text" | "image";
+  content?: string;
+  contentImage?: string;
+  order: number;
+}
+
 interface BlockData {
   id: string;
   title: string;
@@ -23,6 +32,7 @@ interface BlockData {
   content?: string;
   contentImage?: string;
   contentType?: "text" | "image" | "both";
+  contentItems?: ContentItem[];
 }
 
 interface CarouselImage {
@@ -72,6 +82,53 @@ interface StyleSettings {
   background: string;
 }
 
+interface NavbarSettings {
+  backgroundColor: string;
+  textColor: string;
+  logoColor: string;
+  transparency: number;
+  isVisible: boolean;
+  isSticky: boolean;
+  showLogo: boolean;
+  showSearch: boolean;
+  showSaveButton: boolean;
+  height: number;
+  borderRadius: number;
+  shadow: boolean;
+}
+
+interface FooterSettings {
+  isVisible: boolean;
+  backgroundColor: string;
+  textColor: string;
+  companyName: string;
+  copyright: string;
+  showSocialLinks: boolean;
+  socialLinks: {
+    facebook: string;
+    linkedin: string;
+    github: string;
+  };
+  customText: string;
+}
+
+interface PageBackgroundSettings {
+  type: "solid" | "gradient" | "image";
+  solidColor: string;
+  gradientColors: string[];
+  gradientDirection: string;
+  backgroundImage: string;
+}
+
+interface NavigationItem {
+  id: string;
+  label: string;
+  view: "home" | "about" | "contact" | "custom";
+  customUrl?: string;
+  isVisible: boolean;
+  order: number;
+}
+
 interface ResizeState {
   isResizing: boolean;
   currentBlockId: string | null;
@@ -86,62 +143,63 @@ interface ResizeState {
 
 // Brands Slider Component
 const BrandsSlider = () => {
+  const { t } = useTranslation();
   // Real brand logos - single row
   const brands = [
     {
-      name: "Microsoft",
+      name: t("brands.microsoft"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Microsoft_logo.svg/2048px-Microsoft_logo.svg.png",
     },
     {
-      name: "Google",
+      name: t("brands.google"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/2560px-Google_2015_logo.svg.png",
     },
     {
-      name: "Apple",
+      name: t("brands.apple"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/1667px-Apple_logo_black.svg.png",
     },
     {
-      name: "Amazon",
+      name: t("brands.amazon"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png",
     },
     {
-      name: "Netflix",
+      name: t("brands.netflix"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/2560px-Netflix_2015_logo.svg.png",
     },
     {
-      name: "Tesla",
+      name: t("brands.tesla"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Tesla_T_symbol.svg/1200px-Tesla_T_symbol.svg.png",
     },
     {
-      name: "Meta",
+      name: t("brands.meta"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Meta_Platforms_Inc._logo.svg/2560px-Meta_Platforms_Inc._logo.svg.png",
     },
     {
-      name: "Adobe",
+      name: t("brands.adobe"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Adobe_Corporate_Logo.svg/2560px-Adobe_Corporate_Logo.svg.png",
     },
     {
-      name: "IBM",
+      name: t("brands.ibm"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/IBM_logo.svg/2560px-IBM_logo.svg.png",
     },
     {
-      name: "Intel",
+      name: t("brands.intel"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282006-2020%29.svg/2560px-Intel_logo_%282006-2020%29.svg.png",
     },
     {
-      name: "Nike",
+      name: t("brands.nike"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/2560px-Logo_NIKE.svg.png",
     },
     {
-      name: "Samsung",
+      name: t("brands.samsung"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Samsung_Logo.svg/2560px-Samsung_Logo.svg.png",
     },
     {
-      name: "Oracle",
+      name: t("brands.oracle"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Oracle_logo.svg/2560px-Oracle_logo.svg.png",
     },
     {
-      name: "Uber",
+      name: t("brands.uber"),
       logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Uber_logo_2018.svg/2560px-Uber_logo_2018.svg.png",
     },
   ];
@@ -290,12 +348,18 @@ const BrandsSlider = () => {
 };
 
 // Footer Component
-const Footer = () => {
+const Footer = ({ footerSettings }: { footerSettings: FooterSettings }) => {
+  const { t } = useTranslation();
+
+  if (!footerSettings.isVisible) {
+    return null;
+  }
+
   return (
     <footer
       style={{
-        backgroundColor: "#1d1d1f",
-        color: "#f5f5f7",
+        backgroundColor: footerSettings.backgroundColor,
+        color: footerSettings.textColor,
         padding: "40px 0 20px 0",
         borderTop: "1px solid #424245",
         fontFamily:
@@ -334,7 +398,7 @@ const Footer = () => {
                 fontWeight: "600",
               }}
             >
-              Company
+              {footerSettings.companyName}
             </span>
           </div>
 
@@ -346,127 +410,151 @@ const Footer = () => {
               flexWrap: "wrap",
             }}
           >
-            {["Home", "About", "Services", "Contact"].map((link) => (
+            {[
+              { key: "home", label: t("navigation.home") },
+              { key: "about", label: t("navigation.about") },
+              { key: "services", label: t("navigation.services") },
+              { key: "contact", label: t("navigation.contact") },
+            ].map((link) => (
               <a
-                key={link}
+                key={link.key}
                 href="#"
                 style={{
-                  color: "#a1a1a6",
+                  color: footerSettings.textColor,
+                  opacity: 0.7,
                   textDecoration: "none",
                   fontSize: "0.95rem",
-                  transition: "color 0.3s ease",
+                  transition: "opacity 0.3s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "#007AFF";
+                  e.currentTarget.style.opacity = "1";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "#a1a1a6";
+                  e.currentTarget.style.opacity = "0.7";
                 }}
               >
-                {link}
+                {link.label}
               </a>
             ))}
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "15px",
-              alignItems: "center",
-            }}
-          >
-            {/* Social Icons */}
-            <a
-              href="#"
+          {footerSettings.showSocialLinks && (
+            <div
               style={{
                 display: "flex",
+                gap: "15px",
                 alignItems: "center",
-                justifyContent: "center",
-                width: "36px",
-                height: "36px",
-                backgroundColor: "#2d2d30",
-                borderRadius: "8px",
-                color: "#f5f5f7",
-                textDecoration: "none",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#007AFF";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#2d2d30";
               }}
             >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
-              </svg>
-            </a>
-            <a
-              href="#"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "36px",
-                height: "36px",
-                backgroundColor: "#2d2d30",
-                borderRadius: "8px",
-                color: "#f5f5f7",
-                textDecoration: "none",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#0077B5";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#2d2d30";
-              }}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-              </svg>
-            </a>
-            <a
-              href="#"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "36px",
-                height: "36px",
-                backgroundColor: "#2d2d30",
-                borderRadius: "8px",
-                color: "#f5f5f7",
-                textDecoration: "none",
-                transition: "all 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#333";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#2d2d30";
-              }}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-              </svg>
-            </a>
-          </div>
+              {/* Facebook Icon */}
+              {footerSettings.socialLinks.facebook && (
+                <a
+                  href={footerSettings.socialLinks.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "36px",
+                    height: "36px",
+                    backgroundColor: "#2d2d30",
+                    borderRadius: "8px",
+                    color: footerSettings.textColor,
+                    textDecoration: "none",
+                    transition: "all 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#007AFF";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#2d2d30";
+                  }}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                  </svg>
+                </a>
+              )}
+
+              {/* LinkedIn Icon */}
+              {footerSettings.socialLinks.linkedin && (
+                <a
+                  href={footerSettings.socialLinks.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "36px",
+                    height: "36px",
+                    backgroundColor: "#2d2d30",
+                    borderRadius: "8px",
+                    color: footerSettings.textColor,
+                    textDecoration: "none",
+                    transition: "all 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#0077B5";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#2d2d30";
+                  }}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                  </svg>
+                </a>
+              )}
+
+              {/* GitHub Icon */}
+              {footerSettings.socialLinks.github && (
+                <a
+                  href={footerSettings.socialLinks.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "36px",
+                    height: "36px",
+                    backgroundColor: "#2d2d30",
+                    borderRadius: "8px",
+                    color: footerSettings.textColor,
+                    textDecoration: "none",
+                    transition: "all 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#333";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#2d2d30";
+                  }}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                  </svg>
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         <div
@@ -475,11 +563,16 @@ const Footer = () => {
             marginTop: "30px",
             paddingTop: "20px",
             textAlign: "center",
-            color: "#a1a1a6",
+            color: footerSettings.textColor,
+            opacity: 0.7,
             fontSize: "0.9rem",
           }}
         >
-          © 2024 Company Name. All rights reserved.
+          {footerSettings.copyright ||
+            `© 2024 ${footerSettings.companyName}. All rights reserved.`}
+          {footerSettings.customText && (
+            <div style={{ marginTop: "10px" }}>{footerSettings.customText}</div>
+          )}
         </div>
       </div>
     </footer>
@@ -500,6 +593,7 @@ const HeroCarousel = ({
   images?: CarouselImage[];
   onImagesChange?: (images: CarouselImage[]) => void;
 }) => {
+  const { t } = useTranslation();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [pendingImage, setPendingImage] = useState<CarouselImage | null>(null);
@@ -614,12 +708,12 @@ const HeroCarousel = ({
 
   if (!isVisible) {
     return (
-      <section className="hero-hidden" aria-label="Hero gallery hidden">
+      <section className="hero-hidden" aria-label={t("hero.heroGalleryHidden")}>
         <button
           className="show-hero-btn"
           onClick={onToggleVisibility}
-          aria-label="Show hero carousel"
-          title="Show hero carousel"
+          aria-label={t("hero.showHeroCarousel")}
+          title={t("hero.showHeroCarousel")}
         >
           <svg
             width="24"
@@ -632,19 +726,19 @@ const HeroCarousel = ({
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
             <circle cx="12" cy="12" r="3" />
           </svg>
-          <span>Show Hero Carousel</span>
+          <span>{t("hero.showHeroCarousel")}</span>
         </button>
       </section>
     );
   }
 
   return (
-    <section className="hero rounded shadow" aria-label="Hero gallery">
+    <section className="hero rounded shadow" aria-label={t("hero.heroGallery")}>
       <button
         className="hide-hero-btn"
         onClick={onToggleVisibility}
-        aria-label="Hide hero carousel"
-        title="Hide hero carousel"
+        aria-label={t("hero.hideHeroCarousel")}
+        title={t("hero.hideHeroCarousel")}
       >
         <svg
           width="20"
@@ -681,7 +775,7 @@ const HeroCarousel = ({
                 className="edit-link-btn"
                 aria-label={`Edit link for image ${index + 1}`}
                 onClick={() => handleEditLink(index)}
-                title="Edit link"
+                title={t("hero.editLink")}
               >
                 🔗
               </button>
@@ -689,7 +783,7 @@ const HeroCarousel = ({
                 className="delete-btn"
                 aria-label={`Delete image ${index + 1}`}
                 onClick={() => deleteImage(index)}
-                title="Delete this image"
+                title={t("hero.deleteThisImage")}
               >
                 ×
               </button>
@@ -699,12 +793,16 @@ const HeroCarousel = ({
       </div>
       <button
         className="ctrl prev"
-        aria-label="Previous slide"
+        aria-label={t("hero.previousSlide")}
         onClick={prevSlide}
       >
         ‹
       </button>
-      <button className="ctrl next" aria-label="Next slide" onClick={nextSlide}>
+      <button
+        className="ctrl next"
+        aria-label={t("hero.nextSlide")}
+        onClick={nextSlide}
+      >
         ›
       </button>
       <div className="carousel-controls">
@@ -727,7 +825,7 @@ const HeroCarousel = ({
             id="image-upload"
           />
           <label htmlFor="image-upload" className="upload-btn">
-            + Add Image
+            + {t("hero.addImage")}
           </label>
         </div>
       </div>
@@ -735,22 +833,30 @@ const HeroCarousel = ({
       {showLinkInput && (
         <div className="link-input-overlay">
           <div className="link-input-dialog">
-            <h3>{editingImageIndex !== null ? "Edit Link" : "Add Link"}</h3>
-            <p>Enter a URL for this image (optional):</p>
+            <h3>
+              {editingImageIndex !== null
+                ? t("hero.editLink")
+                : t("hero.addLink")}
+            </h3>
+            <p>{t("hero.enterUrl")}</p>
             <input
               type="url"
               value={linkInputValue}
               onChange={(e) => setLinkInputValue(e.target.value)}
-              placeholder="https://example.com"
+              placeholder={t("hero.urlPlaceholder")}
               className="link-input"
               autoFocus
             />
             <div className="dialog-buttons">
               <button onClick={handleLinkSubmit} className="submit-btn">
-                {editingImageIndex !== null ? "Update" : "Add Image"}
+                {editingImageIndex !== null
+                  ? t("ui.update")
+                  : t("hero.addImage")}
               </button>
               <button onClick={handleLinkCancel} className="cancel-btn">
-                {editingImageIndex !== null ? "Cancel" : "Skip Link"}
+                {editingImageIndex !== null
+                  ? t("ui.cancel")
+                  : t("hero.skipLink")}
               </button>
             </div>
           </div>
@@ -805,6 +911,7 @@ const DynamicBlock = ({
   onReadMore: (blockId: string) => void;
   onDeleteBlock: (blockId: string) => void;
 }) => {
+  const { t } = useTranslation();
   const blockRef = useRef<HTMLElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -922,7 +1029,7 @@ const DynamicBlock = ({
           <button
             className="delete-btn-block"
             onClick={handleImageDelete}
-            title="Delete background image"
+            title={t("style.deleteBackgroundImage")}
           >
             🗑️
           </button>
@@ -933,7 +1040,7 @@ const DynamicBlock = ({
             e.stopPropagation();
             onDeleteBlock(block.id);
           }}
-          title="Delete this block"
+          title={t("blocks.deleteBlock")}
         >
           ❌
         </button>
@@ -992,6 +1099,7 @@ const BlockContentViewModal = ({
   onClose: () => void;
   onEdit: () => void;
 }) => {
+  const { t } = useTranslation();
   if (!isOpen || !block) return null;
 
   const formatContent = (content: string) => {
@@ -1022,15 +1130,18 @@ const BlockContentViewModal = ({
         </div>
 
         <div className="content-viewer">
-          {!block.content && !block.contentImage ? (
+          {!block.content &&
+          !block.contentImage &&
+          (!block.contentItems || block.contentItems.length === 0) ? (
             <div className="no-content">
-              <p>No content available for this block.</p>
+              <p>{t("blocks.noContent")}</p>
               <button className="add-content-btn" onClick={onEdit}>
-                Add Content
+                {t("blocks.addContent")}
               </button>
             </div>
           ) : (
             <>
+              {/* Legacy content display */}
               {(block.contentType === "image" ||
                 block.contentType === "both") &&
                 block.contentImage && (
@@ -1051,6 +1162,78 @@ const BlockContentViewModal = ({
                     }}
                   />
                 )}
+
+              {/* New content items display */}
+              {block.contentItems && block.contentItems.length > 0 && (
+                <div className="content-items-display">
+                  <h3>Content Items</h3>
+                  {block.contentItems
+                    .sort((a, b) => a.order - b.order)
+                    .map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="content-item-display"
+                        style={{
+                          border: "1px solid #ddd",
+                          borderRadius: "8px",
+                          padding: "16px",
+                          margin: "12px 0",
+                          backgroundColor: "#f9f9f9",
+                        }}
+                      >
+                        <div
+                          className="item-header"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            marginBottom: "12px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontWeight: "bold",
+                              color: "#333",
+                              fontSize: "16px",
+                            }}
+                          >
+                            {item.type === "text" ? "📝 Text" : "🖼️ Image"} #
+                            {index + 1}
+                          </span>
+                        </div>
+
+                        {item.type === "text" && item.content && (
+                          <div
+                            className="item-content-display"
+                            dangerouslySetInnerHTML={{
+                              __html: formatContent(item.content),
+                            }}
+                            style={{
+                              padding: "12px",
+                              backgroundColor: "white",
+                              borderRadius: "4px",
+                              border: "1px solid #eee",
+                            }}
+                          />
+                        )}
+
+                        {item.type === "image" && item.contentImage && (
+                          <div className="item-image-display">
+                            <img
+                              src={item.contentImage}
+                              alt="Content item"
+                              style={{
+                                maxWidth: "100%",
+                                height: "auto",
+                                borderRadius: "4px",
+                                border: "1px solid #eee",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
             </>
           )}
         </div>
@@ -1079,20 +1262,30 @@ const BlockContentModal = ({
     blockId: string,
     content: string,
     contentImage: string,
-    contentType: "text" | "image" | "both"
+    contentType: "text" | "image" | "both",
+    contentItems?: ContentItem[]
   ) => void;
 }) => {
+  const { t } = useTranslation();
   const [content, setContent] = useState("");
   const [contentImage, setContentImage] = useState("");
   const [contentType, setContentType] = useState<"text" | "image" | "both">(
     "text"
   );
+  const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newItemType, setNewItemType] = useState<"text" | "image">("text");
+  const [newItemContent, setNewItemContent] = useState("");
+  const [newItemImage, setNewItemImage] = useState("");
+  const [addItemError, setAddItemError] = useState("");
 
   useEffect(() => {
     if (block && isOpen) {
+      console.log("Loading block data:", block);
       setContent(block.content || "");
       setContentImage(block.contentImage || "");
       setContentType(block.contentType || "text");
+      setContentItems(block.contentItems || []);
     }
   }, [block, isOpen]);
 
@@ -1109,9 +1302,76 @@ const BlockContentModal = ({
     event.target.value = "";
   };
 
+  const handleNewItemImageUpload = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        setNewItemImage(imageUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+    event.target.value = "";
+  };
+
+  const handleAddItem = () => {
+    setAddItemError(""); // Clear previous errors
+
+    console.log("Adding item:", { newItemType, newItemContent, newItemImage });
+
+    // Check if text content has meaningful content (not just HTML tags)
+    const hasTextContent =
+      newItemType === "text" &&
+      newItemContent &&
+      newItemContent.replace(/<[^>]*>/g, "").trim().length > 0;
+
+    console.log("Has text content:", hasTextContent);
+
+    if (hasTextContent) {
+      const newItem: ContentItem = {
+        id: Date.now().toString(),
+        type: "text",
+        content: newItemContent,
+        order: contentItems.length,
+      };
+      console.log("Adding text item:", newItem);
+      setContentItems([...contentItems, newItem]);
+      setNewItemContent("");
+      setShowAddForm(false);
+    } else if (newItemType === "image" && newItemImage) {
+      const newItem: ContentItem = {
+        id: Date.now().toString(),
+        type: "image",
+        contentImage: newItemImage,
+        order: contentItems.length,
+      };
+      console.log("Adding image item:", newItem);
+      setContentItems([...contentItems, newItem]);
+      setNewItemImage("");
+      setShowAddForm(false);
+    } else {
+      // Show error message
+      if (newItemType === "text") {
+        setAddItemError(
+          "Please enter some text content before adding the item."
+        );
+      } else {
+        setAddItemError("Please select an image before adding the item.");
+      }
+    }
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    setContentItems(contentItems.filter((item) => item.id !== itemId));
+  };
+
   const handleSave = () => {
     if (block) {
-      onSave(block.id, content, contentImage, contentType);
+      console.log("Saving block with content items:", contentItems);
+      onSave(block.id, content, contentImage, contentType, contentItems);
       onClose();
     }
   };
@@ -1120,6 +1380,11 @@ const BlockContentModal = ({
     setContent("");
     setContentImage("");
     setContentType("text");
+    setContentItems([]);
+    setShowAddForm(false);
+    setNewItemContent("");
+    setNewItemImage("");
+    setAddItemError("");
     onClose();
   };
 
@@ -1133,73 +1398,275 @@ const BlockContentModal = ({
         </button>
 
         <div className="modal-header">
-          <h2>{block.tag} - Content Editor</h2>
+          <h2>
+            {block.tag} - {t("blocks.contentEditor")}
+          </h2>
         </div>
 
         <div className="content-editor">
-          <div className="content-type-selector">
-            <label>Content Type:</label>
-            <select
-              value={contentType}
-              onChange={(e) =>
-                setContentType(e.target.value as "text" | "image" | "both")
-              }
-              className="content-type-select"
-            >
-              <option value="text">Text Only</option>
-              <option value="image">Image Only</option>
-              <option value="both">Text and Image</option>
-            </select>
-          </div>
-
-          {(contentType === "text" || contentType === "both") && (
-            <div className="text-editor-section">
-              <label htmlFor="content-text">Content Text:</label>
-              <SimpleRichEditor
-                content={content}
-                onChange={setContent}
-                placeholder="Enter your content here..."
-                className="content-rich-editor"
-              />
+          {/* Content Items Section */}
+          <div className="content-items-section">
+            <div className="content-items-header">
+              <h3>Content Items</h3>
+              <button
+                className="add-item-btn"
+                onClick={() => setShowAddForm(true)}
+                style={{
+                  background: "#34C759",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                + Add Item
+              </button>
             </div>
-          )}
 
-          {(contentType === "image" || contentType === "both") && (
-            <div className="image-editor-section">
-              <label>Content Image:</label>
-              <div className="image-upload-area">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  style={{ display: "none" }}
-                  id="content-image-upload"
-                />
-                <label
-                  htmlFor="content-image-upload"
-                  className="image-upload-btn"
-                >
-                  📷 Upload Image
-                </label>
-                {contentImage && (
-                  <div className="image-preview">
-                    <img
-                      src={contentImage}
-                      alt="Content preview"
-                      className="preview-image"
-                    />
-                    <button
-                      onClick={() => setContentImage("")}
-                      className="remove-image-btn"
-                      title="Remove image"
-                    >
-                      ×
-                    </button>
+            {/* Add Item Form */}
+            {showAddForm && (
+              <div
+                className="add-item-form"
+                style={{
+                  border: "1px solid #ddd",
+                  borderRadius: "8px",
+                  padding: "16px",
+                  margin: "16px 0",
+                  backgroundColor: "#f9f9f9",
+                }}
+              >
+                <h4>Add New Item</h4>
+                <div className="form-group">
+                  <label>Type:</label>
+                  <select
+                    value={newItemType}
+                    onChange={(e) =>
+                      setNewItemType(e.target.value as "text" | "image")
+                    }
+                    style={{
+                      padding: "8px",
+                      borderRadius: "4px",
+                      border: "1px solid #ccc",
+                      marginLeft: "8px",
+                    }}
+                  >
+                    <option value="text">Text</option>
+                    <option value="image">Image</option>
+                  </select>
+                </div>
+
+                {newItemType === "text" && (
+                  <div className="form-group">
+                    <label>Content:</label>
+                    <div style={{ marginTop: "8px" }}>
+                      <SimpleRichEditor
+                        content={newItemContent}
+                        onChange={setNewItemContent}
+                        placeholder="Enter text content..."
+                        className="new-item-rich-editor"
+                      />
+                    </div>
                   </div>
                 )}
+
+                {newItemType === "image" && (
+                  <div className="form-group">
+                    <label>Image:</label>
+                    <div className="image-upload-area">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleNewItemImageUpload}
+                        style={{ display: "none" }}
+                        id="new-item-image-upload"
+                      />
+                      <label
+                        htmlFor="new-item-image-upload"
+                        className="image-upload-btn"
+                        style={{
+                          display: "inline-block",
+                          padding: "8px 16px",
+                          background: "#007AFF",
+                          color: "white",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          marginTop: "8px",
+                        }}
+                      >
+                        📷 Upload Image
+                      </label>
+                      {newItemImage && (
+                        <div
+                          className="image-preview"
+                          style={{ marginTop: "8px" }}
+                        >
+                          <img
+                            src={newItemImage}
+                            alt="Preview"
+                            style={{
+                              maxWidth: "200px",
+                              maxHeight: "150px",
+                              borderRadius: "4px",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {addItemError && (
+                  <div
+                    style={{
+                      color: "#FF3B30",
+                      fontSize: "14px",
+                      marginTop: "8px",
+                      padding: "8px",
+                      backgroundColor: "#FFEBEE",
+                      border: "1px solid #FFCDD2",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    {addItemError}
+                  </div>
+                )}
+
+                <div className="form-actions" style={{ marginTop: "16px" }}>
+                  <button
+                    onClick={handleAddItem}
+                    style={{
+                      background: "#34C759",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      marginRight: "8px",
+                    }}
+                  >
+                    Add Item
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setNewItemContent("");
+                      setNewItemImage("");
+                      setAddItemError("");
+                    }}
+                    style={{
+                      background: "#FF3B30",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
+            )}
+
+            {/* Content Items List */}
+            <div className="content-items-list">
+              {contentItems.map((item, index) => {
+                console.log("Rendering content item:", item);
+                return (
+                  <div
+                    key={item.id}
+                    className="content-item"
+                    style={{
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      margin: "8px 0",
+                      backgroundColor: "white",
+                      position: "relative",
+                    }}
+                  >
+                    <div
+                      className="item-header"
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontWeight: "bold",
+                          color: "#333",
+                        }}
+                      >
+                        {item.type === "text" ? "📝 Text" : "🖼️ Image"} #
+                        {index + 1}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteItem(item.id)}
+                        style={{
+                          background: "#FF3B30",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "4px",
+                          padding: "4px 8px",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                        }}
+                      >
+                        × Delete
+                      </button>
+                    </div>
+
+                    {item.type === "text" && item.content && (
+                      <div
+                        className="item-content"
+                        style={{
+                          padding: "8px",
+                          backgroundColor: "#f5f5f5",
+                          borderRadius: "4px",
+                          whiteSpace: "pre-wrap",
+                        }}
+                      >
+                        {item.content}
+                      </div>
+                    )}
+
+                    {item.type === "image" && item.contentImage && (
+                      <div className="item-image">
+                        <img
+                          src={item.contentImage}
+                          alt="Content item"
+                          style={{
+                            maxWidth: "200px",
+                            maxHeight: "150px",
+                            borderRadius: "4px",
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {contentItems.length === 0 && (
+                <div
+                  style={{
+                    textAlign: "center",
+                    color: "#666",
+                    padding: "20px",
+                    fontStyle: "italic",
+                  }}
+                >
+                  No items added yet. Click "Add Item" to start.
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         <div className="modal-actions">
@@ -1227,6 +1694,7 @@ const ReplyModal = ({
   onClose: () => void;
   onSendReply: (replyTitle: string, replyBody: string) => void;
 }) => {
+  const { t } = useTranslation();
   const [replyTitle, setReplyTitle] = useState("");
   const [replyBody, setReplyBody] = useState("");
 
@@ -1262,52 +1730,52 @@ const ReplyModal = ({
         </button>
 
         <div className="modal-header">
-          <h2>Reply</h2>
+          <h2>{t("contact.reply")}</h2>
         </div>
 
         <div className="message-details">
           <div className="detail-row">
-            <span className="detail-label">Type:</span>
+            <span className="detail-label">{t("contact.type")}:</span>
             <span className="type-tag">{message.type}</span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Name:</span>
+            <span className="detail-label">{t("contact.name")}:</span>
             <span className="detail-value">{message.name}</span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Email:</span>
+            <span className="detail-label">{t("contact.email")}:</span>
             <span className="detail-value">{message.email}</span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Mobile:</span>
+            <span className="detail-label">{t("contact.mobile")}:</span>
             <span className="detail-value">{message.mobile}</span>
           </div>
           <div className="detail-row">
-            <span className="detail-label">Body:</span>
+            <span className="detail-label">{t("contact.body")}:</span>
             <span className="detail-value">{message.message}</span>
           </div>
         </div>
 
         <div className="reply-section">
-          <h3>Reply</h3>
+          <h3>{t("contact.reply")}</h3>
           <div className="form-group">
-            <label htmlFor="reply-title">Title</label>
+            <label htmlFor="reply-title">{t("contact.title")}</label>
             <input
               id="reply-title"
               type="text"
               value={replyTitle}
               onChange={(e) => setReplyTitle(e.target.value)}
-              placeholder="Re: ........."
+              placeholder={t("contact.replyPlaceholder")}
               className="reply-input"
             />
           </div>
           <div className="form-group">
-            <label htmlFor="reply-body">Body</label>
+            <label htmlFor="reply-body">{t("contact.body")}</label>
             <textarea
               id="reply-body"
               value={replyBody}
               onChange={(e) => setReplyBody(e.target.value)}
-              placeholder="Type your reply here..."
+              placeholder={t("contact.replyBodyPlaceholder")}
               className="reply-textarea"
               rows={6}
             />
@@ -1316,7 +1784,7 @@ const ReplyModal = ({
 
         <div className="modal-actions">
           <button className="send-btn" onClick={handleSend}>
-            SEND
+            {t("ui.send")}
           </button>
           <button className="cancel-btn" onClick={handleCancel}>
             CANCEL
@@ -1342,6 +1810,7 @@ const ContactMessagesAdmin = ({
   onReplyMessage: (id: number) => void;
   doubleCheckMessages: Set<number>;
 }) => {
+  const { t } = useTranslation();
   const [filterType] = useState("all");
   const [selectedMessages, setSelectedMessages] = useState<number[]>([]);
 
@@ -1369,13 +1838,13 @@ const ContactMessagesAdmin = ({
     <div className="contact-admin">
       <div className="admin-header">
         <div className="breadcrumbs">
-          <span>Contact Us</span>
+          <span>{t("contact.contactUs")}</span>
         </div>
       </div>
 
       <div className="admin-content">
         <div className="tabs">
-          <button className="tab active">Messages</button>
+          <button className="tab active">{t("contact.messages")}</button>
         </div>
 
         <div className="messages-table">
@@ -1393,13 +1862,13 @@ const ContactMessagesAdmin = ({
                   />
                 </th>
                 <th>ID</th>
-                <th>Country</th>
-                <th>Type</th>
-                <th>Name</th>
-                <th>Mobile</th>
-                <th>Subject</th>
-                <th>Message</th>
-                <th>Date</th>
+                <th>{t("contact.country")}</th>
+                <th>{t("contact.type")}</th>
+                <th>{t("contact.name")}</th>
+                <th>{t("contact.mobile")}</th>
+                <th>{t("contact.subject")}</th>
+                <th>{t("contact.message")}</th>
+                <th>{t("contact.date")}</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -1428,21 +1897,21 @@ const ContactMessagesAdmin = ({
                       <button
                         className="action-btn delete"
                         onClick={() => onDeleteMessage(message.id)}
-                        title="Delete"
+                        title={t("ui.delete")}
                       >
                         🗑
                       </button>
                       <button
                         className="action-btn mark-read"
                         onClick={() => onMarkAsRead(message.id)}
-                        title="Mark as Read"
+                        title={t("contact.markAsRead")}
                       >
                         {doubleCheckMessages.has(message.id) ? "✓✓" : "✓"}
                       </button>
                       <button
                         className="action-btn reply"
                         onClick={() => onReplyMessage(message.id)}
-                        title="Reply"
+                        title={t("ui.reply")}
                       >
                         ↩
                       </button>
@@ -1598,6 +2067,7 @@ const AdminControlsPopup = ({
   onSelectedBlockStyleChange: (key: keyof StyleSettings, value: string) => void;
   setBlocks: React.Dispatch<React.SetStateAction<BlockData[]>>;
 }) => {
+  const { t } = useTranslation();
   const currentSettings = selectedBlock?.styleSettings || styleSettings;
   const isBlockSelected = !!selectedBlock;
 
@@ -1692,7 +2162,7 @@ const AdminControlsPopup = ({
               }
             >
               <option value="shadow">Shadow</option>
-              <option value="flat">Flat</option>
+              <option value="flat">{t("blocks.flat")}</option>
             </select>
           </div>
 
@@ -1948,7 +2418,7 @@ const AdminControlsPopup = ({
               onClick={onAddNewBlock}
               className="add-block-btn"
             >
-              Add New Block
+              {t("blocks.addNewBlock")}
             </button>
 
             <button
@@ -1956,7 +2426,7 @@ const AdminControlsPopup = ({
               onClick={onDeleteAllBlocks}
               className="delete-all-btn"
             >
-              Delete All Blocks
+              {t("blocks.deleteAllBlocks")}
             </button>
           </div>
 
@@ -2003,14 +2473,792 @@ const AdminControlsPopup = ({
   );
 };
 
+// Navbar Controls Component
+const NavbarControlsPopup = ({
+  isOpen,
+  onClose,
+  navbarSettings,
+  onNavbarSettingsChange,
+  navigationItems,
+  onNavigationItemsChange,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  navbarSettings: NavbarSettings;
+  onNavbarSettingsChange: (key: keyof NavbarSettings, value: any) => void;
+  navigationItems: NavigationItem[];
+  onNavigationItemsChange: (items: NavigationItem[]) => void;
+}) => {
+  const { t, i18n } = useTranslation();
+  if (!isOpen) return null;
+
+  const handleAddNavigationItem = () => {
+    const newItem: NavigationItem = {
+      id: `nav_${Date.now()}`,
+      label: t("blocks.newItem"),
+      view: "custom",
+      customUrl: "",
+      isVisible: true,
+      order: navigationItems.length + 1,
+    };
+    onNavigationItemsChange([...navigationItems, newItem]);
+  };
+
+  const handleUpdateNavigationItem = (
+    id: string,
+    field: keyof NavigationItem,
+    value: any
+  ) => {
+    const updatedItems = navigationItems.map((item) =>
+      item.id === id ? { ...item, [field]: value } : item
+    );
+    onNavigationItemsChange(updatedItems);
+  };
+
+  const handleDeleteNavigationItem = (id: string) => {
+    const updatedItems = navigationItems.filter((item) => item.id !== id);
+    onNavigationItemsChange(updatedItems);
+  };
+
+  const handleMoveItem = (id: string, direction: "up" | "down") => {
+    const currentIndex = navigationItems.findIndex((item) => item.id === id);
+    if (
+      (direction === "up" && currentIndex > 0) ||
+      (direction === "down" && currentIndex < navigationItems.length - 1)
+    ) {
+      const newItems = [...navigationItems];
+      const targetIndex =
+        direction === "up" ? currentIndex - 1 : currentIndex + 1;
+      [newItems[currentIndex], newItems[targetIndex]] = [
+        newItems[targetIndex],
+        newItems[currentIndex],
+      ];
+      // Update order values
+      newItems.forEach((item, index) => {
+        item.order = index + 1;
+      });
+      onNavigationItemsChange(newItems);
+    }
+  };
+
+  return (
+    <div className="admin-popup-overlay" onClick={onClose}>
+      <div
+        className="admin-popup-content navbar-controls"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="admin-popup-header">
+          <h3>
+            {t("settings.navbar")} {t("settings.settings")}
+          </h3>
+          <button className="admin-popup-close" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+
+        <div className="admin-popup-body navbar-controls-body">
+          {/* Navbar Appearance */}
+          <div className="control-group">
+            <h4>Appearance</h4>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={navbarSettings.isVisible}
+                onChange={(e) =>
+                  onNavbarSettingsChange("isVisible", e.target.checked)
+                }
+              />
+              Show Navbar
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={navbarSettings.isSticky}
+                onChange={(e) =>
+                  onNavbarSettingsChange("isSticky", e.target.checked)
+                }
+              />
+              Sticky Position
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={navbarSettings.shadow}
+                onChange={(e) =>
+                  onNavbarSettingsChange("shadow", e.target.checked)
+                }
+              />
+              Drop Shadow
+            </label>
+
+            <div className="color-input-group">
+              <label>Background Color:</label>
+              <div className="color-input-container">
+                <input
+                  type="color"
+                  value={navbarSettings.backgroundColor}
+                  onChange={(e) =>
+                    onNavbarSettingsChange("backgroundColor", e.target.value)
+                  }
+                  className="color-input"
+                />
+                <input
+                  type="text"
+                  value={navbarSettings.backgroundColor}
+                  onChange={(e) =>
+                    onNavbarSettingsChange("backgroundColor", e.target.value)
+                  }
+                  className="color-text-input"
+                  placeholder="#1d1d1f"
+                />
+              </div>
+            </div>
+
+            <div className="color-input-group">
+              <label>Text Color:</label>
+              <div className="color-input-container">
+                <input
+                  type="color"
+                  value={navbarSettings.textColor}
+                  onChange={(e) =>
+                    onNavbarSettingsChange("textColor", e.target.value)
+                  }
+                  className="color-input"
+                />
+                <input
+                  type="text"
+                  value={navbarSettings.textColor}
+                  onChange={(e) =>
+                    onNavbarSettingsChange("textColor", e.target.value)
+                  }
+                  className="color-text-input"
+                  placeholder="#f5f5f7"
+                />
+              </div>
+            </div>
+
+            <div className="slider-input-group">
+              <label>Transparency: {navbarSettings.transparency}%</label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={navbarSettings.transparency}
+                onChange={(e) =>
+                  onNavbarSettingsChange(
+                    "transparency",
+                    parseInt(e.target.value)
+                  )
+                }
+                className="slider"
+              />
+            </div>
+
+            <div className="slider-input-group">
+              <label>Height: {navbarSettings.height}px</label>
+              <input
+                type="range"
+                min="40"
+                max="80"
+                value={navbarSettings.height}
+                onChange={(e) =>
+                  onNavbarSettingsChange("height", parseInt(e.target.value))
+                }
+                className="slider"
+              />
+            </div>
+
+            <div className="slider-input-group">
+              <label>Border Radius: {navbarSettings.borderRadius}px</label>
+              <input
+                type="range"
+                min="0"
+                max="20"
+                value={navbarSettings.borderRadius}
+                onChange={(e) =>
+                  onNavbarSettingsChange(
+                    "borderRadius",
+                    parseInt(e.target.value)
+                  )
+                }
+                className="slider"
+              />
+            </div>
+          </div>
+
+          {/* Navbar Elements */}
+          <div className="control-group">
+            <h4>Navbar Elements</h4>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={navbarSettings.showLogo}
+                onChange={(e) =>
+                  onNavbarSettingsChange("showLogo", e.target.checked)
+                }
+              />
+              {t("settings.showLogo")}
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={navbarSettings.showSearch}
+                onChange={(e) =>
+                  onNavbarSettingsChange("showSearch", e.target.checked)
+                }
+              />
+              {t("settings.showSearch")}
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={navbarSettings.showSaveButton}
+                onChange={(e) =>
+                  onNavbarSettingsChange("showSaveButton", e.target.checked)
+                }
+              />
+              {t("settings.showSaveButton")}
+            </label>
+          </div>
+
+          {/* Language Settings */}
+          <div className="control-group">
+            <h4>{t("ui.language")}</h4>
+
+            <div className="language-switcher">
+              <label>
+                <input
+                  type="radio"
+                  name="locale"
+                  value="en"
+                  checked={i18n.language === "en"}
+                  onChange={() => i18n.changeLanguage("en")}
+                />
+                English
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  name="locale"
+                  value="ar"
+                  checked={i18n.language === "ar"}
+                  onChange={() => i18n.changeLanguage("ar")}
+                />
+                العربية
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Footer Controls Popup Component
+const FooterControlsPopup = ({
+  isOpen,
+  onClose,
+  footerSettings,
+  onFooterSettingsChange,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  footerSettings: FooterSettings;
+  onFooterSettingsChange: (key: keyof FooterSettings, value: any) => void;
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="admin-popup-overlay" onClick={onClose}>
+      <div className="admin-popup-content" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-popup-header">
+          <h3>Footer Controls</h3>
+          <button className="admin-popup-close" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="admin-popup-body">
+          <div className="control-group">
+            <h4>General Settings</h4>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={footerSettings.isVisible}
+                onChange={(e) =>
+                  onFooterSettingsChange("isVisible", e.target.checked)
+                }
+              />
+              Show Footer
+            </label>
+
+            <div className="color-input-group">
+              <label>Background Color:</label>
+              <div className="color-input-container">
+                <input
+                  type="color"
+                  value={footerSettings.backgroundColor}
+                  onChange={(e) =>
+                    onFooterSettingsChange("backgroundColor", e.target.value)
+                  }
+                  className="color-input"
+                />
+                <input
+                  type="text"
+                  value={footerSettings.backgroundColor}
+                  onChange={(e) =>
+                    onFooterSettingsChange("backgroundColor", e.target.value)
+                  }
+                  className="color-text-input"
+                />
+              </div>
+            </div>
+
+            <div className="color-input-group">
+              <label>Text Color:</label>
+              <div className="color-input-container">
+                <input
+                  type="color"
+                  value={footerSettings.textColor}
+                  onChange={(e) =>
+                    onFooterSettingsChange("textColor", e.target.value)
+                  }
+                  className="color-input"
+                />
+                <input
+                  type="text"
+                  value={footerSettings.textColor}
+                  onChange={(e) =>
+                    onFooterSettingsChange("textColor", e.target.value)
+                  }
+                  className="color-text-input"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="control-group">
+            <h4>Content Settings</h4>
+
+            <label>
+              Company Name:
+              <input
+                type="text"
+                value={footerSettings.companyName}
+                onChange={(e) =>
+                  onFooterSettingsChange("companyName", e.target.value)
+                }
+                style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+              />
+            </label>
+
+            <label>
+              Copyright Text:
+              <input
+                type="text"
+                value={footerSettings.copyright}
+                onChange={(e) =>
+                  onFooterSettingsChange("copyright", e.target.value)
+                }
+                style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+              />
+            </label>
+
+            <label>
+              Custom Text (optional):
+              <textarea
+                value={footerSettings.customText}
+                onChange={(e) =>
+                  onFooterSettingsChange("customText", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  marginTop: "5px",
+                  minHeight: "60px",
+                }}
+                placeholder="Additional footer text..."
+              />
+            </label>
+          </div>
+
+          <div className="control-group">
+            <h4>Social Links</h4>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={footerSettings.showSocialLinks}
+                onChange={(e) =>
+                  onFooterSettingsChange("showSocialLinks", e.target.checked)
+                }
+              />
+              Show Social Links
+            </label>
+
+            {footerSettings.showSocialLinks && (
+              <>
+                <label>
+                  Facebook URL:
+                  <input
+                    type="url"
+                    value={footerSettings.socialLinks.facebook}
+                    onChange={(e) =>
+                      onFooterSettingsChange("socialLinks", {
+                        ...footerSettings.socialLinks,
+                        facebook: e.target.value,
+                      })
+                    }
+                    style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                    placeholder="https://facebook.com/yourpage"
+                  />
+                </label>
+
+                <label>
+                  LinkedIn URL:
+                  <input
+                    type="url"
+                    value={footerSettings.socialLinks.linkedin}
+                    onChange={(e) =>
+                      onFooterSettingsChange("socialLinks", {
+                        ...footerSettings.socialLinks,
+                        linkedin: e.target.value,
+                      })
+                    }
+                    style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                    placeholder="https://linkedin.com/in/yourprofile"
+                  />
+                </label>
+
+                <label>
+                  GitHub URL:
+                  <input
+                    type="url"
+                    value={footerSettings.socialLinks.github}
+                    onChange={(e) =>
+                      onFooterSettingsChange("socialLinks", {
+                        ...footerSettings.socialLinks,
+                        github: e.target.value,
+                      })
+                    }
+                    style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                    placeholder="https://github.com/yourusername"
+                  />
+                </label>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Page Background Controls Popup Component
+const PageBackgroundControlsPopup = ({
+  isOpen,
+  onClose,
+  pageBackgroundSettings,
+  onPageBackgroundSettingsChange,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  pageBackgroundSettings: PageBackgroundSettings;
+  onPageBackgroundSettingsChange: (
+    key: keyof PageBackgroundSettings,
+    value: any
+  ) => void;
+}) => {
+  if (!isOpen) return null;
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageUrl = event.target?.result as string;
+        onPageBackgroundSettingsChange("backgroundImage", imageUrl);
+        onPageBackgroundSettingsChange("type", "image");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div className="admin-popup-overlay" onClick={onClose}>
+      <div className="admin-popup-content" onClick={(e) => e.stopPropagation()}>
+        <div className="admin-popup-header">
+          <h3>Page Background Controls</h3>
+          <button className="admin-popup-close" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="admin-popup-body">
+          <div className="control-group">
+            <h4>Background Type</h4>
+
+            <label>
+              <input
+                type="radio"
+                name="backgroundType"
+                value="solid"
+                checked={pageBackgroundSettings.type === "solid"}
+                onChange={(e) =>
+                  onPageBackgroundSettingsChange("type", e.target.value)
+                }
+              />
+              Solid Color
+            </label>
+
+            <label>
+              <input
+                type="radio"
+                name="backgroundType"
+                value="gradient"
+                checked={pageBackgroundSettings.type === "gradient"}
+                onChange={(e) =>
+                  onPageBackgroundSettingsChange("type", e.target.value)
+                }
+              />
+              Gradient
+            </label>
+
+            <label>
+              <input
+                type="radio"
+                name="backgroundType"
+                value="image"
+                checked={pageBackgroundSettings.type === "image"}
+                onChange={(e) =>
+                  onPageBackgroundSettingsChange("type", e.target.value)
+                }
+              />
+              Image
+            </label>
+          </div>
+
+          {pageBackgroundSettings.type === "solid" && (
+            <div className="control-group">
+              <h4>Solid Color Settings</h4>
+              <div className="color-input-group">
+                <label>Background Color:</label>
+                <div className="color-input-container">
+                  <input
+                    type="color"
+                    value={pageBackgroundSettings.solidColor}
+                    onChange={(e) =>
+                      onPageBackgroundSettingsChange(
+                        "solidColor",
+                        e.target.value
+                      )
+                    }
+                    className="color-input"
+                  />
+                  <input
+                    type="text"
+                    value={pageBackgroundSettings.solidColor}
+                    onChange={(e) =>
+                      onPageBackgroundSettingsChange(
+                        "solidColor",
+                        e.target.value
+                      )
+                    }
+                    className="color-text-input"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {pageBackgroundSettings.type === "gradient" && (
+            <div className="control-group">
+              <h4>Gradient Settings</h4>
+
+              <div className="gradient-inputs">
+                <div className="gradient-color-input">
+                  <label>Color 1:</label>
+                  <div className="color-input-container">
+                    <input
+                      type="color"
+                      value={pageBackgroundSettings.gradientColors[0]}
+                      onChange={(e) => {
+                        const newColors = [
+                          ...pageBackgroundSettings.gradientColors,
+                        ];
+                        newColors[0] = e.target.value;
+                        onPageBackgroundSettingsChange(
+                          "gradientColors",
+                          newColors
+                        );
+                      }}
+                      className="color-input"
+                    />
+                    <input
+                      type="text"
+                      value={pageBackgroundSettings.gradientColors[0]}
+                      onChange={(e) => {
+                        const newColors = [
+                          ...pageBackgroundSettings.gradientColors,
+                        ];
+                        newColors[0] = e.target.value;
+                        onPageBackgroundSettingsChange(
+                          "gradientColors",
+                          newColors
+                        );
+                      }}
+                      className="color-text-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="gradient-color-input">
+                  <label>Color 2:</label>
+                  <div className="color-input-container">
+                    <input
+                      type="color"
+                      value={pageBackgroundSettings.gradientColors[1]}
+                      onChange={(e) => {
+                        const newColors = [
+                          ...pageBackgroundSettings.gradientColors,
+                        ];
+                        newColors[1] = e.target.value;
+                        onPageBackgroundSettingsChange(
+                          "gradientColors",
+                          newColors
+                        );
+                      }}
+                      className="color-input"
+                    />
+                    <input
+                      type="text"
+                      value={pageBackgroundSettings.gradientColors[1]}
+                      onChange={(e) => {
+                        const newColors = [
+                          ...pageBackgroundSettings.gradientColors,
+                        ];
+                        newColors[1] = e.target.value;
+                        onPageBackgroundSettingsChange(
+                          "gradientColors",
+                          newColors
+                        );
+                      }}
+                      className="color-text-input"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <label>
+                Gradient Direction:
+                <select
+                  value={pageBackgroundSettings.gradientDirection}
+                  onChange={(e) =>
+                    onPageBackgroundSettingsChange(
+                      "gradientDirection",
+                      e.target.value
+                    )
+                  }
+                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                >
+                  <option value="0deg">Top to Bottom</option>
+                  <option value="90deg">Left to Right</option>
+                  <option value="45deg">Top-Left to Bottom-Right</option>
+                  <option value="135deg">Top-Right to Bottom-Left</option>
+                  <option value="180deg">Bottom to Top</option>
+                  <option value="270deg">Right to Left</option>
+                </select>
+              </label>
+            </div>
+          )}
+
+          {pageBackgroundSettings.type === "image" && (
+            <div className="control-group">
+              <h4>Image Settings</h4>
+
+              <label>
+                Upload Background Image:
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                />
+              </label>
+
+              <label>
+                Or Image URL:
+                <input
+                  type="url"
+                  value={pageBackgroundSettings.backgroundImage}
+                  onChange={(e) =>
+                    onPageBackgroundSettingsChange(
+                      "backgroundImage",
+                      e.target.value
+                    )
+                  }
+                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                  placeholder="https://example.com/image.jpg"
+                />
+              </label>
+
+              {pageBackgroundSettings.backgroundImage && (
+                <div style={{ marginTop: "10px" }}>
+                  <p>Preview:</p>
+                  <img
+                    src={pageBackgroundSettings.backgroundImage}
+                    alt="Background preview"
+                    style={{
+                      width: "100%",
+                      maxWidth: "200px",
+                      height: "100px",
+                      objectFit: "cover",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                    }}
+                  />
+                  <button
+                    onClick={() =>
+                      onPageBackgroundSettingsChange("backgroundImage", "")
+                    }
+                    style={{
+                      marginTop: "5px",
+                      padding: "5px 10px",
+                      background: "#dc3545",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Remove Image
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main App Component
 function App() {
+  const { t, i18n } = useTranslation();
+
   // State management
   const [blocks, setBlocks] = useState<BlockData[]>([
     {
       id: "1",
-      title: "Innovation",
-      tag: "Innovation",
+      title: t("blocks.innovation"),
+      tag: t("blocks.innovation"),
       backgroundImage:
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
@@ -2020,8 +3268,8 @@ function App() {
     },
     {
       id: "2",
-      title: "Automation",
-      tag: "Automation",
+      title: t("blocks.automation"),
+      tag: t("blocks.automation"),
       backgroundImage:
         "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
@@ -2031,32 +3279,32 @@ function App() {
     },
     {
       id: "3",
-      title: "Analytics",
-      tag: "Analytics",
+      title: t("blocks.analytics"),
+      tag: t("blocks.analytics"),
       backgroundImage:
         "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
     },
     {
       id: "4",
-      title: "Analytics",
-      tag: "Analytics",
+      title: t("blocks.analytics"),
+      tag: t("blocks.analytics"),
       backgroundImage:
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
     },
     {
       id: "5",
-      title: "Analytics",
-      tag: "Analytics",
+      title: t("blocks.analytics"),
+      tag: t("blocks.analytics"),
       backgroundImage:
         "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
     },
     {
       id: "6",
-      title: "Flat",
-      tag: "Flat",
+      title: t("blocks.flat"),
+      tag: t("blocks.flat"),
       backgroundColor: "#000",
       isGradient: false,
       gradientColors: ["#000000", "#333333"],
@@ -2065,8 +3313,8 @@ function App() {
     },
     {
       id: "7",
-      title: "Gradient Test",
-      tag: "Gradient",
+      title: t("blocks.gradientTest"),
+      tag: t("blocks.gradient"),
       isGradient: true,
       gradientColors: ["#ff6b6b", "#4ecdc4"],
       gradientDirection: "45deg",
@@ -2187,6 +3435,61 @@ function App() {
   const [adminPopupOpen, setAdminPopupOpen] = useState(false);
   const [selectedBlockForModal, setSelectedBlockForModal] =
     useState<BlockData | null>(null);
+  const [navbarSettings, setNavbarSettings] = useState<NavbarSettings>({
+    backgroundColor: "#1d1d1f",
+    textColor: "#f5f5f7",
+    logoColor: "#f5f5f7",
+    transparency: 95,
+    isVisible: true,
+    isSticky: true,
+    showLogo: true,
+    showSearch: true,
+    showSaveButton: true,
+    height: 48,
+    borderRadius: 0,
+    shadow: true,
+  });
+
+  const [footerSettings, setFooterSettings] = useState<FooterSettings>({
+    isVisible: true,
+    backgroundColor: "#1d1d1f",
+    textColor: "#f5f5f7",
+    companyName: "Company",
+    copyright: "© 2024 Company Name. All rights reserved.",
+    showSocialLinks: true,
+    socialLinks: {
+      facebook: "",
+      linkedin: "",
+      github: "",
+    },
+    customText: "",
+  });
+
+  const [pageBackgroundSettings, setPageBackgroundSettings] =
+    useState<PageBackgroundSettings>({
+      type: "solid",
+      solidColor: "#ffffff",
+      gradientColors: ["#667eea", "#764ba2"],
+      gradientDirection: "135deg",
+      backgroundImage: "",
+    });
+
+  const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([
+    { id: "nav_1", label: "Home", view: "home", isVisible: true, order: 1 },
+    { id: "nav_2", label: "About", view: "about", isVisible: true, order: 2 },
+    {
+      id: "nav_3",
+      label: "Contact",
+      view: "contact",
+      isVisible: true,
+      order: 3,
+    },
+  ]);
+
+  const [navbarControlsOpen, setNavbarControlsOpen] = useState(false);
+  const [footerControlsOpen, setFooterControlsOpen] = useState(false);
+  const [pageBackgroundControlsOpen, setPageBackgroundControlsOpen] =
+    useState(false);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([
     {
       id: 27,
@@ -2483,6 +3786,36 @@ function App() {
     );
   };
 
+  const handleNavbarSettingsChange = (
+    key: keyof NavbarSettings,
+    value: any
+  ) => {
+    setNavbarSettings((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleFooterSettingsChange = (
+    key: keyof FooterSettings,
+    value: any
+  ) => {
+    setFooterSettings((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handlePageBackgroundSettingsChange = (
+    key: keyof PageBackgroundSettings,
+    value: any
+  ) => {
+    setPageBackgroundSettings((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   const handleResetAllCards = () => {
     setBlocks((prev) =>
       prev.map((block) => ({
@@ -2541,8 +3874,8 @@ function App() {
     ).toString();
     const newBlock: BlockData = {
       id: newId,
-      title: "New Block",
-      tag: "New Block",
+      title: t("blocks.newBlock"),
+      tag: t("blocks.newBlock"),
       backgroundColor: "#333",
       isGradient: false,
       gradientColors: ["#333333", "#666666"],
@@ -2644,12 +3977,20 @@ function App() {
     blockId: string,
     content: string,
     contentImage: string,
-    contentType: "text" | "image" | "both"
+    contentType: "text" | "image" | "both",
+    contentItems?: ContentItem[]
   ) => {
+    console.log("Saving block content:", {
+      blockId,
+      content,
+      contentImage,
+      contentType,
+      contentItems,
+    });
     setBlocks((prev) =>
       prev.map((block) =>
         block.id === blockId
-          ? { ...block, content, contentImage, contentType }
+          ? { ...block, content, contentImage, contentType, contentItems }
           : block
       )
     );
@@ -2754,107 +4095,280 @@ function App() {
     }
   }, [resizeState]);
 
-  return (
-    <div className="container">
-      <header className="apple-header">
-        <div className="header-content">
-          <div className="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-            </svg>
-          </div>
-          <nav className="main-nav">
-            <button
-              className={`nav-link ${currentView === "home" ? "active" : ""}`}
-              onClick={() => setCurrentView("home")}
-            >
-              Home
-            </button>
+  // Create dynamic navbar styles
+  const navbarStyle: React.CSSProperties = {
+    backgroundColor: `${navbarSettings.backgroundColor}${Math.round(
+      (navbarSettings.transparency / 100) * 255
+    )
+      .toString(16)
+      .padStart(2, "0")}`,
+    color: navbarSettings.textColor,
+    height: `${navbarSettings.height}px`,
+    borderRadius: `${navbarSettings.borderRadius}px`,
+    position: navbarSettings.isSticky ? "sticky" : "relative",
+    boxShadow: navbarSettings.shadow ? "0 2px 10px rgba(0, 0, 0, 0.1)" : "none",
+    top: navbarSettings.isSticky ? "0" : "auto",
+    zIndex: navbarSettings.isSticky ? 1000 : "auto",
+  };
 
-            <button
-              className={`nav-link ${currentView === "about" ? "active" : ""}`}
-              onClick={() => setCurrentView("about")}
-            >
-              About
-            </button>
-            <button
-              className={`nav-link ${
-                currentView === "contact" ? "active" : ""
-              }`}
-              onClick={() => setCurrentView("contact")}
-            >
-              Contact
-            </button>
-          </nav>
-          <div className="header-actions">
-            {!isLiveView && (
+  const handleNavItemClick = (item: NavigationItem) => {
+    if (item.view === "custom" && item.customUrl) {
+      if (
+        item.customUrl.startsWith("http://") ||
+        item.customUrl.startsWith("https://")
+      ) {
+        window.open(item.customUrl, "_blank");
+      } else {
+        window.location.href = item.customUrl;
+      }
+    } else {
+      setCurrentView(item.view as "home" | "about" | "contact");
+    }
+  };
+
+  // Create dynamic page background styles
+  const getPageBackgroundStyle = (): React.CSSProperties => {
+    switch (pageBackgroundSettings.type) {
+      case "solid":
+        return { backgroundColor: pageBackgroundSettings.solidColor };
+      case "gradient":
+        const direction = pageBackgroundSettings.gradientDirection;
+        const colors = pageBackgroundSettings.gradientColors;
+        return {
+          background: `linear-gradient(${direction}, ${colors[0]}, ${colors[1]})`,
+        };
+      case "image":
+        return pageBackgroundSettings.backgroundImage
+          ? {
+              backgroundImage: `url(${pageBackgroundSettings.backgroundImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }
+          : { backgroundColor: pageBackgroundSettings.solidColor };
+      default:
+        return { backgroundColor: "#ffffff" };
+    }
+  };
+
+  return (
+    <div className="container" style={getPageBackgroundStyle()}>
+      {navbarSettings.isVisible && (
+        <header className="apple-header" style={navbarStyle}>
+          <div className="header-content">
+            {navbarSettings.showLogo && (
+              <div className="logo" style={{ color: navbarSettings.logoColor }}>
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                </svg>
+              </div>
+            )}
+            <nav className="main-nav">
+              {navigationItems
+                .filter((item) => item.isVisible)
+                .sort((a, b) => a.order - b.order)
+                .map((item) => (
+                  <button
+                    key={item.id}
+                    className={`nav-link ${
+                      item.view !== "custom" && currentView === item.view
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() => handleNavItemClick(item)}
+                    style={{ color: navbarSettings.textColor }}
+                  >
+                    {item.view === "home"
+                      ? t("navigation.home")
+                      : item.view === "about"
+                      ? t("navigation.about")
+                      : item.view === "contact"
+                      ? t("navigation.contact")
+                      : item.label}
+                  </button>
+                ))}
+            </nav>
+            <div className="header-actions">
+              {/* Navbar Controls Button - only visible in edit mode */}
+              {!isLiveView && (
+                <>
+                  <button
+                    className="navbar-controls-btn"
+                    onClick={() => setNavbarControlsOpen(true)}
+                    style={{
+                      background: "#34C759",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      marginRight: "12px",
+                    }}
+                  >
+                    ⚙️ Navbar
+                  </button>
+
+                  <button
+                    className="footer-controls-btn"
+                    onClick={() => setFooterControlsOpen(true)}
+                    style={{
+                      background: "#FF9500",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      marginRight: "12px",
+                    }}
+                  >
+                    🦶 Footer
+                  </button>
+
+                  <button
+                    className="page-background-controls-btn"
+                    onClick={() => setPageBackgroundControlsOpen(true)}
+                    style={{
+                      background: "#5856D6",
+                      color: "white",
+                      border: "none",
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      marginRight: "12px",
+                    }}
+                  >
+                    🎨 Background
+                  </button>
+                </>
+              )}
+
+              {navbarSettings.showSaveButton && (
+                <>
+                  {!isLiveView && (
+                    <button
+                      className="save-btn"
+                      onClick={() => setIsLiveView(true)}
+                      style={{
+                        background: "#007AFF",
+                        color: "white",
+                        border: "none",
+                        padding: "8px 16px",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        marginRight: "12px",
+                      }}
+                    >
+                      💾 Save & View Live
+                    </button>
+                  )}
+                  {isLiveView && (
+                    <button
+                      className="edit-btn"
+                      onClick={() => setIsLiveView(false)}
+                      style={{
+                        background: "#FF3B30",
+                        color: "white",
+                        border: "none",
+                        padding: "8px 16px",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        marginRight: "12px",
+                      }}
+                    >
+                      ✏️ Edit Page
+                    </button>
+                  )}
+                </>
+              )}
+
+              {navbarSettings.showSearch && (
+                <button
+                  className="search-btn"
+                  aria-label="Search"
+                  style={{ color: navbarSettings.textColor }}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Language Switcher Icon */}
               <button
-                className="save-btn"
-                onClick={() => setIsLiveView(true)}
+                className="language-switcher-btn"
+                aria-label={`Switch to ${
+                  i18n.language === "en" ? "Arabic" : "English"
+                }`}
+                title={`Switch to ${
+                  i18n.language === "en" ? "العربية" : "English"
+                }`}
+                onClick={() =>
+                  i18n.changeLanguage(i18n.language === "en" ? "ar" : "en")
+                }
                 style={{
-                  background: "#007AFF",
-                  color: "white",
+                  color: navbarSettings.textColor,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  background: "none",
                   border: "none",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
+                  padding: "6px 8px",
+                  borderRadius: "4px",
                   cursor: "pointer",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "500",
-                  marginRight: "12px",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "none";
                 }}
               >
-                💾 Save & View Live
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+                <span style={{ minWidth: "20px" }}>
+                  {i18n.language.toUpperCase()}
+                </span>
               </button>
-            )}
-            {isLiveView && (
-              <button
-                className="edit-btn"
-                onClick={() => setIsLiveView(false)}
-                style={{
-                  background: "#FF3B30",
-                  color: "white",
-                  border: "none",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  marginRight: "12px",
-                }}
-              >
-                ✏️ Edit Page
-              </button>
-            )}
-            <button className="search-btn" aria-label="Search">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-            </button>
-            <button className="cart-btn" aria-label="Shopping bag">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 0 1-8 0" />
-              </svg>
-            </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {currentView === "home" ? (
         isLiveView ? (
@@ -2944,7 +4458,7 @@ function App() {
 
       {/* Brands Slider and Footer - visible on all views */}
       <BrandsSlider />
-      <Footer />
+      <Footer footerSettings={footerSettings} />
 
       <ReplyModal
         message={selectedMessage}
@@ -2965,6 +4479,29 @@ function App() {
         isOpen={blockModalOpen}
         onClose={handleCloseBlockModal}
         onSave={handleBlockContentSave}
+      />
+
+      <NavbarControlsPopup
+        isOpen={navbarControlsOpen}
+        onClose={() => setNavbarControlsOpen(false)}
+        navbarSettings={navbarSettings}
+        onNavbarSettingsChange={handleNavbarSettingsChange}
+        navigationItems={navigationItems}
+        onNavigationItemsChange={setNavigationItems}
+      />
+
+      <FooterControlsPopup
+        isOpen={footerControlsOpen}
+        onClose={() => setFooterControlsOpen(false)}
+        footerSettings={footerSettings}
+        onFooterSettingsChange={handleFooterSettingsChange}
+      />
+
+      <PageBackgroundControlsPopup
+        isOpen={pageBackgroundControlsOpen}
+        onClose={() => setPageBackgroundControlsOpen(false)}
+        pageBackgroundSettings={pageBackgroundSettings}
+        onPageBackgroundSettingsChange={handlePageBackgroundSettingsChange}
       />
     </div>
   );

@@ -1079,54 +1079,54 @@ header:not(.apple-header) nav a:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* Multiple resize handles */
+/* Multiple resize handles - Outside the block */
 .resize-handle.se {
-  top: 0;
-  right: 0;
+  top: -8px;
+  right: -8px;
   cursor: se-resize;
 }
 
 .resize-handle.sw {
-  top: 0;
-  left: 0;
+  top: -8px;
+  left: -8px;
   cursor: sw-resize;
 }
 
 .resize-handle.ne {
-  bottom: 0;
-  right: 0;
+  bottom: -8px;
+  right: -8px;
   cursor: ne-resize;
 }
 
 .resize-handle.nw {
-  bottom: 0;
-  left: 0;
+  bottom: -8px;
+  left: -8px;
   cursor: nw-resize;
 }
 
 .resize-handle.e {
   top: 50%;
-  right: 0;
+  right: -8px;
   transform: translateY(-50%);
   cursor: e-resize;
 }
 
 .resize-handle.w {
   top: 50%;
-  left: 0;
+  left: -8px;
   transform: translateY(-50%);
   cursor: w-resize;
 }
 
 .resize-handle.n {
-  top: 0;
+  top: -8px;
   left: 50%;
   transform: translateX(-50%);
   cursor: n-resize;
 }
 
 .resize-handle.s {
-  bottom: 0;
+  bottom: -8px;
   left: 50%;
   transform: translateX(-50%);
   cursor: s-resize;
