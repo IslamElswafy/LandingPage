@@ -1100,319 +1100,49 @@ const BlockContentViewModal = ({
   onEdit: () => void;
 }) => {
   const { t } = useTranslation();
-  if (!isOpen || !block) return null;
-
-  const formatContent = (content: string) => {
-    // If content contains HTML tags (from Tiptap), return as is
-    if (content.includes("<")) {
-      return content;
-    }
-
-    // Otherwise, apply basic markdown formatting for backward compatibility
-    return content
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      .replace(/\n/g, "<br/>");
-  };
-
-  return (
-    <div className="modal-overlay">
-      <div className="block-viewer-modal">
-        <button className="modal-close" onClick={onClose}>
-          ×
-        </button>
-
-        <div className="modal-header">
-          <h2>{block.tag}</h2>
-          <button className="edit-content-btn" onClick={onEdit}>
-            ✏️ Edit Content
-          </button>
-        </div>
-
-        <div className="content-viewer">
-          {!block.content &&
-          !block.contentImage &&
-          (!block.contentItems || block.contentItems.length === 0) ? (
-            <div className="no-content">
-              <p>{t("blocks.noContent")}</p>
-              <button className="add-content-btn" onClick={onEdit}>
-                {t("blocks.addContent")}
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* Legacy content display */}
-              {(block.contentType === "image" ||
-                block.contentType === "both") &&
-                block.contentImage && (
-                  <div className="content-image">
-                    <img
-                      src={block.contentImage}
-                      alt={`${block.tag} content`}
-                    />
-                  </div>
-                )}
-
-              {(block.contentType === "text" || block.contentType === "both") &&
-                block.content && (
-                  <div
-                    className="content-text"
-                    dangerouslySetInnerHTML={{
-                      __html: formatContent(block.content),
-                    }}
-                  />
-                )}
-
-              {/* New content items display */}
-              {block.contentItems && block.contentItems.length > 0 && (
-                <div className="content-items-display">
-                  <h3>Content Items</h3>
-                  {block.contentItems
-                    .sort((a, b) => a.order - b.order)
-                    .map((item, index) => (
-                      <div
-                        key={item.id}
-                        className="content-item-display"
-                        style={{
-                          border: "1px solid #ddd",
-                          borderRadius: "8px",
-                          padding: "16px",
-                          margin: "12px 0",
-                          backgroundColor: "#f9f9f9",
-                        }}
-                      >
-                        <div
-                          className="item-header"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            marginBottom: "12px",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontWeight: "bold",
-                              color: "#333",
-                              fontSize: "16px",
-                            }}
-                          >
-                            {item.type === "text" ? "📝 Text" : "🖼️ Image"} #
-                            {index + 1}
-                          </span>
-                        </div>
-
-                        {item.type === "text" && item.content && (
-                          <div
-                            className="item-content-display"
-                            dangerouslySetInnerHTML={{
-                              __html: formatContent(item.content),
-                            }}
-                            style={{
-                              padding: "12px",
-                              backgroundColor: "white",
-                              borderRadius: "4px",
-                              border: "1px solid #eee",
-                            }}
-                          />
-                        )}
-
-                        {item.type === "image" && item.contentImage && (
-                          <div className="item-image-display">
-                            <img
-                              src={item.contentImage}
-                              alt="Content item"
-                              style={{
-                                maxWidth: "100%",
-                                height: "auto",
-                                borderRadius: "4px",
-                                border: "1px solid #eee",
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        <div className="modal-actions">
-          <button className="close-btn" onClick={onClose}>
-            CLOSE
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Block Content Modal Component
-const BlockContentModal = ({
-  block,
-  isOpen,
-  onClose,
-  onSave,
-}: {
-  block: BlockData | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (
-    blockId: string,
-    content: string,
-    contentImage: string,
-    contentType: "text" | "image" | "both",
-    contentItems?: ContentItem[]
-  ) => void;
-}) => {
-  const { t } = useTranslation();
-  const [content, setContent] = useState("");
-  const [contentImage, setContentImage] = useState("");
-  const [contentType, setContentType] = useState<"text" | "image" | "both">(
-    "text"
-  );
-  const [contentItems, setContentItems] = useState<ContentItem[]>([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newItemType, setNewItemType] = useState<"text" | "image">("text");
-  const [newItemContent, setNewItemContent] = useState("");
-  const [newItemImage, setNewItemImage] = useState("");
-  const [addItemError, setAddItemError] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editorContent, setEditorContent] = useState("");
+  const [tempContent, setTempContent] = useState("");
 
   useEffect(() => {
     if (block && isOpen) {
-      console.log("Loading block data:", block);
-      setContent(block.content || "");
-      setContentImage(block.contentImage || "");
-      setContentType(block.contentType || "text");
-      setContentItems(block.contentItems || []);
+      // Initialize editor with existing content or default
+      const initialContent = block.title ? `<h1>${block.title}</h1><p>Add your content here...</p>` : "<p>Add your content here...</p>";
+      setEditorContent(initialContent);
+      setTempContent(initialContent);
+      setIsEditing(false);
     }
   }, [block, isOpen]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target?.result as string;
-        setContentImage(imageUrl);
-      };
-      reader.readAsDataURL(file);
-    }
-    event.target.value = "";
-  };
-
-  const handleNewItemImageUpload = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageUrl = e.target?.result as string;
-        setNewItemImage(imageUrl);
-      };
-      reader.readAsDataURL(file);
-    }
-    event.target.value = "";
-  };
-
-  const handleAddItem = () => {
-    setAddItemError(""); // Clear previous errors
-
-    console.log("Adding item:", { newItemType, newItemContent, newItemImage });
-
-    // Check if text content has meaningful content (not just HTML tags)
-    const hasTextContent =
-      newItemType === "text" &&
-      newItemContent &&
-      newItemContent.replace(/<[^>]*>/g, "").trim().length > 0;
-
-    console.log("Has text content:", hasTextContent);
-
-    if (hasTextContent) {
-      const newItem: ContentItem = {
-        id: Date.now().toString(),
-        type: "text",
-        content: newItemContent,
-        order: contentItems.length,
-      };
-      console.log("Adding text item:", newItem);
-      setContentItems([...contentItems, newItem]);
-      setNewItemContent("");
-      setShowAddForm(false);
-    } else if (newItemType === "image" && newItemImage) {
-      const newItem: ContentItem = {
-        id: Date.now().toString(),
-        type: "image",
-        contentImage: newItemImage,
-        order: contentItems.length,
-      };
-      console.log("Adding image item:", newItem);
-      setContentItems([...contentItems, newItem]);
-      setNewItemImage("");
-      setShowAddForm(false);
-    } else {
-      // Show error message
-      if (newItemType === "text") {
-        setAddItemError(
-          "Please enter some text content before adding the item."
-        );
-      } else {
-        setAddItemError("Please select an image before adding the item.");
-      }
-    }
-  };
-
-  const handleDeleteItem = (itemId: string) => {
-    setContentItems(contentItems.filter((item) => item.id !== itemId));
-  };
+  if (!isOpen || !block) return null;
 
   const handleSave = () => {
-    if (block) {
-      console.log("Saving block with content items:", contentItems);
-      onSave(block.id, content, contentImage, contentType, contentItems);
-      onClose();
-    }
+    setEditorContent(tempContent);
+    setIsEditing(false);
+    // Here you would typically save to your backend/state management
+    console.log("Saving content:", tempContent);
   };
 
   const handleCancel = () => {
-    setContent("");
-    setContentImage("");
-    setContentType("text");
-    setContentItems([]);
-    setShowAddForm(false);
-    setNewItemContent("");
-    setNewItemImage("");
-    setAddItemError("");
-    onClose();
+    setTempContent(editorContent);
+    setIsEditing(false);
   };
 
-  if (!isOpen || !block) return null;
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
 
   return (
-    <div className="modal-overlay">
-      <div className="block-content-modal">
-        <button className="modal-close" onClick={onClose}>
-          ×
-        </button>
-
-        <div className="modal-header">
-          <h2>
-            {block.tag} - {t("blocks.contentEditor")}
-          </h2>
-        </div>
-
-        <div className="content-editor">
-          {/* Content Items Section */}
-          <div className="content-items-section">
-            <div className="content-items-header">
-              <h3>Content Items</h3>
+    <div className="admin-popup-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="admin-popup-content" style={{ width: "90vw", maxWidth: "1200px", height: "90vh" }}>
+        <div className="admin-popup-header">
+          <h3>{isEditing ? `${t("Editing")}: ${block.title}` : `${t("Viewing")}: ${block.title}`}</h3>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {!isEditing && (
               <button
-                className="add-item-btn"
-                onClick={() => setShowAddForm(true)}
+                onClick={handleEdit}
                 style={{
-                  background: "#34C759",
+                  background: "#007AFF",
                   color: "white",
                   border: "none",
                   padding: "8px 16px",
@@ -1422,265 +1152,153 @@ const BlockContentModal = ({
                   fontWeight: "500",
                 }}
               >
-                + Add Item
+                ✏️ {t("Edit")}
               </button>
-            </div>
-
-            {/* Add Item Form */}
-            {showAddForm && (
-              <div
-                className="add-item-form"
-                style={{
-                  border: "1px solid #ddd",
-                  borderRadius: "8px",
-                  padding: "16px",
-                  margin: "16px 0",
-                  backgroundColor: "#f9f9f9",
-                }}
-              >
-                <h4>Add New Item</h4>
-                <div className="form-group">
-                  <label>Type:</label>
-                  <select
-                    value={newItemType}
-                    onChange={(e) =>
-                      setNewItemType(e.target.value as "text" | "image")
-                    }
-                    style={{
-                      padding: "8px",
-                      borderRadius: "4px",
-                      border: "1px solid #ccc",
-                      marginLeft: "8px",
-                    }}
-                  >
-                    <option value="text">Text</option>
-                    <option value="image">Image</option>
-                  </select>
-                </div>
-
-                {newItemType === "text" && (
-                  <div className="form-group">
-                    <label>Content:</label>
-                    <div style={{ marginTop: "8px" }}>
-                      <SimpleRichEditor
-                        content={newItemContent}
-                        onChange={setNewItemContent}
-                        placeholder="Enter text content..."
-                        className="new-item-rich-editor"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {newItemType === "image" && (
-                  <div className="form-group">
-                    <label>Image:</label>
-                    <div className="image-upload-area">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleNewItemImageUpload}
-                        style={{ display: "none" }}
-                        id="new-item-image-upload"
-                      />
-                      <label
-                        htmlFor="new-item-image-upload"
-                        className="image-upload-btn"
-                        style={{
-                          display: "inline-block",
-                          padding: "8px 16px",
-                          background: "#007AFF",
-                          color: "white",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          marginTop: "8px",
-                        }}
-                      >
-                        📷 Upload Image
-                      </label>
-                      {newItemImage && (
-                        <div
-                          className="image-preview"
-                          style={{ marginTop: "8px" }}
-                        >
-                          <img
-                            src={newItemImage}
-                            alt="Preview"
-                            style={{
-                              maxWidth: "200px",
-                              maxHeight: "150px",
-                              borderRadius: "4px",
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {addItemError && (
-                  <div
-                    style={{
-                      color: "#FF3B30",
-                      fontSize: "14px",
-                      marginTop: "8px",
-                      padding: "8px",
-                      backgroundColor: "#FFEBEE",
-                      border: "1px solid #FFCDD2",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    {addItemError}
-                  </div>
-                )}
-
-                <div className="form-actions" style={{ marginTop: "16px" }}>
-                  <button
-                    onClick={handleAddItem}
-                    style={{
-                      background: "#34C759",
-                      color: "white",
-                      border: "none",
-                      padding: "8px 16px",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      marginRight: "8px",
-                    }}
-                  >
-                    Add Item
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowAddForm(false);
-                      setNewItemContent("");
-                      setNewItemImage("");
-                      setAddItemError("");
-                    }}
-                    style={{
-                      background: "#FF3B30",
-                      color: "white",
-                      border: "none",
-                      padding: "8px 16px",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
             )}
-
-            {/* Content Items List */}
-            <div className="content-items-list">
-              {contentItems.map((item, index) => {
-                console.log("Rendering content item:", item);
-                return (
-                  <div
-                    key={item.id}
-                    className="content-item"
-                    style={{
-                      border: "1px solid #ddd",
-                      borderRadius: "8px",
-                      padding: "12px",
-                      margin: "8px 0",
-                      backgroundColor: "white",
-                      position: "relative",
-                    }}
-                  >
-                    <div
-                      className="item-header"
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontWeight: "bold",
-                          color: "#333",
-                        }}
-                      >
-                        {item.type === "text" ? "📝 Text" : "🖼️ Image"} #
-                        {index + 1}
-                      </span>
-                      <button
-                        onClick={() => handleDeleteItem(item.id)}
-                        style={{
-                          background: "#FF3B30",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "4px",
-                          padding: "4px 8px",
-                          cursor: "pointer",
-                          fontSize: "12px",
-                        }}
-                      >
-                        × Delete
-                      </button>
-                    </div>
-
-                    {item.type === "text" && item.content && (
-                      <div
-                        className="item-content"
-                        style={{
-                          padding: "8px",
-                          backgroundColor: "#f5f5f5",
-                          borderRadius: "4px",
-                          whiteSpace: "pre-wrap",
-                        }}
-                      >
-                        {item.content}
-                      </div>
-                    )}
-
-                    {item.type === "image" && item.contentImage && (
-                      <div className="item-image">
-                        <img
-                          src={item.contentImage}
-                          alt="Content item"
-                          style={{
-                            maxWidth: "200px",
-                            maxHeight: "150px",
-                            borderRadius: "4px",
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {contentItems.length === 0 && (
-                <div
+            {isEditing && (
+              <>
+                <button
+                  onClick={handleCancel}
                   style={{
-                    textAlign: "center",
-                    color: "#666",
-                    padding: "20px",
-                    fontStyle: "italic",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
                   }}
                 >
-                  No items added yet. Click "Add Item" to start.
-                </div>
-              )}
-            </div>
+                  {t("Cancel")}
+                </button>
+                <button
+                  onClick={handleSave}
+                  style={{
+                    background: "#28a745",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+                >
+                  💾 {t("Save")}
+                </button>
+              </>
+            )}
+            <button className="admin-popup-close" onClick={onClose}>
+              ✕
+            </button>
           </div>
         </div>
 
-        <div className="modal-actions">
-          <button className="save-btn" onClick={handleSave}>
-            SAVE CONTENT
-          </button>
-          <button className="cancel-btn" onClick={handleCancel}>
-            CANCEL
-          </button>
+        <div className="admin-popup-body" style={{ height: "calc(100% - 80px)", display: "flex", flexDirection: "column" }}>
+          {/* Block Info Section */}
+          <div style={{
+            background: "#f8fafc",
+            border: "1px solid #e5e7eb",
+            borderRadius: "8px",
+            padding: "16px",
+            marginBottom: "20px",
+            flexShrink: 0
+          }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", fontSize: "14px" }}>
+              <div><strong>{t("Tag")}:</strong> <span style={{ background: "#e3f2fd", padding: "2px 8px", borderRadius: "12px" }}>{block.tag}</span></div>
+              <div><strong>{t("ID")}:</strong> <code style={{ background: "#f1f3f4", padding: "2px 6px", borderRadius: "3px" }}>{block.id}</code></div>
+              {block.backgroundColor && (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <strong>{t("Background")}:</strong>
+                  <div style={{
+                    width: "20px",
+                    height: "20px",
+                    backgroundColor: block.backgroundColor,
+                    border: "1px solid #ccc",
+                    borderRadius: "4px"
+                  }}></div>
+                  <span>{block.backgroundColor}</span>
+                </div>
+              )}
+              {block.width && block.height && (
+                <div><strong>{t("Size")}:</strong> {block.width} × {block.height}px</div>
+              )}
+            </div>
+          </div>
+
+          {/* Content Editor/Viewer */}
+          <div style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+            border: isEditing ? "2px solid #007AFF" : "1px solid #e5e7eb",
+            borderRadius: "8px",
+            overflow: "hidden"
+          }}>
+            {isEditing ? (
+              <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                <div style={{
+                  background: "#f8fafc",
+                  padding: "12px 16px",
+                  borderBottom: "1px solid #e5e7eb",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  color: "#374151"
+                }}>
+                  📝 {t("Editing Mode")} - {t("Use the toolbar below to format your content")}
+                </div>
+                <div style={{ flex: 1, minHeight: 0 }}>
+                  <SimpleRichEditor
+                    content={tempContent}
+                    onChange={setTempContent}
+                    placeholder={`${t("Start writing content for")} "${block.title}"...`}
+                    className="block-content-editor"
+                    autoSave={false}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                <div style={{
+                  background: "#f8fafc",
+                  padding: "12px 16px",
+                  borderBottom: "1px solid #e5e7eb",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  color: "#374151",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}>
+                  <span>👁️ {t("Preview Mode")}</span>
+                  <span style={{ fontSize: "12px", color: "#6b7280" }}>
+                    {t("Click Edit to modify content")}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    padding: "24px",
+                    overflow: "auto",
+                    backgroundColor: "white",
+                    fontSize: "16px",
+                    lineHeight: "1.6"
+                  }}
+                  className="item-content-display"
+                  dangerouslySetInnerHTML={{ __html: editorContent }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+// Block Content Modal Component
 
 // Reply Modal Component
 const ReplyModal = ({
@@ -4472,13 +4090,6 @@ function App() {
         isOpen={blockViewModalOpen}
         onClose={handleCloseViewModal}
         onEdit={handleEditContent}
-      />
-
-      <BlockContentModal
-        block={selectedBlockForModal}
-        isOpen={blockModalOpen}
-        onClose={handleCloseBlockModal}
-        onSave={handleBlockContentSave}
       />
 
       <NavbarControlsPopup

@@ -1146,3 +1146,72 @@
   background: none;
   padding: 0;
 }
+
+/* Block Content Editor Styles */
+.block-content-editor {
+  height: 100%;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.block-content-editor .advanced-rich-editor {
+  height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Hide the stats bar in modal */
+.block-content-editor .MuiPaper-root:first-child {
+  display: none !important;
+}
+
+.block-content-editor .MuiPaper-root {
+  border-radius: 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.block-content-editor .ProseMirror {
+  min-height: 300px !important;
+  max-height: none !important;
+  height: auto !important;
+  padding: 20px !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+  border: 1px solid transparent !important;
+  background: white !important;
+}
+
+.block-content-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+.block-content-editor .ProseMirror:focus {
+  outline: none;
+}
+
+/* Make the editor fill the modal properly */
+.block-content-editor > div {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.block-content-editor > div > div:last-child {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.block-content-editor .MuiBox-root:last-child {
+  flex: 1;
+}
+
+/* Ensure the editor container fills the space */
+.block-content-editor .advanced-rich-editor > div:last-child {
+  flex: 1;
+}
