@@ -49,6 +49,8 @@ import {
   Paper,
   Switch,
   FormControlLabel,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import {
   TableChart,
@@ -62,6 +64,8 @@ import {
   Edit,
   CloudUpload,
   Settings,
+  Link as LinkIcon,
+  Upload,
 } from "@mui/icons-material";
 
 // Advanced Tiptap Extensions
@@ -87,8 +91,156 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Dropcursor from "@tiptap/extension-dropcursor";
 import Gapcursor from "@tiptap/extension-gapcursor";
 import { common, createLowlight } from "lowlight";
+import { Node } from "@tiptap/core";
+import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
 
 const lowlight = createLowlight(common);
+
+// Resizable Image Component
+const ResizableImageComponent: React.FC<{
+  node: any;
+  updateAttributes: (attrs: any) => void;
+  selected: boolean;
+}> = ({ node, updateAttributes, selected }) => {
+  const { src, alt, title, width, height } = node.attrs;
+  const [isResizing, setIsResizing] = useState(false);
+  const [dimensions, setDimensions] = useState({
+    width: width || "auto",
+    height: height || "auto",
+  });
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsResizing(true);
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startWidth = imageRef.current?.offsetWidth || 0;
+      const startHeight = imageRef.current?.offsetHeight || 0;
+      const aspectRatio = startWidth / startHeight;
+
+      const handleMouseMove = (e: MouseEvent) => {
+        const deltaX = e.clientX - startX;
+        const newWidth = Math.max(50, startWidth + deltaX);
+        const newHeight = newWidth / aspectRatio;
+
+        setDimensions({ width: newWidth, height: newHeight });
+      };
+
+      const handleMouseUp = () => {
+        setIsResizing(false);
+        updateAttributes({
+          width: dimensions.width,
+          height: dimensions.height,
+        });
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [dimensions, updateAttributes]
+  );
+
+  return (
+    <NodeViewWrapper
+      style={{
+        position: "relative",
+        display: "inline-block",
+        border: selected ? "2px solid #1976d2" : "2px solid transparent",
+        borderRadius: "4px",
+      }}
+    >
+      <img
+        ref={imageRef}
+        src={src}
+        alt={alt}
+        title={title}
+        style={{
+          width: dimensions.width === "auto" ? "auto" : `${dimensions.width}px`,
+          height:
+            dimensions.height === "auto" ? "auto" : `${dimensions.height}px`,
+          maxWidth: "100%",
+          borderRadius: "4px",
+          display: "block",
+        }}
+        draggable={false}
+      />
+      {selected && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "-5px",
+            right: "-5px",
+            width: "10px",
+            height: "10px",
+            backgroundColor: "#1976d2",
+            cursor: "se-resize",
+            borderRadius: "2px",
+            border: "1px solid white",
+          }}
+          onMouseDown={handleMouseDown}
+        />
+      )}
+      {isResizing && (
+        <div
+          style={{
+            position: "absolute",
+            top: "-25px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            backgroundColor: "rgba(0,0,0,0.8)",
+            color: "white",
+            padding: "2px 8px",
+            borderRadius: "4px",
+            fontSize: "12px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {Math.round(dimensions.width as number)} ×{" "}
+          {Math.round(dimensions.height as number)}
+        </div>
+      )}
+    </NodeViewWrapper>
+  );
+};
+
+// Custom Resizable Image Extension
+const ResizableImage = Image.extend({
+  name: "resizableImage",
+
+  addAttributes() {
+    return {
+      ...Image.config.addAttributes?.call(this),
+      width: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute("width"),
+        renderHTML: (attributes: { width?: string | number }) => {
+          if (!attributes.width) return {};
+          return { width: attributes.width };
+        },
+      },
+      height: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute("height"),
+        renderHTML: (attributes: { height?: string | number }) => {
+          if (!attributes.height) return {};
+          return { height: attributes.height };
+        },
+      },
+    };
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(ResizableImageComponent);
+  },
+
+  atom: true,
+  draggable: true,
+});
 
 interface SimpleRichEditorProps {
   content: string;
@@ -109,6 +261,8 @@ interface EditorState {
   showExportDialog: boolean;
   imageUrl: string;
   imageCaption: string;
+  selectedImageFile: File | null;
+  imageInputMode: "url" | "file";
   fontSize: string;
   tableBorders: boolean;
   tableRows: number;
@@ -145,6 +299,8 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
     showExportDialog: false,
     imageUrl: "",
     imageCaption: "",
+    selectedImageFile: null,
+    imageInputMode: "url",
     fontSize: "16",
     tableBorders: true,
     tableRows: 3,
@@ -465,7 +621,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       Subscript,
       Superscript,
       TextAlign.configure({
-        types: ["heading", "paragraph"],
+        types: ["heading", "paragraph", "resizableImage"],
       }),
       FontFamily.configure({
         types: ["textStyle"],
@@ -486,11 +642,12 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           target: "_blank",
         },
       }),
-      Image.configure({
+      ResizableImage.configure({
         HTMLAttributes: {
           class: "editor-image",
         },
         allowBase64: true,
+        inline: false,
       }),
       Table.configure({
         resizable: true,
@@ -588,14 +745,13 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           const reader = new FileReader();
           reader.onload = () => {
             const result = reader.result as string;
+            // Insert in a paragraph so it can be aligned
             currentEditor
               .chain()
               .focus()
-              .setImage({
-                src: result,
-                alt: file.name,
-                title: file.name,
-              })
+              .insertContent(
+                `<p><img src="${result}" alt="${file.name}" title="${file.name}" /></p>`
+              )
               .run();
 
             updateState({
@@ -644,21 +800,51 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
   );
 
   const insertImage = useCallback(() => {
-    if (!currentEditor || !state.imageUrl) return;
+    if (!currentEditor) return;
 
-    const imageHtml = state.imageCaption
-      ? `<figure><img src="${state.imageUrl}" alt="${state.imageCaption}" title="${state.imageCaption}" /><figcaption>${state.imageCaption}</figcaption></figure>`
-      : `<img src="${state.imageUrl}" alt="" />`;
+    const handleImageInsertion = (imageSrc: string) => {
+      if (state.imageCaption) {
+        // Insert with caption using figure
+        const imageHtml = `<figure><img src="${imageSrc}" alt="${state.imageCaption}" title="${state.imageCaption}" /><figcaption>${state.imageCaption}</figcaption></figure>`;
+        currentEditor.chain().focus().insertContent(imageHtml).run();
+      } else {
+        // Insert resizable image in a paragraph so it can be aligned
+        currentEditor
+          .chain()
+          .focus()
+          .insertContent(`<p><img src="${imageSrc}" alt="" title="" /></p>`)
+          .run();
+      }
+      updateState({
+        showImageDialog: false,
+        imageUrl: "",
+        imageCaption: "",
+        selectedImageFile: null,
+        imageInputMode: "url",
+        notification: "Image inserted successfully!",
+        showNotification: true,
+      });
+    };
 
-    currentEditor.chain().focus().insertContent(imageHtml).run();
-    updateState({
-      showImageDialog: false,
-      imageUrl: "",
-      imageCaption: "",
-      notification: "Image inserted successfully!",
-      showNotification: true,
-    });
-  }, [currentEditor, state.imageUrl, state.imageCaption, updateState]);
+    if (state.imageInputMode === "url") {
+      if (!state.imageUrl) return;
+      handleImageInsertion(state.imageUrl);
+    } else if (state.imageInputMode === "file" && state.selectedImageFile) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        handleImageInsertion(result);
+      };
+      reader.readAsDataURL(state.selectedImageFile);
+    }
+  }, [
+    currentEditor,
+    state.imageUrl,
+    state.imageCaption,
+    state.imageInputMode,
+    state.selectedImageFile,
+    updateState,
+  ]);
 
   const insertTable = useCallback(() => {
     if (!currentEditor) return;
@@ -776,12 +962,20 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           extensions={extensions}
           content={content}
           editable={!readOnly}
+          onCreate={({ editor }) => {
+            // Ensure controls render immediately on mount
+            setCurrentEditor(editor);
+          }}
           onUpdate={({ editor }) => {
             onChange(editor.getHTML());
             setCurrentEditor(editor);
           }}
           renderControls={() => {
-            if (!currentEditor) return null;
+            // Controls can render immediately; actions will use currentEditor when available
+            if (!currentEditor) {
+              // Render controls early (without depending on currentEditor)
+              // so the toolbar is visible before the first keystroke.
+            }
             return (
               <MenuControlsContainer>
                 {/* Font Controls */}
@@ -888,7 +1082,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           editorProps={{
             attributes: {
               style:
-                "min-height: 400px; padding: 16px; outline: none; line-height: 1.6;",
+                "min-height: 400px; max-height: 400px; overflow-y: auto; scrollbar-gutter: stable both-edges; padding: 16px; outline: none; line-height: 1.6;",
               placeholder: placeholder,
             },
           }}
@@ -904,7 +1098,8 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
             top: "120px",
             left: "20px",
             width: 400,
-            maxHeight: 300,
+            maxHeight: 450,
+            minHeight: 450,
             p: 2,
             zIndex: 1300,
           }}
@@ -940,7 +1135,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
               display: "grid",
               gridTemplateColumns: "repeat(8, 1fr)",
               gap: 1,
-              maxHeight: 150,
+              maxHeight: 250,
               overflowY: "auto",
             }}
           >
@@ -951,7 +1146,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
                 sx={{
                   minWidth: "auto",
                   p: 0.5,
-                  fontSize: "18px",
+                  fontSize: "25px",
                   aspectRatio: "1",
                 }}
               >
@@ -981,16 +1176,72 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       >
         <DialogTitle>Insert Image</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Image URL"
-            fullWidth
-            variant="outlined"
-            value={state.imageUrl}
-            onChange={(e) => updateState({ imageUrl: e.target.value })}
-            sx={{ mb: 2 }}
-          />
+          <Tabs
+            value={state.imageInputMode}
+            onChange={(_, newValue) =>
+              updateState({ imageInputMode: newValue })
+            }
+            sx={{ mb: 2, borderBottom: 1, borderColor: "divider" }}
+          >
+            <Tab
+              icon={<LinkIcon />}
+              label="URL"
+              value="url"
+              iconPosition="start"
+            />
+            <Tab
+              icon={<Upload />}
+              label="Upload File"
+              value="file"
+              iconPosition="start"
+            />
+          </Tabs>
+
+          {state.imageInputMode === "url" && (
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Image URL"
+              fullWidth
+              variant="outlined"
+              value={state.imageUrl}
+              onChange={(e) => updateState({ imageUrl: e.target.value })}
+              placeholder="https://example.com/image.jpg"
+              sx={{ mb: 2 }}
+            />
+          )}
+
+          {state.imageInputMode === "file" && (
+            <Box sx={{ mb: 2 }}>
+              <input
+                accept="image/*"
+                style={{ display: "none" }}
+                id="image-file-input"
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  updateState({ selectedImageFile: file });
+                }}
+              />
+              <label htmlFor="image-file-input">
+                <Button
+                  variant="outlined"
+                  component="span"
+                  startIcon={<CloudUpload />}
+                  fullWidth
+                  sx={{ mb: 1 }}
+                >
+                  Choose Image File
+                </Button>
+              </label>
+              {state.selectedImageFile && (
+                <Typography variant="body2" color="text.secondary">
+                  Selected: {state.selectedImageFile.name}
+                </Typography>
+              )}
+            </Box>
+          )}
+
           <TextField
             margin="dense"
             label="Caption (optional)"
@@ -998,6 +1249,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
             variant="outlined"
             value={state.imageCaption}
             onChange={(e) => updateState({ imageCaption: e.target.value })}
+            placeholder="Enter image caption..."
           />
         </DialogContent>
         <DialogActions>
@@ -1007,7 +1259,10 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           <Button
             onClick={insertImage}
             variant="contained"
-            disabled={!state.imageUrl}
+            disabled={
+              (state.imageInputMode === "url" && !state.imageUrl) ||
+              (state.imageInputMode === "file" && !state.selectedImageFile)
+            }
           >
             Insert Image
           </Button>
@@ -1116,6 +1371,32 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       <style>{`
         .advanced-rich-editor .ProseMirror {
           outline: none;
+          /* Ensure scrolling behavior and visible scrollbar styling */
+          max-height: 400px;
+          overflow-y: auto;
+          scrollbar-gutter: stable both-edges;
+        }
+
+        /* WebKit scrollbar styling */
+        .advanced-rich-editor .ProseMirror::-webkit-scrollbar {
+          width: 10px;
+        }
+        .advanced-rich-editor .ProseMirror::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 8px;
+        }
+        .advanced-rich-editor .ProseMirror::-webkit-scrollbar-thumb {
+          background: #c1c1c1;
+          border-radius: 8px;
+        }
+        .advanced-rich-editor .ProseMirror::-webkit-scrollbar-thumb:hover {
+          background: #a8a8a8;
+        }
+
+        /* Firefox scrollbar styling */
+        .advanced-rich-editor .ProseMirror {
+          scrollbar-width: thin;
+          scrollbar-color: #c1c1c1 #f1f1f1;
         }
 
         .advanced-rich-editor .editor-table {
@@ -1155,7 +1436,53 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           height: auto;
           border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          cursor: pointer;
+          transition: all 0.2s ease;
         }
+
+        .advanced-rich-editor .editor-image:hover {
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+
+        .advanced-rich-editor .ProseMirror .ProseMirror-selectednode {
+          outline: none !important;
+        }
+
+        .advanced-rich-editor .resize-handle {
+          position: absolute;
+          bottom: -5px;
+          right: -5px;
+          width: 12px;
+          height: 12px;
+          background: #1976d2;
+          border: 2px solid white;
+          border-radius: 3px;
+          cursor: se-resize;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .advanced-rich-editor .resize-handle:hover {
+          background: #1565c0;
+          transform: scale(1.1);
+        }
+
+        .advanced-rich-editor .resize-tooltip {
+          position: absolute;
+          top: -30px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0,0,0,0.8);
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          font-family: monospace;
+          white-space: nowrap;
+          pointer-events: none;
+          z-index: 1000;
+        }
+
 
         .advanced-rich-editor .editor-link {
           color: #1976d2;
@@ -1170,7 +1497,45 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         .advanced-rich-editor figure {
           margin: 24px 0;
           text-align: center;
+          position: relative;
+          display: inline-block;
+          max-width: 100%;
+          clear: both;
         }
+
+        .advanced-rich-editor figure img {
+          max-width: 100%;
+          height: auto;
+        }
+
+        /* Image alignment styles */
+        .advanced-rich-editor .ProseMirror p[style*="text-align: left"] img,
+        .advanced-rich-editor .ProseMirror div[style*="text-align: left"] img {
+          display: block;
+          margin-left: 0;
+          margin-right: auto;
+        }
+
+        .advanced-rich-editor .ProseMirror p[style*="text-align: center"] img,
+        .advanced-rich-editor .ProseMirror div[style*="text-align: center"] img {
+          display: block;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .advanced-rich-editor .ProseMirror p[style*="text-align: right"] img,
+        .advanced-rich-editor .ProseMirror div[style*="text-align: right"] img {
+          display: block;
+          margin-left: auto;
+          margin-right: 0;
+        }
+
+        .advanced-rich-editor .ProseMirror p[style*="text-align: left"],
+        .advanced-rich-editor .ProseMirror p[style*="text-align: center"],
+        .advanced-rich-editor .ProseMirror p[style*="text-align: right"] {
+          margin: 16px 0;
+        }
+
 
         .advanced-rich-editor figcaption {
           color: #666;

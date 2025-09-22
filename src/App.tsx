@@ -3,6 +3,10 @@ import { useTranslation } from "react-i18next";
 import "./App.css";
 import SimpleRichEditor from "./components/SimpleRichEditor";
 import CleanLandingPage from "./components/CleanLandingPage";
+import NotificationCenter from "./components/NotificationCenter";
+import ToastNotification from "./components/ToastNotification";
+import { useNotifications } from "./hooks/useNotifications";
+import type { ToastNotificationData } from "./types/notifications";
 
 // Types
 interface ContentItem {
@@ -1107,7 +1111,9 @@ const BlockContentViewModal = ({
   useEffect(() => {
     if (block && isOpen) {
       // Initialize editor with existing content or default
-      const initialContent = block.title ? `<h1>${block.title}</h1><p>Add your content here...</p>` : "<p>Add your content here...</p>";
+      const initialContent = block.title
+        ? `<h1>${block.title}</h1><p>Add your content here...</p>`
+        : "<p>Add your content here...</p>";
       setEditorContent(initialContent);
       setTempContent(initialContent);
       setIsEditing(false);
@@ -1133,10 +1139,20 @@ const BlockContentViewModal = ({
   };
 
   return (
-    <div className="admin-popup-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="admin-popup-content" style={{ width: "90vw", maxWidth: "1200px", height: "90vh" }}>
+    <div
+      className="admin-popup-overlay"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className="admin-popup-content"
+        style={{ width: "90vw", maxWidth: "1200px", height: "90vh" }}
+      >
         <div className="admin-popup-header">
-          <h3>{isEditing ? `${t("Editing")}: ${block.title}` : `${t("Viewing")}: ${block.title}`}</h3>
+          <h3>
+            {isEditing
+              ? `${t("Editing")}: ${block.title}`
+              : `${t("Viewing")}: ${block.title}`}
+          </h3>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             {!isEditing && (
               <button
@@ -1195,83 +1211,124 @@ const BlockContentViewModal = ({
           </div>
         </div>
 
-        <div className="admin-popup-body" style={{ height: "calc(100% - 80px)", display: "flex", flexDirection: "column" }}>
+        <div
+          className="admin-popup-body"
+          style={{
+            height: "calc(100% - 80px)",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {/* Block Info Section */}
-          <div style={{
-            background: "#f8fafc",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            padding: "16px",
-            marginBottom: "20px",
-            flexShrink: 0
-          }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", fontSize: "14px" }}>
-              <div><strong>{t("Tag")}:</strong> <span style={{ background: "#e3f2fd", padding: "2px 8px", borderRadius: "12px" }}>{block.tag}</span></div>
-              <div><strong>{t("ID")}:</strong> <code style={{ background: "#f1f3f4", padding: "2px 6px", borderRadius: "3px" }}>{block.id}</code></div>
+          <div
+            style={{
+              background: "#f8fafc",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "16px",
+              marginBottom: "20px",
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "16px",
+                fontSize: "14px",
+              }}
+            >
+              <div>
+                <strong>{t("Tag")}:</strong>{" "}
+                <span
+                  style={{
+                    background: "#e3f2fd",
+                    padding: "2px 8px",
+                    borderRadius: "12px",
+                  }}
+                >
+                  {block.tag}
+                </span>
+              </div>
+              <div>
+                <strong>{t("ID")}:</strong>{" "}
+                <code
+                  style={{
+                    background: "#f1f3f4",
+                    padding: "2px 6px",
+                    borderRadius: "3px",
+                  }}
+                >
+                  {block.id}
+                </code>
+              </div>
               {block.backgroundColor && (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
                   <strong>{t("Background")}:</strong>
-                  <div style={{
-                    width: "20px",
-                    height: "20px",
-                    backgroundColor: block.backgroundColor,
-                    border: "1px solid #ccc",
-                    borderRadius: "4px"
-                  }}></div>
+                  <div
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      backgroundColor: block.backgroundColor,
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                    }}
+                  ></div>
                   <span>{block.backgroundColor}</span>
                 </div>
               )}
               {block.width && block.height && (
-                <div><strong>{t("Size")}:</strong> {block.width} × {block.height}px</div>
+                <div>
+                  <strong>{t("Size")}:</strong> {block.width} × {block.height}px
+                </div>
               )}
             </div>
           </div>
 
           {/* Content Editor/Viewer */}
-          <div style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-            border: isEditing ? "2px solid #007AFF" : "1px solid #e5e7eb",
-            borderRadius: "8px",
-            overflow: "hidden"
-          }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+              borderRadius: "8px",
+              overflow: "auto",
+            }}
+          >
             {isEditing ? (
-              <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-                <div style={{
-                  background: "#f8fafc",
-                  padding: "12px 16px",
-                  borderBottom: "1px solid #e5e7eb",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  color: "#374151"
-                }}>
-                  📝 {t("Editing Mode")} - {t("Use the toolbar below to format your content")}
-                </div>
-                <div style={{ flex: 1, minHeight: 0 }}>
-                  <SimpleRichEditor
-                    content={tempContent}
-                    onChange={setTempContent}
-                    placeholder={`${t("Start writing content for")} "${block.title}"...`}
-                    className="block-content-editor"
-                    autoSave={false}
-                  />
-                </div>
-              </div>
+              <SimpleRichEditor
+                content={tempContent}
+                onChange={setTempContent}
+                placeholder={`${t("Start writing content for")} "${
+                  block.title
+                }"...`}
+                className="block-content-editor"
+                autoSave={false}
+              />
             ) : (
-              <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-                <div style={{
-                  background: "#f8fafc",
-                  padding: "12px 16px",
-                  borderBottom: "1px solid #e5e7eb",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  color: "#374151",
+              <div
+                style={{
+                  height: "100%",
                   display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center"
-                }}>
+                  flexDirection: "column",
+                }}
+              >
+                <div
+                  style={{
+                    background: "#f8fafc",
+                    padding: "12px 16px",
+                    borderBottom: "1px solid #e5e7eb",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
                   <span>👁️ {t("Preview Mode")}</span>
                   <span style={{ fontSize: "12px", color: "#6b7280" }}>
                     {t("Click Edit to modify content")}
@@ -1284,7 +1341,7 @@ const BlockContentViewModal = ({
                     overflow: "auto",
                     backgroundColor: "white",
                     fontSize: "16px",
-                    lineHeight: "1.6"
+                    lineHeight: "1.6",
                   }}
                   className="item-content-display"
                   dangerouslySetInnerHTML={{ __html: editorContent }}
@@ -2871,6 +2928,24 @@ const PageBackgroundControlsPopup = ({
 function App() {
   const { t, i18n } = useTranslation();
 
+  // Notification system
+  const {
+    notifications,
+    toasts,
+    notificationCenterOpen,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    clearAllNotifications,
+    removeToast,
+    toggleNotificationCenter,
+    closeNotificationCenter,
+    showSuccess,
+    showError,
+    showWarning,
+    showInfo,
+  } = useNotifications();
+
   // State management
   const [blocks, setBlocks] = useState<BlockData[]>([
     {
@@ -3061,7 +3136,7 @@ function App() {
     isVisible: true,
     isSticky: true,
     showLogo: true,
-    showSearch: true,
+    showSearch: false,
     showSaveButton: true,
     height: 48,
     borderRadius: 0,
@@ -3914,25 +3989,96 @@ function App() {
                 </>
               )}
 
-              {navbarSettings.showSearch && (
-                <button
-                  className="search-btn"
-                  aria-label="Search"
-                  style={{ color: navbarSettings.textColor }}
+              {/* Notification Icon */}
+              <button
+                className="notification-btn"
+                aria-label="Notifications"
+                onClick={toggleNotificationCenter}
+                style={{
+                  color: navbarSettings.textColor,
+                  position: "relative",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  padding: "8px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "8px",
+                  transition: "all 0.2s ease",
+                  transform: "scale(1)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.02)";
+                  e.currentTarget.style.background =
+                    "rgba(255, 255, 255, 0.12)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(0, 0, 0, 0.12)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.background =
+                    "rgba(255, 255, 255, 0.08)";
+                  e.currentTarget.style.boxShadow =
+                    "0 2px 8px rgba(0, 0, 0, 0.08)";
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "600",
+                    transition: "all 0.3s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "20px",
+                    height: "20px",
+                  }}
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
+                  🔔
+                </div>
+                {unreadCount > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "-2px",
+                      right: "-2px",
+                      background: "#ff4757",
+                      color: "white",
+                      borderRadius: "50%",
+                      minWidth: "18px",
+                      height: "18px",
+                      fontSize: "10px",
+                      fontWeight: "600",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0",
+                      boxShadow: "0 2px 8px rgba(255, 71, 87, 0.4)",
+                      border: "2px solid white",
+                      fontFamily:
+                        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                      textShadow: "0 1px 2px rgba(0, 0, 0, 0.2)",
+                      transform: "scale(1)",
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "scale(1.1)";
+                      e.currentTarget.style.boxShadow =
+                        "0 6px 16px rgba(255, 107, 107, 0.6), 0 0 0 4px rgba(255, 255, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "scale(1)";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 12px rgba(255, 107, 107, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)";
+                    }}
                   >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
-                </button>
-              )}
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </button>
 
               {/* Language Switcher Icon */}
               <button
@@ -4114,6 +4260,35 @@ function App() {
         pageBackgroundSettings={pageBackgroundSettings}
         onPageBackgroundSettingsChange={handlePageBackgroundSettingsChange}
       />
+
+      {/* Notification Center */}
+      <NotificationCenter
+        isOpen={notificationCenterOpen}
+        onClose={closeNotificationCenter}
+        notifications={notifications}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
+        onClearAll={clearAllNotifications}
+        showSuccess={showSuccess}
+        showError={showError}
+        showWarning={showWarning}
+        showInfo={showInfo}
+        isEditMode={!isLiveView}
+      />
+
+      {/* Toast Notifications */}
+      {toasts.map((toast: ToastNotificationData) => (
+        <ToastNotification
+          key={toast.id}
+          id={toast.id}
+          type={toast.type}
+          title={toast.title}
+          message={toast.message}
+          duration={toast.duration}
+          position={toast.position}
+          onClose={removeToast}
+        />
+      ))}
     </div>
   );
 }
