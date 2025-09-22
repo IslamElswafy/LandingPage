@@ -214,7 +214,9 @@ const ResizableImage = Image.extend({
 
   addAttributes() {
     return {
-      ...Image.config.addAttributes?.call(this),
+      ...(typeof super.addAttributes === "function"
+        ? super.addAttributes()
+        : {}),
       width: {
         default: null,
         parseHTML: (element: HTMLElement) => element.getAttribute("width"),
