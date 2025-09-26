@@ -1130,7 +1130,10 @@ const BlockContentViewModal = ({
     // Save JSON content to localStorage for image positioning data
     if (tempJsonContent) {
       console.log("Saving JSON to localStorage:", tempJsonContent);
-      localStorage.setItem('editor-content-json', JSON.stringify(tempJsonContent));
+      localStorage.setItem(
+        "editor-content-json",
+        JSON.stringify(tempJsonContent)
+      );
     } else {
       console.log("No JSON content to save!");
     }

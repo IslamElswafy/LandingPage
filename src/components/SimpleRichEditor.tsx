@@ -82,6 +82,7 @@ import {
   Save,
   Download,
   GetApp,
+  Delete,
 } from "@mui/icons-material";
 
 // Advanced Tiptap Extensions
@@ -121,7 +122,10 @@ const ResizableImageComponent: React.FC<{
   const { src, alt, title, width, height, x, y, layer, opacity } = node.attrs;
   const [showControls, setShowControls] = useState(false);
   const [aspectRatioLocked, setAspectRatioLocked] = useState(true);
-  const [naturalDimensions, setNaturalDimensions] = useState({ width: 0, height: 0 });
+  const [naturalDimensions, setNaturalDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
   const [currentDimensions, setCurrentDimensions] = useState({
     width: width || "auto",
     height: height || "auto",
@@ -133,8 +137,15 @@ const ResizableImageComponent: React.FC<{
   const [layerState, setLayerState] = useState(layer || "behind"); // "overlay" or "behind"
   const [imageOpacity, setImageOpacity] = useState(opacity || 100); // 0-100
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0, imageX: 0, imageY: 0 });
-  const [controlsAnchorEl, setControlsAnchorEl] = useState<HTMLElement | null>(null);
+  const [dragStart, setDragStart] = useState({
+    x: 0,
+    y: 0,
+    imageX: 0,
+    imageY: 0,
+  });
+  const [controlsAnchorEl, setControlsAnchorEl] = useState<HTMLElement | null>(
+    null
+  );
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -147,7 +158,10 @@ const ResizableImageComponent: React.FC<{
       const { naturalWidth, naturalHeight } = imageRef.current;
       setNaturalDimensions({ width: naturalWidth, height: naturalHeight });
 
-      if (currentDimensions.width === "auto" || currentDimensions.height === "auto") {
+      if (
+        currentDimensions.width === "auto" ||
+        currentDimensions.height === "auto"
+      ) {
         setCurrentDimensions({
           width: naturalWidth > 400 ? 400 : naturalWidth,
           height: naturalHeight > 300 ? 300 : naturalHeight,
@@ -160,26 +174,66 @@ const ResizableImageComponent: React.FC<{
   const handleWidthChange = useCallback(
     (newWidth: number) => {
       const width = Math.max(10, newWidth);
-      const height = aspectRatioLocked && aspectRatio ? Math.round(width / aspectRatio) : currentDimensions.height;
+      const height =
+        aspectRatioLocked && aspectRatio
+          ? Math.round(width / aspectRatio)
+          : currentDimensions.height;
 
-      const updatedDimensions = { width, height: aspectRatioLocked ? height : currentDimensions.height };
+      const updatedDimensions = {
+        width,
+        height: aspectRatioLocked ? height : currentDimensions.height,
+      };
       setCurrentDimensions(updatedDimensions);
-      updateAttributes({ ...updatedDimensions, x: position.x, y: position.y, layer: layerState, opacity: imageOpacity });
+      updateAttributes({
+        ...updatedDimensions,
+        x: position.x,
+        y: position.y,
+        layer: layerState,
+        opacity: imageOpacity,
+      });
     },
-    [aspectRatioLocked, aspectRatio, currentDimensions.height, position, layerState, imageOpacity, updateAttributes]
+    [
+      aspectRatioLocked,
+      aspectRatio,
+      currentDimensions.height,
+      position,
+      layerState,
+      imageOpacity,
+      updateAttributes,
+    ]
   );
 
   // Handle height change with aspect ratio lock
   const handleHeightChange = useCallback(
     (newWidth: number) => {
       const height = Math.max(10, newWidth);
-      const width = aspectRatioLocked && aspectRatio ? Math.round(height * aspectRatio) : currentDimensions.width;
+      const width =
+        aspectRatioLocked && aspectRatio
+          ? Math.round(height * aspectRatio)
+          : currentDimensions.width;
 
-      const updatedDimensions = { height, width: aspectRatioLocked ? width : currentDimensions.width };
+      const updatedDimensions = {
+        height,
+        width: aspectRatioLocked ? width : currentDimensions.width,
+      };
       setCurrentDimensions(updatedDimensions);
-      updateAttributes({ ...updatedDimensions, x: position.x, y: position.y, layer: layerState, opacity: imageOpacity });
+      updateAttributes({
+        ...updatedDimensions,
+        x: position.x,
+        y: position.y,
+        layer: layerState,
+        opacity: imageOpacity,
+      });
     },
-    [aspectRatioLocked, aspectRatio, currentDimensions.width, position, layerState, imageOpacity, updateAttributes]
+    [
+      aspectRatioLocked,
+      aspectRatio,
+      currentDimensions.width,
+      position,
+      layerState,
+      imageOpacity,
+      updateAttributes,
+    ]
   );
 
   // Handle X position change
@@ -187,7 +241,13 @@ const ResizableImageComponent: React.FC<{
     (newX: number) => {
       const newPosition = { x: newX, y: position.y };
       setPosition(newPosition);
-      updateAttributes({ width: currentDimensions.width, height: currentDimensions.height, ...newPosition, layer: layerState, opacity: imageOpacity });
+      updateAttributes({
+        width: currentDimensions.width,
+        height: currentDimensions.height,
+        ...newPosition,
+        layer: layerState,
+        opacity: imageOpacity,
+      });
     },
     [position.y, currentDimensions, layerState, imageOpacity, updateAttributes]
   );
@@ -197,7 +257,13 @@ const ResizableImageComponent: React.FC<{
     (newY: number) => {
       const newPosition = { x: position.x, y: newY };
       setPosition(newPosition);
-      updateAttributes({ width: currentDimensions.width, height: currentDimensions.height, ...newPosition, layer: layerState, opacity: imageOpacity });
+      updateAttributes({
+        width: currentDimensions.width,
+        height: currentDimensions.height,
+        ...newPosition,
+        layer: layerState,
+        opacity: imageOpacity,
+      });
     },
     [position.x, currentDimensions, layerState, imageOpacity, updateAttributes]
   );
@@ -211,12 +277,17 @@ const ResizableImageComponent: React.FC<{
     const resetPosition = { x: 0, y: 0 };
     setCurrentDimensions(resetDimensions);
     setPosition(resetPosition);
-    updateAttributes({ ...resetDimensions, ...resetPosition, layer: layerState, opacity: imageOpacity });
+    updateAttributes({
+      ...resetDimensions,
+      ...resetPosition,
+      layer: layerState,
+      opacity: imageOpacity,
+    });
   }, [naturalDimensions, updateAttributes]);
 
   // Toggle aspect ratio lock
   const toggleAspectRatioLock = useCallback(() => {
-    setAspectRatioLocked(prev => !prev);
+    setAspectRatioLocked((prev) => !prev);
   }, []);
 
   // Toggle layer state (overlay/behind text)
@@ -234,26 +305,31 @@ const ResizableImageComponent: React.FC<{
   }, [layerState, currentDimensions, position, imageOpacity, updateAttributes]);
 
   // Handle opacity change
-  const handleOpacityChange = useCallback((newOpacity: number) => {
-    const opacity = Math.min(100, Math.max(0, newOpacity));
-    setImageOpacity(opacity);
-    updateAttributes({
-      width: currentDimensions.width,
-      height: currentDimensions.height,
-      x: position.x,
-      y: position.y,
-      layer: layerState,
-      opacity: opacity,
-    });
-  }, [currentDimensions, position, layerState, updateAttributes]);
-
+  const handleOpacityChange = useCallback(
+    (newOpacity: number) => {
+      const opacity = Math.min(100, Math.max(0, newOpacity));
+      setImageOpacity(opacity);
+      updateAttributes({
+        width: currentDimensions.width,
+        height: currentDimensions.height,
+        x: position.x,
+        y: position.y,
+        layer: layerState,
+        opacity: opacity,
+      });
+    },
+    [currentDimensions, position, layerState, updateAttributes]
+  );
 
   // Show controls
-  const handleShowControls = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    setControlsAnchorEl(event.currentTarget);
-    setShowControls(true);
-  }, []);
+  const handleShowControls = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      event.stopPropagation();
+      setControlsAnchorEl(event.currentTarget);
+      setShowControls(true);
+    },
+    []
+  );
 
   // Hide controls
   const handleHideControls = useCallback(() => {
@@ -262,16 +338,19 @@ const ResizableImageComponent: React.FC<{
   }, []);
 
   // Handle drag start
-  const handleDragStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-    setDragStart({
-      x: e.clientX,
-      y: e.clientY,
-      imageX: position.x,
-      imageY: position.y,
-    });
-  }, [position]);
+  const handleDragStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX,
+        y: e.clientY,
+        imageX: position.x,
+        imageY: position.y,
+      });
+    },
+    [position]
+  );
 
   // Handle drag
   useEffect(() => {
@@ -318,15 +397,15 @@ const ResizableImageComponent: React.FC<{
         zIndex: selected
           ? 1000
           : layerState === "overlay"
-            ? 100 // Above text - will hide text unless opacity is reduced
-            : 1, // Behind text - text appears normally
+          ? 100 // Above text - will hide text unless opacity is reduced
+          : 1, // Behind text - text appears normally
         border: selected
           ? layerState === "behind"
             ? "2px solid #ff9800"
             : "2px solid #1976d2"
           : layerState === "behind"
-            ? "2px dashed rgba(255, 152, 0, 0.3)"
-            : "2px solid transparent",
+          ? "2px dashed rgba(255, 152, 0, 0.3)"
+          : "2px solid transparent",
         borderRadius: "4px",
         cursor: isDragging ? "grabbing" : "grab",
         opacity: imageOpacity / 100, // Use manual opacity control
@@ -340,8 +419,14 @@ const ResizableImageComponent: React.FC<{
         onLoad={handleImageLoad}
         onMouseDown={handleDragStart}
         style={{
-          width: currentDimensions.width === "auto" ? "auto" : `${currentDimensions.width}px`,
-          height: currentDimensions.height === "auto" ? "auto" : `${currentDimensions.height}px`,
+          width:
+            currentDimensions.width === "auto"
+              ? "auto"
+              : `${currentDimensions.width}px`,
+          height:
+            currentDimensions.height === "auto"
+              ? "auto"
+              : `${currentDimensions.height}px`,
           borderRadius: "4px",
           display: "block",
           userSelect: "none",
@@ -381,7 +466,6 @@ const ResizableImageComponent: React.FC<{
         </Box>
       )}
 
-
       {/* Layer Toggle Button */}
       {selected && (
         <IconButton
@@ -400,9 +484,17 @@ const ResizableImageComponent: React.FC<{
             },
             boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
-          title={layerState === "overlay" ? "Overlay mode (image above text)" : "Background mode (image behind text)"}
+          title={
+            layerState === "overlay"
+              ? "Overlay mode (image above text)"
+              : "Background mode (image behind text)"
+          }
         >
-          {layerState === "overlay" ? <FlipToFront fontSize="small" /> : <FlipToBack fontSize="small" />}
+          {layerState === "overlay" ? (
+            <FlipToFront fontSize="small" />
+          ) : (
+            <FlipToBack fontSize="small" />
+          )}
         </IconButton>
       )}
 
@@ -453,7 +545,10 @@ const ResizableImageComponent: React.FC<{
         }}
       >
         <Box>
-          <Typography variant="subtitle2" sx={{ mb: 2, color: "#ffffff", fontWeight: "bold" }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ mb: 2, color: "#ffffff", fontWeight: "bold" }}
+          >
             Image Properties
           </Typography>
 
@@ -476,7 +571,11 @@ const ResizableImageComponent: React.FC<{
                 },
               }}
               InputProps={{
-                endAdornment: <InputAdornment position="end" sx={{ color: "#ccc" }}>px</InputAdornment>,
+                endAdornment: (
+                  <InputAdornment position="end" sx={{ color: "#ccc" }}>
+                    px
+                  </InputAdornment>
+                ),
               }}
             />
 
@@ -497,7 +596,11 @@ const ResizableImageComponent: React.FC<{
                 },
               }}
               InputProps={{
-                endAdornment: <InputAdornment position="end" sx={{ color: "#ccc" }}>px</InputAdornment>,
+                endAdornment: (
+                  <InputAdornment position="end" sx={{ color: "#ccc" }}>
+                    px
+                  </InputAdornment>
+                ),
               }}
             />
           </Box>
@@ -507,7 +610,11 @@ const ResizableImageComponent: React.FC<{
             <TextField
               label="Width"
               type="number"
-              value={currentDimensions.width === "auto" ? "" : currentDimensions.width}
+              value={
+                currentDimensions.width === "auto"
+                  ? ""
+                  : currentDimensions.width
+              }
               onChange={(e) => handleWidthChange(parseInt(e.target.value) || 0)}
               size="small"
               sx={{
@@ -521,7 +628,11 @@ const ResizableImageComponent: React.FC<{
                 },
               }}
               InputProps={{
-                endAdornment: <InputAdornment position="end" sx={{ color: "#ccc" }}>px</InputAdornment>,
+                endAdornment: (
+                  <InputAdornment position="end" sx={{ color: "#ccc" }}>
+                    px
+                  </InputAdornment>
+                ),
               }}
             />
 
@@ -540,8 +651,14 @@ const ResizableImageComponent: React.FC<{
             <TextField
               label="Height"
               type="number"
-              value={currentDimensions.height === "auto" ? "" : currentDimensions.height}
-              onChange={(e) => handleHeightChange(parseInt(e.target.value) || 0)}
+              value={
+                currentDimensions.height === "auto"
+                  ? ""
+                  : currentDimensions.height
+              }
+              onChange={(e) =>
+                handleHeightChange(parseInt(e.target.value) || 0)
+              }
               size="small"
               sx={{
                 flex: 1,
@@ -554,13 +671,24 @@ const ResizableImageComponent: React.FC<{
                 },
               }}
               InputProps={{
-                endAdornment: <InputAdornment position="end" sx={{ color: "#ccc" }}>px</InputAdornment>,
+                endAdornment: (
+                  <InputAdornment position="end" sx={{ color: "#ccc" }}>
+                    px
+                  </InputAdornment>
+                ),
               }}
             />
           </Box>
 
           {/* Additional Info */}
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
             <Typography variant="caption" sx={{ color: "#ccc" }}>
               Original: {naturalDimensions.width} × {naturalDimensions.height}
             </Typography>
@@ -571,7 +699,14 @@ const ResizableImageComponent: React.FC<{
             )}
           </Box>
 
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
             <Typography variant="caption" sx={{ color: "#ccc" }}>
               Position: {position.x}, {position.y}
             </Typography>
@@ -581,7 +716,17 @@ const ResizableImageComponent: React.FC<{
           </Box>
 
           {/* Layer Control */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, p: 1, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 1 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              mb: 2,
+              p: 1,
+              backgroundColor: "rgba(255,255,255,0.05)",
+              borderRadius: 1,
+            }}
+          >
             <Layers sx={{ color: "#ccc", fontSize: 16 }} />
             <Typography variant="body2" sx={{ color: "#ccc", flex: 1 }}>
               Layer:
@@ -590,13 +735,19 @@ const ResizableImageComponent: React.FC<{
               variant={layerState === "overlay" ? "contained" : "outlined"}
               size="small"
               onClick={toggleLayerState}
-              startIcon={layerState === "overlay" ? <FlipToFront /> : <FlipToBack />}
+              startIcon={
+                layerState === "overlay" ? <FlipToFront /> : <FlipToBack />
+              }
               sx={{
-                backgroundColor: layerState === "overlay" ? "#1976d2" : "transparent",
+                backgroundColor:
+                  layerState === "overlay" ? "#1976d2" : "transparent",
                 color: layerState === "overlay" ? "white" : "#1976d2",
                 borderColor: "#1976d2",
                 "&:hover": {
-                  backgroundColor: layerState === "overlay" ? "#1565c0" : "rgba(25, 118, 210, 0.1)",
+                  backgroundColor:
+                    layerState === "overlay"
+                      ? "#1565c0"
+                      : "rgba(25, 118, 210, 0.1)",
                 },
               }}
             >
@@ -605,12 +756,22 @@ const ResizableImageComponent: React.FC<{
           </Box>
 
           {/* Opacity Control */}
-          <Box sx={{ mb: 2, p: 1, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 1 }}>
+          <Box
+            sx={{
+              mb: 2,
+              p: 1,
+              backgroundColor: "rgba(255,255,255,0.05)",
+              borderRadius: 1,
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
               <Typography variant="body2" sx={{ color: "#ccc", minWidth: 60 }}>
                 Opacity:
               </Typography>
-              <Typography variant="body2" sx={{ color: "#1976d2", fontWeight: "bold", minWidth: 35 }}>
+              <Typography
+                variant="body2"
+                sx={{ color: "#1976d2", fontWeight: "bold", minWidth: 35 }}
+              >
                 {imageOpacity}%
               </Typography>
             </Box>
@@ -697,7 +858,8 @@ const ResizableImage = Image.extend({
       },
       x: {
         default: 0,
-        parseHTML: (element: HTMLElement) => parseInt(element.getAttribute("data-x") || "0"),
+        parseHTML: (element: HTMLElement) =>
+          parseInt(element.getAttribute("data-x") || "0"),
         renderHTML: (attributes: { x?: number }) => {
           if (!attributes.x && attributes.x !== 0) return {};
           return { "data-x": attributes.x };
@@ -705,7 +867,8 @@ const ResizableImage = Image.extend({
       },
       y: {
         default: 0,
-        parseHTML: (element: HTMLElement) => parseInt(element.getAttribute("data-y") || "0"),
+        parseHTML: (element: HTMLElement) =>
+          parseInt(element.getAttribute("data-y") || "0"),
         renderHTML: (attributes: { y?: number }) => {
           if (!attributes.y && attributes.y !== 0) return {};
           return { "data-y": attributes.y };
@@ -713,7 +876,8 @@ const ResizableImage = Image.extend({
       },
       layer: {
         default: "behind",
-        parseHTML: (element: HTMLElement) => element.getAttribute("data-layer") || "behind",
+        parseHTML: (element: HTMLElement) =>
+          element.getAttribute("data-layer") || "behind",
         renderHTML: (attributes: { layer?: string }) => {
           if (!attributes.layer) return {};
           return { "data-layer": attributes.layer };
@@ -721,7 +885,8 @@ const ResizableImage = Image.extend({
       },
       opacity: {
         default: 100,
-        parseHTML: (element: HTMLElement) => parseInt(element.getAttribute("data-opacity") || "100"),
+        parseHTML: (element: HTMLElement) =>
+          parseInt(element.getAttribute("data-opacity") || "100"),
         renderHTML: (attributes: { opacity?: number }) => {
           if (!attributes.opacity && attributes.opacity !== 0) return {};
           return { "data-opacity": attributes.opacity };
@@ -733,12 +898,14 @@ const ResizableImage = Image.extend({
   addCommands() {
     return {
       ...this.parent?.(),
-      setResizableImage: (attributes) => ({ commands }) => {
-        return commands.insertContent({
-          type: this.name,
-          attrs: attributes,
-        });
-      },
+      setResizableImage:
+        (attributes) =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: attributes,
+          });
+        },
     };
   },
 
@@ -1264,7 +1431,11 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
             currentEditor
               .chain()
               .focus()
-              .setResizableImage({ src: result, alt: file.name, title: file.name })
+              .setResizableImage({
+                src: result,
+                alt: file.name,
+                title: file.name,
+              })
               .run();
 
             updateState({
@@ -1302,9 +1473,11 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
     }
   }, [currentEditor, updateState]);
 
-
   // Use external preview mode if provided, otherwise use internal state
-  const isPreviewMode = externalPreviewMode !== undefined ? externalPreviewMode : state.isPreviewMode;
+  const isPreviewMode =
+    externalPreviewMode !== undefined
+      ? externalPreviewMode
+      : state.isPreviewMode;
 
   // Toggle Preview Mode
   const togglePreviewMode = useCallback(() => {
@@ -1317,28 +1490,32 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
 
   // Load saved layout state
   const loadSavedState = useCallback(() => {
-    const savedJsonContent = localStorage.getItem('editor-content-json');
-    console.log('Loading saved JSON content:', savedJsonContent);
+    const savedJsonContent = localStorage.getItem("editor-content-json");
+    console.log("Loading saved JSON content:", savedJsonContent);
     if (savedJsonContent && currentEditor) {
       try {
         const jsonContent = JSON.parse(savedJsonContent);
-        console.log('Parsed JSON content:', jsonContent);
+        console.log("Parsed JSON content:", jsonContent);
         currentEditor.commands.setContent(jsonContent);
         updateState({
           notification: "Saved layout loaded!",
           showNotification: true,
         });
       } catch (error) {
-        console.error('Error loading saved state:', error);
+        console.error("Error loading saved state:", error);
       }
     } else {
-      console.log('No saved JSON content found or no editor available');
+      console.log("No saved JSON content found or no editor available");
     }
   }, [currentEditor, updateState]);
 
   // Load saved state when entering preview mode
   useEffect(() => {
-    console.log('Preview mode effect triggered:', isPreviewMode, !!currentEditor);
+    console.log(
+      "Preview mode effect triggered:",
+      isPreviewMode,
+      !!currentEditor
+    );
     if (isPreviewMode && currentEditor) {
       loadSavedState();
     }
@@ -1456,6 +1633,15 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
     currentEditor.chain().focus().toggleBlockquote().run();
   }, [currentEditor]);
 
+  const deleteTable = useCallback(() => {
+    if (!currentEditor) return;
+    currentEditor.chain().focus().deleteTable().run();
+    updateState({
+      notification: "Table deleted successfully!",
+      showNotification: true,
+    });
+  }, [currentEditor, updateState]);
+
   // Filtered emojis with search
   const filteredEmojis = useMemo(() => {
     const categoryEmojis =
@@ -1468,7 +1654,9 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
 
   return (
     <Box
-      className={`advanced-rich-editor ${isPreviewMode ? 'preview-mode' : ''} ${className}`}
+      className={`advanced-rich-editor ${
+        isPreviewMode ? "preview-mode" : ""
+      } ${className}`}
       sx={{
         position: state.isFullscreen ? "fixed" : "relative",
         top: state.isFullscreen ? 0 : "auto",
@@ -1553,11 +1741,14 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
               const htmlContent = editor.getHTML();
               const jsonContent = editor.getJSON();
 
-              console.log('onUpdate - HTML:', htmlContent);
-              console.log('onUpdate - JSON:', jsonContent);
+              console.log("onUpdate - HTML:", htmlContent);
+              console.log("onUpdate - JSON:", jsonContent);
 
               // Store JSON content for image positioning data
-              localStorage.setItem('editor-content-json', JSON.stringify(jsonContent));
+              localStorage.setItem(
+                "editor-content-json",
+                JSON.stringify(jsonContent)
+              );
 
               // Pass both HTML and JSON to parent component
               onChange(htmlContent, jsonContent);
@@ -1655,6 +1846,25 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
                     <TableChart />
                   </IconButton>
                 </Tooltip>
+
+                {/* Delete Table Button - Only show when table is selected */}
+                {currentEditor?.isActive("table") && (
+                  <Tooltip title="Delete Table">
+                    <IconButton
+                      size="small"
+                      onClick={deleteTable}
+                      sx={{
+                        color: "error.main",
+                        "&:hover": {
+                          backgroundColor: "error.light",
+                          color: "error.contrastText",
+                        },
+                      }}
+                    >
+                      <Delete />
+                    </IconButton>
+                  </Tooltip>
+                )}
 
                 <Tooltip title="Insert Emoji">
                   <IconButton
