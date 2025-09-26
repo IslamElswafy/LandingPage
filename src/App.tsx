@@ -1107,6 +1107,8 @@ const BlockContentViewModal = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editorContent, setEditorContent] = useState("");
   const [tempContent, setTempContent] = useState("");
+  const [tempJsonContent, setTempJsonContent] = useState<any>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   useEffect(() => {
     if (block && isOpen) {
@@ -1124,9 +1126,22 @@ const BlockContentViewModal = ({
 
   const handleSave = () => {
     setEditorContent(tempContent);
+
+    // Save JSON content to localStorage for image positioning data
+    if (tempJsonContent) {
+      console.log("Saving JSON to localStorage:", tempJsonContent);
+      localStorage.setItem('editor-content-json', JSON.stringify(tempJsonContent));
+    } else {
+      console.log("No JSON content to save!");
+    }
+
+    // Enter Preview Mode after saving
+    setIsPreviewMode(true);
     setIsEditing(false);
+
     // Here you would typically save to your backend/state management
     console.log("Saving content:", tempContent);
+    console.log("Saving JSON content:", tempJsonContent);
   };
 
   const handleCancel = () => {
@@ -1136,6 +1151,18 @@ const BlockContentViewModal = ({
 
   const handleEdit = () => {
     setIsEditing(true);
+    setIsPreviewMode(false); // Exit preview mode when editing
+  };
+
+  const handlePreviewModeToggle = () => {
+    setIsPreviewMode(!isPreviewMode);
+  };
+
+  const handleContentChange = (htmlContent: string, jsonContent?: any) => {
+    setTempContent(htmlContent);
+    if (jsonContent) {
+      setTempJsonContent(jsonContent);
+    }
   };
 
   return (
@@ -1149,8 +1176,10 @@ const BlockContentViewModal = ({
       >
         <div className="admin-popup-header">
           <h3>
-            {isEditing
+            {isEditing && !isPreviewMode
               ? `${t("Editing")}: ${block.title}`
+              : isPreviewMode
+              ? `👁️ ${t("Preview Mode")}: ${block.title}`
               : `${t("Viewing")}: ${block.title}`}
           </h3>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -1301,12 +1330,14 @@ const BlockContentViewModal = ({
             {isEditing ? (
               <SimpleRichEditor
                 content={tempContent}
-                onChange={setTempContent}
+                onChange={handleContentChange}
                 placeholder={`${t("Start writing content for")} "${
                   block.title
                 }"...`}
                 className="block-content-editor"
                 autoSave={false}
+                isPreviewMode={isPreviewMode}
+                onPreviewModeToggle={handlePreviewModeToggle}
               />
             ) : (
               <div
