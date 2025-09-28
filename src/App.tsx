@@ -1003,7 +1003,6 @@ const DynamicBlock = ({
       onDoubleClick={() => onDoubleClick(block.id)}
       onClick={() => onBlockClick(block.id)}
     >
-      <span className="tag">{block.tag}</span>
       <button
         className="cta"
         onClick={(e) => {
@@ -1270,18 +1269,6 @@ const BlockContentViewModal = ({
                 fontSize: "14px",
               }}
             >
-              <div>
-                <strong>{t("Tag")}:</strong>{" "}
-                <span
-                  style={{
-                    background: "#e3f2fd",
-                    padding: "2px 8px",
-                    borderRadius: "12px",
-                  }}
-                >
-                  {block.tag}
-                </span>
-              </div>
               <div>
                 <strong>{t("ID")}:</strong>{" "}
                 <code
