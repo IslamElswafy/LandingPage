@@ -61,27 +61,16 @@ import {
   EmojiEmotions,
   Code,
   FormatQuote,
-  Fullscreen,
-  FullscreenExit,
-  Preview,
-  Edit,
   CloudUpload,
-  Settings,
   Link as LinkIcon,
   Upload,
   Lock,
   LockOpen,
-  AspectRatio,
   PhotoSizeSelectActual,
-  DragIndicator,
   OpenWith,
   Layers,
-  LayersClear,
   FlipToFront,
   FlipToBack,
-  Save,
-  Download,
-  GetApp,
   Delete,
 } from "@mui/icons-material";
 
@@ -108,7 +97,6 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Dropcursor from "@tiptap/extension-dropcursor";
 import Gapcursor from "@tiptap/extension-gapcursor";
 import { common, createLowlight } from "lowlight";
-import { Node } from "@tiptap/core";
 import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
 
 const lowlight = createLowlight(common);
@@ -173,7 +161,7 @@ const ResizableImageComponent: React.FC<{
   // Handle width change with aspect ratio lock
   const handleWidthChange = useCallback(
     (newWidth: number) => {
-      const width = Math.max(10, newWidth);
+      const width = Math.max(0, newWidth);
       const height =
         aspectRatioLocked && aspectRatio
           ? Math.round(width / aspectRatio)
@@ -206,7 +194,7 @@ const ResizableImageComponent: React.FC<{
   // Handle height change with aspect ratio lock
   const handleHeightChange = useCallback(
     (newWidth: number) => {
-      const height = Math.max(10, newWidth);
+      const height = Math.max(0, newWidth);
       const width =
         aspectRatioLocked && aspectRatio
           ? Math.round(height * aspectRatio)
@@ -287,8 +275,29 @@ const ResizableImageComponent: React.FC<{
 
   // Toggle aspect ratio lock
   const toggleAspectRatioLock = useCallback(() => {
-    setAspectRatioLocked((prev) => !prev);
-  }, []);
+    setAspectRatioLocked((prev) => {
+      const newLocked = !prev;
+
+      // If locking aspect ratio, immediately sync width based on current height
+      if (newLocked && aspectRatio && currentDimensions.height !== "auto") {
+        const syncedWidth = Math.round(currentDimensions.height * aspectRatio);
+        const updatedDimensions = {
+          width: syncedWidth,
+          height: currentDimensions.height,
+        };
+        setCurrentDimensions(updatedDimensions);
+        updateAttributes({
+          ...updatedDimensions,
+          x: position.x,
+          y: position.y,
+          layer: layerState,
+          opacity: imageOpacity,
+        });
+      }
+
+      return newLocked;
+    });
+  }, [aspectRatio, currentDimensions, position, layerState, imageOpacity, updateAttributes]);
 
   // Toggle layer state (overlay/behind text)
   const toggleLayerState = useCallback(() => {
@@ -839,7 +848,7 @@ const ResizableImage = Image.extend({
 
   addAttributes() {
     return {
-      ...this.parent?.(),
+      ...this.parent?.() || {},
       width: {
         default: null,
         parseHTML: (element: HTMLElement) => element.getAttribute("width"),
@@ -897,10 +906,10 @@ const ResizableImage = Image.extend({
 
   addCommands() {
     return {
-      ...this.parent?.(),
+      ...this.parent?.() || {},
       setResizableImage:
-        (attributes) =>
-        ({ commands }) => {
+        (attributes: any) =>
+        ({ commands }: { commands: any }) => {
           return commands.insertContent({
             type: this.name,
             attrs: attributes,
@@ -1295,10 +1304,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
   // Advanced Extensions Configuration
   const extensions = useMemo(
     () => [
-      StarterKit.configure({
-        // Exclude the default Image extension to use our ResizableImage instead
-        image: false,
-      }),
+      StarterKit,
       Underline,
       Subscript,
       Superscript,
@@ -1479,14 +1485,6 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       ? externalPreviewMode
       : state.isPreviewMode;
 
-  // Toggle Preview Mode
-  const togglePreviewMode = useCallback(() => {
-    if (onPreviewModeToggle) {
-      onPreviewModeToggle();
-    } else {
-      updateState({ isPreviewMode: !state.isPreviewMode });
-    }
-  }, [onPreviewModeToggle, state.isPreviewMode, updateState]);
 
   // Load saved layout state
   const loadSavedState = useCallback(() => {
@@ -2088,37 +2086,29 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       >
         <DialogTitle>Insert Table</DialogTitle>
         <DialogContent>
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Rows</InputLabel>
-            <Select
-              value={state.tableRows}
-              onChange={(e) =>
-                updateState({ tableRows: Number(e.target.value) })
-              }
-            >
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                <MenuItem key={num} value={num}>
-                  {num}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <TextField
+            fullWidth
+            margin="dense"
+            label="Rows"
+            type="number"
+            value={state.tableRows}
+            onChange={(e) =>
+              updateState({ tableRows: Math.max(1, Number(e.target.value) || 1) })
+            }
+            inputProps={{ min: 1, max: 50 }}
+          />
 
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Columns</InputLabel>
-            <Select
-              value={state.tableCols}
-              onChange={(e) =>
-                updateState({ tableCols: Number(e.target.value) })
-              }
-            >
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                <MenuItem key={num} value={num}>
-                  {num}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <TextField
+            fullWidth
+            margin="dense"
+            label="Columns"
+            type="number"
+            value={state.tableCols}
+            onChange={(e) =>
+              updateState({ tableCols: Math.max(1, Number(e.target.value) || 1) })
+            }
+            inputProps={{ min: 1, max: 50 }}
+          />
 
           <FormControlLabel
             control={
