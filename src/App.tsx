@@ -79,6 +79,7 @@ interface VisitorStats {
 
 interface StyleSettings {
   stylePreset: string;
+  opacity: number;
   animation: string;
   corners: string;
   elevation: string;
@@ -954,6 +955,9 @@ const DynamicBlock = ({
 
   const getBlockStyle = () => {
     const baseStyle = getBackgroundStyle();
+    const styleSettings = block.styleSettings || defaultStyleSettings;
+    const opacity =
+      styleSettings.opacity !== undefined ? styleSettings.opacity / 100 : 1;
 
     if (block.isManuallyResized) {
       return {
@@ -962,10 +966,14 @@ const DynamicBlock = ({
         height: block.height ? `${block.height}px` : "auto",
         position: "relative" as const,
         zIndex: 10,
+        opacity: opacity,
       };
     }
 
-    return baseStyle;
+    return {
+      ...baseStyle,
+      opacity: opacity,
+    };
   };
 
   const getBackgroundStyle = () => {
@@ -1793,11 +1801,60 @@ const AdminControlsPopup = ({
           )}
 
           {isBlockSelected && (
-            <div className="selected-block-info">
-              <p>
-                <strong>✅ Controlling Block:</strong> {selectedBlock.tag} (ID:{" "}
-                {selectedBlock.id})
-              </p>
+            <div className="block-preview-container">
+              <div className="preview-label">
+                <strong>Preview</strong>
+              </div>
+              <div
+                style={{
+                  width: "200px",
+                  height: "120px",
+                  position: "relative",
+                  marginBottom: "10px",
+                  backgroundColor: "#f0f0f0",
+                  backgroundImage:
+                    "linear-gradient(45deg, #e0e0e0 25%, transparent 25%), linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e0e0e0 75%), linear-gradient(-45deg, transparent 75%, #e0e0e0 75%)",
+                  backgroundSize: "10px 10px",
+                  backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                }}
+              >
+                <div
+                  className={`block-preview ${
+                    currentSettings.stylePreset || ""
+                  } ${currentSettings.animation || ""} ${
+                    currentSettings.corners || ""
+                  } ${currentSettings.elevation || ""} ${
+                    currentSettings.border || ""
+                  } ${currentSettings.background || ""}`}
+                  style={{
+                    backgroundColor: selectedBlock.backgroundColor,
+                    backgroundImage: selectedBlock.backgroundImage
+                      ? `url(${selectedBlock.backgroundImage})`
+                      : selectedBlock.isGradient && selectedBlock.gradientColors
+                      ? `linear-gradient(${
+                          selectedBlock.gradientDirection || "45deg"
+                        }, ${selectedBlock.gradientColors.join(", ")})`
+                      : undefined,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    width: "100%",
+                    height: "100%",
+                    borderRadius:
+                      currentSettings.corners === "rounded" ? "8px" : "0",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "12px",
+                    color: "#333",
+                    textAlign: "center",
+                    position: "relative",
+                    overflow: "hidden",
+                    opacity: currentSettings.opacity / 100,
+                  }}
+                ></div>
+              </div>
             </div>
           )}
 
@@ -1819,6 +1876,31 @@ const AdminControlsPopup = ({
               <option value="style-gradient">Gradient</option>
               <option value="style-dark">Dark</option>
             </select>
+
+            <label>Opacity:</label>
+            <div className="opacity-control">
+              <input
+                type="range"
+                min="1"
+                max="100"
+                value={currentSettings.opacity}
+                onChange={(e) =>
+                  isBlockSelected
+                    ? onSelectedBlockStyleChange(
+                        "opacity",
+                        e.target.value
+                      )
+                    : onStyleChange("opacity", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  marginBottom: "5px",
+                }}
+              />
+              <span style={{ fontSize: "12px", color: "#666" }}>
+                {currentSettings.opacity}%
+              </span>
+            </div>
 
             <label>Animation:</label>
             <select
@@ -2125,44 +2207,6 @@ const AdminControlsPopup = ({
               {t("blocks.deleteAllBlocks")}
             </button>
           </div>
-
-          <div className="control-group">
-            <h4>Block Selection</h4>
-            {selectedBlockId ? (
-              <p>
-                <strong>Selected Block:</strong> {selectedBlockId}
-                <br />
-                <small>
-                  Click on any block to select it, or click the same block again
-                  to deselect.
-                </small>
-              </p>
-            ) : (
-              <p>
-                <em>No block selected</em>
-                <br />
-                <small>
-                  Click on any block to select and control it individually.
-                </small>
-              </p>
-            )}
-          </div>
-
-          <p>
-            <strong>Admin Note:</strong> Can add pictures background or flat or
-            solid color or gradient other things as admin and these can be
-            discussed.
-          </p>
-          <p>
-            <strong>Resizing Tips:</strong>
-            <br />
-            • Drag resize handles to adjust width and height
-            <br />
-            • Widen a block to 85% of container width to make it full-width
-            <br />
-            • Full-width blocks push other blocks to new rows
-            <br />• Double-click any card to reset its size to auto
-          </p>
         </div>
       </div>
     </div>
@@ -3035,6 +3079,7 @@ function App() {
       isManuallyResized: false,
       styleSettings: {
         stylePreset: "",
+        opacity: 100,
         animation: "",
         corners: "rounded",
         elevation: "shadow",
@@ -3046,6 +3091,7 @@ function App() {
 
   const [styleSettings, setStyleSettings] = useState<StyleSettings>({
     stylePreset: "",
+    opacity: 100,
     animation: "",
     corners: "rounded",
     elevation: "shadow",
