@@ -107,18 +107,32 @@ import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
 
 const lowlight = createLowlight(common);
 
+const generateAnchorId = () => `anchor-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
 // Inline Image Component with Word-like Text Wrapping and Drag-Drop
 const InlineImageComponent: React.FC<{
   node: any;
   updateAttributes: (attrs: any) => void;
   selected: boolean;
 }> = ({ node, updateAttributes, selected }) => {
-  const { src, alt, title, width, height, float, opacity } = node.attrs;
+  const { src, alt, title, width, height, float, opacity, anchorId, anchorOffset } = node.attrs;
 
   // Debug logging
   useEffect(() => {
     console.log('InlineImageComponent mounted', { selected, draggable: true, float });
   }, [selected, float]);
+
+  // Ensure anchor metadata exists for this image node
+  useEffect(() => {
+    if (!anchorId) {
+      updateAttributes({
+        anchorId: generateAnchorId(),
+        anchorOffset: typeof anchorOffset === 'number' ? anchorOffset : 0,
+      });
+    } else if (typeof anchorOffset !== 'number') {
+      updateAttributes({ anchorOffset: 0 });
+    }
+  }, [anchorId, anchorOffset, updateAttributes]);
   const [showControls, setShowControls] = useState(false);
   const [aspectRatioLocked, setAspectRatioLocked] = useState(true);
   const [naturalDimensions, setNaturalDimensions] = useState({
@@ -367,23 +381,47 @@ const InlineImageComponent: React.FC<{
     };
   }, [isResizing, resizeStart, aspectRatioLocked, aspectRatio, floatState, imageOpacity, updateAttributes]);
 
+  const widthValue =
+    currentDimensions.width === "auto"
+      ? "auto"
+      : `${currentDimensions.width}px`;
+  const heightValue =
+    currentDimensions.height === "auto"
+      ? "auto"
+      : `${currentDimensions.height}px`;
+
+  const wrapperStyle = {
+    display: "inline-block",
+    float: floatState,
+    margin:
+      floatState === "left"
+        ? "0 16px 8px 0"
+        : floatState === "right"
+        ? "0 0 8px 16px"
+        : "8px auto",
+    position: "relative",
+    border: selected ? "2px solid #1976d2" : "2px solid transparent",
+    borderRadius: "4px",
+    cursor: isResizing ? "se-resize" : "default",
+    opacity: imageOpacity / 100,
+    maxWidth: "100%",
+    width: widthValue,
+    height: heightValue,
+    "--inline-image-width": widthValue,
+    "--inline-image-max-width":
+      currentDimensions.width === "auto" ? "100%" : widthValue,
+    "--inline-image-height": heightValue,
+  } as React.CSSProperties & {
+    "--inline-image-width"?: string;
+    "--inline-image-max-width"?: string;
+    "--inline-image-height"?: string;
+  };
+
   return (
     <NodeViewWrapper
       ref={containerRef}
       className="inline-image-wrapper"
-      style={{
-        display: "inline-block",
-        float: floatState,
-        margin: floatState === "left" ? "0 16px 8px 0" : floatState === "right" ? "0 0 8px 16px" : "8px auto",
-        position: "relative",
-        border: selected ? "2px solid #1976d2" : "2px solid transparent",
-        borderRadius: "4px",
-        cursor: isResizing ? "se-resize" : "default",
-        opacity: imageOpacity / 100,
-        maxWidth: "100%",
-        width: currentDimensions.width === "auto" ? "auto" : `${currentDimensions.width}px`,
-        height: currentDimensions.height === "auto" ? "auto" : `${currentDimensions.height}px`,
-      }}
+      style={wrapperStyle}
       contentEditable={false}
     >
       <img
@@ -821,6 +859,28 @@ const InlineImage = Image.extend({
           return { "data-float": attributes.float };
         },
       },
+      anchorId: {
+        default: null,
+        parseHTML: (element: HTMLElement) =>
+          element.getAttribute("data-anchor-id"),
+        renderHTML: (attributes: { anchorId?: string | null }) => {
+          if (!attributes.anchorId) return {};
+          return { "data-anchor-id": attributes.anchorId };
+        },
+      },
+      anchorOffset: {
+        default: 0,
+        parseHTML: (element: HTMLElement) => {
+          const value = element.getAttribute("data-anchor-offset");
+          if (value === null) return 0;
+          const parsed = parseFloat(value);
+          return Number.isFinite(parsed) ? parsed : 0;
+        },
+        renderHTML: (attributes: { anchorOffset?: number }) => {
+          if (typeof attributes.anchorOffset !== "number") return {};
+          return { "data-anchor-offset": String(attributes.anchorOffset) };
+        },
+      },
       opacity: {
         default: 100,
         parseHTML: (element: HTMLElement) =>
@@ -837,11 +897,23 @@ const InlineImage = Image.extend({
     return {
       ...this.parent?.() || {},
       setInlineImage:
-        (attributes: any) =>
+        (attributes: any = {}) =>
         ({ commands }: { commands: any }) => {
+          const normalizedAttributes = {
+            ...attributes,
+            anchorId:
+              typeof attributes?.anchorId === "string" && attributes.anchorId
+                ? attributes.anchorId
+                : generateAnchorId(),
+            anchorOffset:
+              typeof attributes?.anchorOffset === "number"
+                ? attributes.anchorOffset
+                : 0,
+          };
+
           return commands.insertContent({
             type: this.name,
-            attrs: attributes,
+            attrs: normalizedAttributes,
           });
         },
     };
@@ -2611,13 +2683,13 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           clear: both;
         }
 
-        /* Prevent width expansion during drag */
+        /* Keep image footprint stable while dragging */
         .advanced-rich-editor .ProseMirror-hideselection .inline-image-wrapper {
           opacity: 0.5;
-          width: auto !important;
-          max-width: none !important;
+          width: var(--inline-image-width, auto) !important;
+          max-width: var(--inline-image-max-width, 100%) !important;
+          height: var(--inline-image-height, auto) !important;
         }
-
         /* Dragging visual feedback */
         .advanced-rich-editor [draggable="true"].inline-image-wrapper {
           cursor: grab;
