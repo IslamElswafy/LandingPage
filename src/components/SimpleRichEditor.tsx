@@ -72,6 +72,12 @@ import {
   FlipToFront,
   FlipToBack,
   Delete,
+  CallMerge,
+  CallSplit,
+  TableRows,
+  ViewColumn,
+  AddBox,
+  RemoveCircle,
 } from "@mui/icons-material";
 
 // Advanced Tiptap Extensions
@@ -1579,22 +1585,40 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
   const insertTable = useCallback(() => {
     if (!currentEditor) return;
 
-    currentEditor
-      .chain()
-      .focus()
-      .insertTable({
-        rows: state.tableRows,
-        cols: state.tableCols,
-        withHeaderRow: true,
-      })
-      .run();
+    try {
+      // Use TipTap's table extension to create table
+      currentEditor
+        .chain()
+        .focus()
+        .insertTable({
+          rows: state.tableRows,
+          cols: state.tableCols,
+          withHeaderRow: true,
+        })
+        .run();
 
-    updateState({
-      showTableDialog: false,
-      notification: `Table ${state.tableRows}x${state.tableCols} inserted!`,
-      showNotification: true,
-    });
-  }, [currentEditor, state.tableRows, state.tableCols, updateState]);
+      // Apply border class after table creation
+      setTimeout(() => {
+        const tables = currentEditor.view.dom.querySelectorAll('table:last-child');
+        if (tables.length > 0) {
+          const lastTable = tables[tables.length - 1];
+          lastTable.className = `editor-table${state.tableBorders ? ' bordered' : ''}`;
+        }
+      }, 100);
+
+      updateState({
+        showTableDialog: false,
+        notification: `Table ${state.tableRows}×${state.tableCols} inserted successfully!`,
+        showNotification: true,
+      });
+    } catch (error) {
+      console.error('Error inserting table:', error);
+      updateState({
+        notification: 'Failed to insert table. Please try again.',
+        showNotification: true,
+      });
+    }
+  }, [currentEditor, state.tableRows, state.tableCols, state.tableBorders, updateState]);
 
   const applyFontSize = useCallback(
     (size: string) => {
@@ -1638,6 +1662,145 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       notification: "Table deleted successfully!",
       showNotification: true,
     });
+  }, [currentEditor, updateState]);
+
+  // Table manipulation functions
+  const mergeCells = useCallback(() => {
+    if (!currentEditor) return;
+    currentEditor.chain().focus().mergeCells().run();
+    updateState({
+      notification: "Cells merged successfully!",
+      showNotification: true,
+    });
+  }, [currentEditor, updateState]);
+
+  const splitCell = useCallback(() => {
+    if (!currentEditor) return;
+    currentEditor.chain().focus().splitCell().run();
+    updateState({
+      notification: "Cell split successfully!",
+      showNotification: true,
+    });
+  }, [currentEditor, updateState]);
+
+  const addColumnBefore = useCallback(() => {
+    if (!currentEditor) return;
+    try {
+      if (currentEditor.can().addColumnBefore()) {
+        currentEditor.chain().focus().addColumnBefore().run();
+        updateState({
+          notification: "Column added before!",
+          showNotification: true,
+        });
+      } else {
+        updateState({
+          notification: "Cannot add column. Make sure cursor is in a table cell.",
+          showNotification: true,
+        });
+      }
+    } catch (error) {
+      console.error('Add column before error:', error);
+    }
+  }, [currentEditor, updateState]);
+
+  const addColumnAfter = useCallback(() => {
+    if (!currentEditor) return;
+    try {
+      if (currentEditor.can().addColumnAfter()) {
+        currentEditor.chain().focus().addColumnAfter().run();
+        updateState({
+          notification: "Column added after!",
+          showNotification: true,
+        });
+      } else {
+        updateState({
+          notification: "Cannot add column. Make sure cursor is in a table cell.",
+          showNotification: true,
+        });
+      }
+    } catch (error) {
+      console.error('Add column after error:', error);
+    }
+  }, [currentEditor, updateState]);
+
+  const deleteColumn = useCallback(() => {
+    if (!currentEditor) return;
+    try {
+      if (currentEditor.can().deleteColumn()) {
+        currentEditor.chain().focus().deleteColumn().run();
+        updateState({
+          notification: "Column deleted!",
+          showNotification: true,
+        });
+      } else {
+        updateState({
+          notification: "Cannot delete column. Make sure cursor is in a table cell.",
+          showNotification: true,
+        });
+      }
+    } catch (error) {
+      console.error('Delete column error:', error);
+    }
+  }, [currentEditor, updateState]);
+
+  const addRowBefore = useCallback(() => {
+    if (!currentEditor) return;
+    try {
+      if (currentEditor.can().addRowBefore()) {
+        currentEditor.chain().focus().addRowBefore().run();
+        updateState({
+          notification: "Row added before!",
+          showNotification: true,
+        });
+      } else {
+        updateState({
+          notification: "Cannot add row. Make sure cursor is in a table cell.",
+          showNotification: true,
+        });
+      }
+    } catch (error) {
+      console.error('Add row before error:', error);
+    }
+  }, [currentEditor, updateState]);
+
+  const addRowAfter = useCallback(() => {
+    if (!currentEditor) return;
+    try {
+      if (currentEditor.can().addRowAfter()) {
+        currentEditor.chain().focus().addRowAfter().run();
+        updateState({
+          notification: "Row added after!",
+          showNotification: true,
+        });
+      } else {
+        updateState({
+          notification: "Cannot add row. Make sure cursor is in a table cell.",
+          showNotification: true,
+        });
+      }
+    } catch (error) {
+      console.error('Add row after error:', error);
+    }
+  }, [currentEditor, updateState]);
+
+  const deleteRow = useCallback(() => {
+    if (!currentEditor) return;
+    try {
+      if (currentEditor.can().deleteRow()) {
+        currentEditor.chain().focus().deleteRow().run();
+        updateState({
+          notification: "Row deleted!",
+          showNotification: true,
+        });
+      } else {
+        updateState({
+          notification: "Cannot delete row. Make sure cursor is in a table cell.",
+          showNotification: true,
+        });
+      }
+    } catch (error) {
+      console.error('Delete row error:', error);
+    }
   }, [currentEditor, updateState]);
 
   // Filtered emojis with search
@@ -1845,23 +2008,93 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
                   </IconButton>
                 </Tooltip>
 
-                {/* Delete Table Button - Only show when table is selected */}
+                {/* Table Controls - Only show when table is selected */}
                 {currentEditor?.isActive("table") && (
-                  <Tooltip title="Delete Table">
-                    <IconButton
-                      size="small"
-                      onClick={deleteTable}
-                      sx={{
-                        color: "error.main",
-                        "&:hover": {
-                          backgroundColor: "error.light",
-                          color: "error.contrastText",
-                        },
-                      }}
-                    >
-                      <Delete />
-                    </IconButton>
-                  </Tooltip>
+                  <>
+                    <MenuDivider />
+
+                    {/* Cell Merge/Split */}
+                    <Tooltip title="Merge Cells">
+                      <IconButton size="small" onClick={mergeCells}>
+                        <CallMerge />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Split Cell">
+                      <IconButton size="small" onClick={splitCell}>
+                        <CallSplit />
+                      </IconButton>
+                    </Tooltip>
+
+                    <MenuDivider />
+
+                    {/* Row Controls */}
+                    <Tooltip title="Add Row Before">
+                      <IconButton size="small" onClick={addRowBefore}>
+                        <AddBox />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Add Row After">
+                      <IconButton size="small" onClick={addRowAfter}>
+                        <TableRows />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Delete Row">
+                      <IconButton
+                        size="small"
+                        onClick={deleteRow}
+                        sx={{ color: "warning.main" }}
+                      >
+                        <RemoveCircle />
+                      </IconButton>
+                    </Tooltip>
+
+                    <MenuDivider />
+
+                    {/* Column Controls */}
+                    <Tooltip title="Add Column Before">
+                      <IconButton size="small" onClick={addColumnBefore}>
+                        <AddBox sx={{ transform: "rotate(90deg)" }} />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Add Column After">
+                      <IconButton size="small" onClick={addColumnAfter}>
+                        <ViewColumn />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Delete Column">
+                      <IconButton
+                        size="small"
+                        onClick={deleteColumn}
+                        sx={{ color: "warning.main" }}
+                      >
+                        <RemoveCircle sx={{ transform: "rotate(90deg)" }} />
+                      </IconButton>
+                    </Tooltip>
+
+                    <MenuDivider />
+
+                    {/* Delete Table */}
+                    <Tooltip title="Delete Table">
+                      <IconButton
+                        size="small"
+                        onClick={deleteTable}
+                        sx={{
+                          color: "error.main",
+                          "&:hover": {
+                            backgroundColor: "error.light",
+                            color: "error.contrastText",
+                          },
+                        }}
+                      >
+                        <Delete />
+                      </IconButton>
+                    </Tooltip>
+                  </>
                 )}
 
                 <Tooltip title="Insert Emoji">
@@ -2077,58 +2310,184 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       <Dialog
         open={state.showTableDialog}
         onClose={() => updateState({ showTableDialog: false })}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
         sx={{ zIndex: 1400 }}
         PaperProps={{
           sx: { zIndex: 1400 },
         }}
       >
-        <DialogTitle>Insert Table</DialogTitle>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TableChart color="primary" />
+            Insert Table
+          </Box>
+        </DialogTitle>
         <DialogContent>
-          <TextField
-            fullWidth
-            margin="dense"
-            label="Rows"
-            type="number"
-            value={state.tableRows}
-            onChange={(e) =>
-              updateState({ tableRows: Math.max(1, Number(e.target.value) || 1) })
-            }
-            inputProps={{ min: 1, max: 50 }}
-          />
-
-          <TextField
-            fullWidth
-            margin="dense"
-            label="Columns"
-            type="number"
-            value={state.tableCols}
-            onChange={(e) =>
-              updateState({ tableCols: Math.max(1, Number(e.target.value) || 1) })
-            }
-            inputProps={{ min: 1, max: 50 }}
-          />
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={state.tableBorders}
+          <Box sx={{ py: 2 }}>
+            {/* Size Controls */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+              <TextField
+                label="Rows"
+                type="number"
+                value={state.tableRows}
                 onChange={(e) =>
-                  updateState({ tableBorders: e.target.checked })
+                  updateState({ tableRows: Math.max(1, Math.min(20, Number(e.target.value) || 1)) })
                 }
+                inputProps={{ min: 1, max: 20 }}
+                sx={{ width: 120 }}
+                size="small"
               />
-            }
-            label="Show borders"
-            sx={{ mt: 2 }}
-          />
+              <TextField
+                label="Columns"
+                type="number"
+                value={state.tableCols}
+                onChange={(e) =>
+                  updateState({ tableCols: Math.max(1, Math.min(10, Number(e.target.value) || 1)) })
+                }
+                inputProps={{ min: 1, max: 10 }}
+                sx={{ width: 120 }}
+                size="small"
+              />
+            </Box>
+
+            {/* Visual Preview */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Preview ({state.tableRows} × {state.tableCols})
+              </Typography>
+              <Box
+                sx={{
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 1,
+                  p: 2,
+                  backgroundColor: '#fafafa',
+                  overflow: 'auto',
+                  maxHeight: 200,
+                }}
+              >
+                <table
+                  style={{
+                    borderCollapse: 'collapse',
+                    width: '100%',
+                    fontSize: '12px',
+                  }}
+                >
+                  <tbody>
+                    {Array.from({ length: Math.min(state.tableRows, 6) }, (_, rowIndex) => (
+                      <tr key={rowIndex}>
+                        {Array.from({ length: Math.min(state.tableCols, 8) }, (_, colIndex) => (
+                          rowIndex === 0 ? (
+                            <th
+                              key={colIndex}
+                              style={{
+                                border: state.tableBorders ? '1px solid #ccc' : '1px solid transparent',
+                                padding: '4px 8px',
+                                backgroundColor: '#f5f5f5',
+                                fontWeight: 'bold',
+                                minWidth: '60px',
+                                textAlign: 'left',
+                              }}
+                            >
+                              H{colIndex + 1}
+                            </th>
+                          ) : (
+                            <td
+                              key={colIndex}
+                              style={{
+                                border: state.tableBorders ? '1px solid #ccc' : '1px solid transparent',
+                                padding: '4px 8px',
+                                minWidth: '60px',
+                              }}
+                            >
+                              {rowIndex},{colIndex + 1}
+                            </td>
+                          )
+                        ))}
+                        {state.tableCols > 8 && (
+                          <td style={{ padding: '4px 8px', fontStyle: 'italic', color: '#666' }}>
+                            +{state.tableCols - 8} more
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                    {state.tableRows > 6 && (
+                      <tr>
+                        <td
+                          colSpan={Math.min(state.tableCols, 8) + (state.tableCols > 8 ? 1 : 0)}
+                          style={{ padding: '4px 8px', fontStyle: 'italic', color: '#666', textAlign: 'center' }}
+                        >
+                          +{state.tableRows - 6} more rows
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </Box>
+            </Box>
+
+            {/* Options */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={state.tableBorders}
+                    onChange={(e) => {
+                      const newBorderState = e.target.checked;
+                      updateState({ tableBorders: newBorderState });
+
+                      // Toggle borders on all existing tables immediately
+                      if (currentEditor) {
+                        const tables = currentEditor.view.dom.querySelectorAll('table.editor-table');
+                        tables.forEach((table: Element) => {
+                          if (newBorderState) {
+                            table.classList.add('bordered');
+                          } else {
+                            table.classList.remove('bordered');
+                          }
+                        });
+                      }
+                    }}
+                  />
+                }
+                label="Show table borders"
+              />
+
+              {/* Quick Size Buttons */}
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>
+                  Quick Sizes:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {[
+                    [2, 2], [3, 3], [3, 4], [4, 4], [5, 3], [6, 4]
+                  ].map(([rows, cols]) => (
+                    <Button
+                      key={`${rows}x${cols}`}
+                      variant={state.tableRows === rows && state.tableCols === cols ? "contained" : "outlined"}
+                      size="small"
+                      onClick={() => updateState({ tableRows: rows, tableCols: cols })}
+                      sx={{ minWidth: 'auto', px: 1 }}
+                    >
+                      {rows}×{cols}
+                    </Button>
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => updateState({ showTableDialog: false })}>
             Cancel
           </Button>
-          <Button onClick={insertTable} variant="contained">
-            Insert Table
+          <Button
+            onClick={insertTable}
+            variant="contained"
+            startIcon={<TableChart />}
+            disabled={state.tableRows < 1 || state.tableCols < 1}
+          >
+            Insert Table ({state.tableRows}×{state.tableCols})
           </Button>
         </DialogActions>
       </Dialog>
@@ -2227,6 +2586,48 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           font-weight: bold;
           text-align: left;
           background-color: #f5f5f5;
+        }
+
+        /* Merged cells styling */
+        .advanced-rich-editor .editor-table td[colspan],
+        .advanced-rich-editor .editor-table th[colspan],
+        .advanced-rich-editor .editor-table td[rowspan],
+        .advanced-rich-editor .editor-table th[rowspan] {
+          background-color: rgba(25, 118, 210, 0.05);
+          position: relative;
+        }
+
+        .advanced-rich-editor .editor-table td[colspan]:after,
+        .advanced-rich-editor .editor-table th[colspan]:after {
+          content: "↔";
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          font-size: 10px;
+          color: #1976d2;
+          opacity: 0.7;
+        }
+
+        .advanced-rich-editor .editor-table td[rowspan]:after,
+        .advanced-rich-editor .editor-table th[rowspan]:after {
+          content: "↕";
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          font-size: 10px;
+          color: #1976d2;
+          opacity: 0.7;
+        }
+
+        .advanced-rich-editor .editor-table td[colspan][rowspan]:after,
+        .advanced-rich-editor .editor-table th[colspan][rowspan]:after {
+          content: "⤡";
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          font-size: 10px;
+          color: #1976d2;
+          opacity: 0.7;
         }
 
         .advanced-rich-editor .editor-image {
