@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            border: 2px solid #1976d2;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #4caf50;
+            color: white;
+        }
+        .failure {
+            background-color: #f44336;
+            color: white;
+        }
+        .info {
+            background-color: #2196f3;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Drag & Drop Test</h1>
+
+    <div class="test-section">
+        <h2>Test Instructions:</h2>
+        <ol>
+            <li>Open the main application at <a href="http://localhost:5174/LandingPage/" target="_blank">http://localhost:5174/LandingPage/</a></li>
+            <li>Insert an image using the image button in the toolbar</li>
+            <li>Click on the image to select it (blue border should appear)</li>
+            <li>Look for the <strong>green circular handle</strong> at the top-left corner</li>
+            <li>Click and drag the green handle to move the image</li>
+            <li>Try to drop it between paragraphs or at different positions</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Expected Behaviors:</h2>
+        <div class="test-result info">
+            ✓ Green drag handle appears when image is selected
+        </div>
+        <div class="test-result info">
+            ✓ Cursor changes to "grab" over the green handle
+        </div>
+        <div class="test-result info">
+            ✓ While dragging, cursor changes to "grabbing"
+        </div>
+        <div class="test-result info">
+            ✓ A drop indicator line appears showing where image will be placed
+        </div>
+        <div class="test-result info">
+            ✓ Image moves to new position when dropped
+        </div>
+        <div class="test-result info">
+            ✓ Text reflows around the image based on wrap setting
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Common Issues & Solutions:</h2>
+        <div style="margin: 10px 0;">
+            <strong>Issue:</strong> No drag handle visible<br>
+            <strong>Solution:</strong> Click on the image first to select it
+        </div>
+        <div style="margin: 10px 0;">
+            <strong>Issue:</strong> Image doesn't move when dragging<br>
+            <strong>Solution:</strong> Make sure you're dragging the GREEN handle, not the image itself
+        </div>
+        <div style="margin: 10px 0;">
+            <strong>Issue:</strong> Can't drop image<br>
+            <strong>Solution:</strong> Look for the drop indicator line and drop there
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Console</h2>
+        <p>Open browser DevTools (F12) and check the Console tab for any errors related to:</p>
+        <ul>
+            <li>NodeViewWrapper</li>
+            <li>ReactNodeViewRenderer</li>
+            <li>data-drag-handle</li>
+            <li>TipTap drag events</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Manual Test Checklist:</h2>
+        <form id="testChecklist">
+            <label><input type="checkbox"> Image can be inserted</label><br>
+            <label><input type="checkbox"> Image can be selected (blue border)</label><br>
+            <label><input type="checkbox"> Green drag handle appears</label><br>
+            <label><input type="checkbox"> Drag handle has grab cursor</label><br>
+            <label><input type="checkbox"> Image can be dragged to new position</label><br>
+            <label><input type="checkbox"> Drop indicator shows during drag</label><br>
+            <label><input type="checkbox"> Image drops at correct position</label><br>
+            <label><input type="checkbox"> Text wrapping works after move</label><br>
+            <label><input type="checkbox"> Resize still works after move</label><br>
+            <label><input type="checkbox"> Float toggle still works after move</label><br>
+        </form>
+    </div>
+
+    <script>
+        console.log('%c Drag & Drop Test Page Loaded', 'color: green; font-size: 16px; font-weight: bold');
+        console.log('To test: Open http://localhost:5174/LandingPage/ and try dragging images');
+    </script>
+</body>
+</html>

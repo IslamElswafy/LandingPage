@@ -107,13 +107,18 @@ import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
 
 const lowlight = createLowlight(common);
 
-// Freely Moveable Image Component with Photoshop-like Controls
-const ResizableImageComponent: React.FC<{
+// Inline Image Component with Word-like Text Wrapping and Drag-Drop
+const InlineImageComponent: React.FC<{
   node: any;
   updateAttributes: (attrs: any) => void;
   selected: boolean;
 }> = ({ node, updateAttributes, selected }) => {
-  const { src, alt, title, width, height, x, y, layer, opacity } = node.attrs;
+  const { src, alt, title, width, height, float, opacity } = node.attrs;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('InlineImageComponent mounted', { selected, draggable: true, float });
+  }, [selected, float]);
   const [showControls, setShowControls] = useState(false);
   const [aspectRatioLocked, setAspectRatioLocked] = useState(true);
   const [naturalDimensions, setNaturalDimensions] = useState({
@@ -124,18 +129,14 @@ const ResizableImageComponent: React.FC<{
     width: width || "auto",
     height: height || "auto",
   });
-  const [position, setPosition] = useState({
-    x: x || 0,
-    y: y || 0,
-  });
-  const [layerState, setLayerState] = useState(layer || "behind"); // "overlay" or "behind"
+  const [floatState, setFloatState] = useState<"left" | "right" | "none">(float || "none"); // Text wrapping position
   const [imageOpacity, setImageOpacity] = useState(opacity || 100); // 0-100
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeStart, setResizeStart] = useState({
     x: 0,
     y: 0,
-    imageX: 0,
-    imageY: 0,
+    width: 0,
+    height: 0,
   });
   const [controlsAnchorEl, setControlsAnchorEl] = useState<HTMLElement | null>(
     null
@@ -167,7 +168,7 @@ const ResizableImageComponent: React.FC<{
   // Handle width change with aspect ratio lock
   const handleWidthChange = useCallback(
     (newWidth: number) => {
-      const width = Math.max(0, newWidth);
+      const width = Math.max(50, newWidth);
       const height =
         aspectRatioLocked && aspectRatio
           ? Math.round(width / aspectRatio)
@@ -180,9 +181,7 @@ const ResizableImageComponent: React.FC<{
       setCurrentDimensions(updatedDimensions);
       updateAttributes({
         ...updatedDimensions,
-        x: position.x,
-        y: position.y,
-        layer: layerState,
+        float: floatState,
         opacity: imageOpacity,
       });
     },
@@ -190,8 +189,7 @@ const ResizableImageComponent: React.FC<{
       aspectRatioLocked,
       aspectRatio,
       currentDimensions.height,
-      position,
-      layerState,
+      floatState,
       imageOpacity,
       updateAttributes,
     ]
@@ -199,8 +197,8 @@ const ResizableImageComponent: React.FC<{
 
   // Handle height change with aspect ratio lock
   const handleHeightChange = useCallback(
-    (newWidth: number) => {
-      const height = Math.max(0, newWidth);
+    (newHeight: number) => {
+      const height = Math.max(50, newHeight);
       const width =
         aspectRatioLocked && aspectRatio
           ? Math.round(height * aspectRatio)
@@ -213,9 +211,7 @@ const ResizableImageComponent: React.FC<{
       setCurrentDimensions(updatedDimensions);
       updateAttributes({
         ...updatedDimensions,
-        x: position.x,
-        y: position.y,
-        layer: layerState,
+        float: floatState,
         opacity: imageOpacity,
       });
     },
@@ -223,61 +219,39 @@ const ResizableImageComponent: React.FC<{
       aspectRatioLocked,
       aspectRatio,
       currentDimensions.width,
-      position,
-      layerState,
+      floatState,
       imageOpacity,
       updateAttributes,
     ]
   );
 
-  // Handle X position change
-  const handleXChange = useCallback(
-    (newX: number) => {
-      const newPosition = { x: newX, y: position.y };
-      setPosition(newPosition);
-      updateAttributes({
-        width: currentDimensions.width,
-        height: currentDimensions.height,
-        ...newPosition,
-        layer: layerState,
-        opacity: imageOpacity,
-      });
-    },
-    [position.y, currentDimensions, layerState, imageOpacity, updateAttributes]
-  );
+  // Toggle float position (text wrapping)
+  const toggleFloat = useCallback(() => {
+    const floatCycle: Array<"none" | "left" | "right"> = ["none", "left", "right"];
+    const currentIndex = floatCycle.indexOf(floatState);
+    const nextFloat = floatCycle[(currentIndex + 1) % floatCycle.length];
+    setFloatState(nextFloat);
+    updateAttributes({
+      width: currentDimensions.width,
+      height: currentDimensions.height,
+      float: nextFloat,
+      opacity: imageOpacity,
+    });
+  }, [floatState, currentDimensions, imageOpacity, updateAttributes]);
 
-  // Handle Y position change
-  const handleYChange = useCallback(
-    (newY: number) => {
-      const newPosition = { x: position.x, y: newY };
-      setPosition(newPosition);
-      updateAttributes({
-        width: currentDimensions.width,
-        height: currentDimensions.height,
-        ...newPosition,
-        layer: layerState,
-        opacity: imageOpacity,
-      });
-    },
-    [position.x, currentDimensions, layerState, imageOpacity, updateAttributes]
-  );
-
-  // Reset to original size and center position
+  // Reset to original size
   const handleResetSize = useCallback(() => {
     const resetDimensions = {
       width: naturalDimensions.width > 400 ? 400 : naturalDimensions.width,
       height: naturalDimensions.height > 300 ? 300 : naturalDimensions.height,
     };
-    const resetPosition = { x: 0, y: 0 };
     setCurrentDimensions(resetDimensions);
-    setPosition(resetPosition);
     updateAttributes({
       ...resetDimensions,
-      ...resetPosition,
-      layer: layerState,
+      float: floatState,
       opacity: imageOpacity,
     });
-  }, [naturalDimensions, updateAttributes]);
+  }, [naturalDimensions, floatState, imageOpacity, updateAttributes]);
 
   // Toggle aspect ratio lock
   const toggleAspectRatioLock = useCallback(() => {
@@ -294,30 +268,14 @@ const ResizableImageComponent: React.FC<{
         setCurrentDimensions(updatedDimensions);
         updateAttributes({
           ...updatedDimensions,
-          x: position.x,
-          y: position.y,
-          layer: layerState,
+          float: floatState,
           opacity: imageOpacity,
         });
       }
 
       return newLocked;
     });
-  }, [aspectRatio, currentDimensions, position, layerState, imageOpacity, updateAttributes]);
-
-  // Toggle layer state (overlay/behind text)
-  const toggleLayerState = useCallback(() => {
-    const newLayerState = layerState === "overlay" ? "behind" : "overlay";
-    setLayerState(newLayerState);
-    updateAttributes({
-      width: currentDimensions.width,
-      height: currentDimensions.height,
-      x: position.x,
-      y: position.y,
-      layer: newLayerState,
-      opacity: imageOpacity,
-    });
-  }, [layerState, currentDimensions, position, imageOpacity, updateAttributes]);
+  }, [aspectRatio, currentDimensions, floatState, imageOpacity, updateAttributes]);
 
   // Handle opacity change
   const handleOpacityChange = useCallback(
@@ -327,13 +285,11 @@ const ResizableImageComponent: React.FC<{
       updateAttributes({
         width: currentDimensions.width,
         height: currentDimensions.height,
-        x: position.x,
-        y: position.y,
-        layer: layerState,
+        float: floatState,
         opacity: opacity,
       });
     },
-    [currentDimensions, position, layerState, updateAttributes]
+    [currentDimensions, floatState, updateAttributes]
   );
 
   // Show controls
@@ -352,45 +308,54 @@ const ResizableImageComponent: React.FC<{
     setShowControls(false);
   }, []);
 
-  // Handle drag start
-  const handleDragStart = useCallback(
+  // Handle resize start
+  const handleResizeStart = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      setIsDragging(true);
-      setDragStart({
+      e.stopPropagation();
+      setIsResizing(true);
+      setResizeStart({
         x: e.clientX,
         y: e.clientY,
-        imageX: position.x,
-        imageY: position.y,
+        width: typeof currentDimensions.width === 'number' ? currentDimensions.width : 0,
+        height: typeof currentDimensions.height === 'number' ? currentDimensions.height : 0,
       });
     },
-    [position]
+    [currentDimensions]
   );
 
-  // Handle drag
+  // Handle resize
   useEffect(() => {
-    if (!isDragging) return;
+    if (!isResizing) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - dragStart.x;
-      const deltaY = e.clientY - dragStart.y;
-      const newPosition = {
-        x: dragStart.imageX + deltaX,
-        y: dragStart.imageY + deltaY,
-      };
+      const deltaX = e.clientX - resizeStart.x;
+      const newWidth = Math.max(50, resizeStart.width + deltaX);
 
-      setPosition(newPosition);
-      updateAttributes({
-        width: currentDimensions.width,
-        height: currentDimensions.height,
-        ...newPosition,
-        layer: layerState,
-        opacity: imageOpacity,
-      });
+      if (aspectRatioLocked && aspectRatio) {
+        const newHeight = Math.round(newWidth / aspectRatio);
+        setCurrentDimensions({ width: newWidth, height: newHeight });
+        updateAttributes({
+          width: newWidth,
+          height: newHeight,
+          float: floatState,
+          opacity: imageOpacity,
+        });
+      } else {
+        const deltaY = e.clientY - resizeStart.y;
+        const newHeight = Math.max(50, resizeStart.height + deltaY);
+        setCurrentDimensions({ width: newWidth, height: newHeight });
+        updateAttributes({
+          width: newWidth,
+          height: newHeight,
+          float: floatState,
+          opacity: imageOpacity,
+        });
+      }
     };
 
     const handleMouseUp = () => {
-      setIsDragging(false);
+      setIsResizing(false);
     };
 
     document.addEventListener("mousemove", handleMouseMove);
@@ -400,31 +365,26 @@ const ResizableImageComponent: React.FC<{
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDragging, dragStart, currentDimensions, updateAttributes]);
+  }, [isResizing, resizeStart, aspectRatioLocked, aspectRatio, floatState, imageOpacity, updateAttributes]);
 
   return (
     <NodeViewWrapper
       ref={containerRef}
+      className="inline-image-wrapper"
       style={{
-        position: "absolute",
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        zIndex: selected
-          ? 1000
-          : layerState === "overlay"
-          ? 100 // Above text - will hide text unless opacity is reduced
-          : 1, // Behind text - text appears normally
-        border: selected
-          ? layerState === "behind"
-            ? "2px solid #ff9800"
-            : "2px solid #1976d2"
-          : layerState === "behind"
-          ? "2px dashed rgba(255, 152, 0, 0.3)"
-          : "2px solid transparent",
+        display: "inline-block",
+        float: floatState,
+        margin: floatState === "left" ? "0 16px 8px 0" : floatState === "right" ? "0 0 8px 16px" : "8px auto",
+        position: "relative",
+        border: selected ? "2px solid #1976d2" : "2px solid transparent",
         borderRadius: "4px",
-        cursor: isDragging ? "grabbing" : "grab",
-        opacity: imageOpacity / 100, // Use manual opacity control
+        cursor: isResizing ? "se-resize" : "default",
+        opacity: imageOpacity / 100,
+        maxWidth: "100%",
+        width: currentDimensions.width === "auto" ? "auto" : `${currentDimensions.width}px`,
+        height: currentDimensions.height === "auto" ? "auto" : `${currentDimensions.height}px`,
       }}
+      contentEditable={false}
     >
       <img
         ref={imageRef}
@@ -432,83 +392,117 @@ const ResizableImageComponent: React.FC<{
         alt={alt}
         title={title}
         onLoad={handleImageLoad}
-        onMouseDown={handleDragStart}
         style={{
-          width:
-            currentDimensions.width === "auto"
-              ? "auto"
-              : `${currentDimensions.width}px`,
-          height:
-            currentDimensions.height === "auto"
-              ? "auto"
-              : `${currentDimensions.height}px`,
+          width: "100%",
+          height: "100%",
           borderRadius: "4px",
           display: "block",
           userSelect: "none",
-          pointerEvents: selected ? "auto" : "none",
+          pointerEvents: "none",
+          objectFit: "contain",
         }}
         draggable={false}
       />
 
-      {/* Drag Handle */}
+      {/* Drag Handle - Must have data-drag-handle */}
       {selected && (
         <Box
-          onMouseDown={handleDragStart}
+          data-drag-handle
           sx={{
             position: "absolute",
             top: "-8px",
             left: "-8px",
-            backgroundColor: "#1976d2",
+            backgroundColor: "#4caf50",
             color: "white",
-            width: 16,
-            height: 16,
+            width: 24,
+            height: 24,
             borderRadius: "50%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "grab",
             boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+            zIndex: 10,
             "&:hover": {
-              backgroundColor: "#1565c0",
+              backgroundColor: "#45a049",
               transform: "scale(1.1)",
             },
             "&:active": {
               cursor: "grabbing",
             },
           }}
+          title="Drag this handle to move image"
         >
-          <OpenWith sx={{ fontSize: 10 }} />
+          <OpenWith sx={{ fontSize: 14 }} />
         </Box>
       )}
 
-      {/* Layer Toggle Button */}
+      {/* Resize Handle */}
+      {selected && (
+        <Box
+          onMouseDown={handleResizeStart}
+          sx={{
+            position: "absolute",
+            bottom: "-8px",
+            right: "-8px",
+            backgroundColor: "#1976d2",
+            color: "white",
+            width: 20,
+            height: 20,
+            borderRadius: "2px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "se-resize",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+            "&:hover": {
+              backgroundColor: "#1565c0",
+              transform: "scale(1.1)",
+            },
+          }}
+        >
+          <PhotoSizeSelectActual sx={{ fontSize: 12 }} />
+        </Box>
+      )}
+
+      {/* Float/Wrap Toggle Button */}
       {selected && (
         <IconButton
           size="small"
-          onClick={toggleLayerState}
+          onClick={toggleFloat}
           sx={{
             position: "absolute",
             top: "-12px",
             right: "16px",
-            backgroundColor: layerState === "overlay" ? "#1976d2" : "#ff9800",
+            backgroundColor:
+              floatState === "left" ? "#ff9800" :
+              floatState === "right" ? "#4caf50" :
+              "#1976d2",
             color: "white",
             width: 24,
             height: 24,
             "&:hover": {
-              backgroundColor: layerState === "overlay" ? "#1565c0" : "#f57c00",
+              backgroundColor:
+                floatState === "left" ? "#f57c00" :
+                floatState === "right" ? "#45a049" :
+                "#1565c0",
             },
             boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
           title={
-            layerState === "overlay"
-              ? "Overlay mode (image above text)"
-              : "Background mode (image behind text)"
+            floatState === "none"
+              ? "No wrapping (inline)"
+              : floatState === "left"
+              ? "Wrap right (float left)"
+              : "Wrap left (float right)"
           }
         >
-          {layerState === "overlay" ? (
-            <FlipToFront fontSize="small" />
+          {floatState === "none" ? (
+            <MenuButtonAlignCenter fontSize="small" />
+          ) : floatState === "left" ? (
+            <MenuButtonAlignLeft fontSize="small" />
           ) : (
-            <FlipToBack fontSize="small" />
+            <MenuButtonAlignRight fontSize="small" />
           )}
         </IconButton>
       )}
@@ -566,59 +560,6 @@ const ResizableImageComponent: React.FC<{
           >
             Image Properties
           </Typography>
-
-          {/* Position Controls */}
-          <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-            <TextField
-              label="X Position"
-              type="number"
-              value={position.x}
-              onChange={(e) => handleXChange(parseInt(e.target.value) || 0)}
-              size="small"
-              sx={{
-                flex: 1,
-                "& .MuiInputLabel-root": { color: "#ccc" },
-                "& .MuiOutlinedInput-root": {
-                  color: "white",
-                  "& fieldset": { borderColor: "#555" },
-                  "&:hover fieldset": { borderColor: "#777" },
-                  "&.Mui-focused fieldset": { borderColor: "#1976d2" },
-                },
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end" sx={{ color: "#ccc" }}>
-                    px
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <TextField
-              label="Y Position"
-              type="number"
-              value={position.y}
-              onChange={(e) => handleYChange(parseInt(e.target.value) || 0)}
-              size="small"
-              sx={{
-                flex: 1,
-                "& .MuiInputLabel-root": { color: "#ccc" },
-                "& .MuiOutlinedInput-root": {
-                  color: "white",
-                  "& fieldset": { borderColor: "#555" },
-                  "&:hover fieldset": { borderColor: "#777" },
-                  "&.Mui-focused fieldset": { borderColor: "#1976d2" },
-                },
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end" sx={{ color: "#ccc" }}>
-                    px
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
 
           {/* Size Controls */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
@@ -723,14 +664,14 @@ const ResizableImageComponent: React.FC<{
             }}
           >
             <Typography variant="caption" sx={{ color: "#ccc" }}>
-              Position: {position.x}, {position.y}
+              Size: {currentDimensions.width} × {currentDimensions.height}
             </Typography>
             <Typography variant="caption" sx={{ color: "#ccc" }}>
-              Size: {currentDimensions.width} × {currentDimensions.height}
+              Wrap: {floatState === "none" ? "None" : floatState === "left" ? "Right" : "Left"}
             </Typography>
           </Box>
 
-          {/* Layer Control */}
+          {/* Text Wrapping Control */}
           <Box
             sx={{
               display: "flex",
@@ -744,29 +685,29 @@ const ResizableImageComponent: React.FC<{
           >
             <Layers sx={{ color: "#ccc", fontSize: 16 }} />
             <Typography variant="body2" sx={{ color: "#ccc", flex: 1 }}>
-              Layer:
+              Text Wrapping:
             </Typography>
             <Button
-              variant={layerState === "overlay" ? "contained" : "outlined"}
+              variant={floatState === "none" ? "contained" : "outlined"}
               size="small"
-              onClick={toggleLayerState}
-              startIcon={
-                layerState === "overlay" ? <FlipToFront /> : <FlipToBack />
-              }
+              onClick={toggleFloat}
               sx={{
+                minWidth: 80,
                 backgroundColor:
-                  layerState === "overlay" ? "#1976d2" : "transparent",
-                color: layerState === "overlay" ? "white" : "#1976d2",
+                  floatState === "left" ? "#ff9800" :
+                  floatState === "right" ? "#4caf50" :
+                  "#1976d2",
+                color: "white",
                 borderColor: "#1976d2",
                 "&:hover": {
                   backgroundColor:
-                    layerState === "overlay"
-                      ? "#1565c0"
-                      : "rgba(25, 118, 210, 0.1)",
+                    floatState === "left" ? "#f57c00" :
+                    floatState === "right" ? "#45a049" :
+                    "#1565c0",
                 },
               }}
             >
-              {layerState === "overlay" ? "Overlay" : "Background"}
+              {floatState === "none" ? "None" : floatState === "left" ? "Right" : "Left"}
             </Button>
           </Box>
 
@@ -848,9 +789,9 @@ const ResizableImageComponent: React.FC<{
   );
 };
 
-// Custom Resizable Image Extension
-const ResizableImage = Image.extend({
-  name: "resizableImage",
+// Custom Inline Image Extension with Text Wrapping
+const InlineImage = Image.extend({
+  name: "inlineImage",
 
   addAttributes() {
     return {
@@ -871,31 +812,13 @@ const ResizableImage = Image.extend({
           return { height: attributes.height };
         },
       },
-      x: {
-        default: 0,
+      float: {
+        default: "none",
         parseHTML: (element: HTMLElement) =>
-          parseInt(element.getAttribute("data-x") || "0"),
-        renderHTML: (attributes: { x?: number }) => {
-          if (!attributes.x && attributes.x !== 0) return {};
-          return { "data-x": attributes.x };
-        },
-      },
-      y: {
-        default: 0,
-        parseHTML: (element: HTMLElement) =>
-          parseInt(element.getAttribute("data-y") || "0"),
-        renderHTML: (attributes: { y?: number }) => {
-          if (!attributes.y && attributes.y !== 0) return {};
-          return { "data-y": attributes.y };
-        },
-      },
-      layer: {
-        default: "behind",
-        parseHTML: (element: HTMLElement) =>
-          element.getAttribute("data-layer") || "behind",
-        renderHTML: (attributes: { layer?: string }) => {
-          if (!attributes.layer) return {};
-          return { "data-layer": attributes.layer };
+          element.getAttribute("data-float") || "none",
+        renderHTML: (attributes: { float?: string }) => {
+          if (!attributes.float) return {};
+          return { "data-float": attributes.float };
         },
       },
       opacity: {
@@ -913,7 +836,7 @@ const ResizableImage = Image.extend({
   addCommands() {
     return {
       ...this.parent?.() || {},
-      setResizableImage:
+      setInlineImage:
         (attributes: any) =>
         ({ commands }: { commands: any }) => {
           return commands.insertContent({
@@ -925,11 +848,16 @@ const ResizableImage = Image.extend({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ResizableImageComponent);
+    return ReactNodeViewRenderer(InlineImageComponent, {
+      draggable: true,
+      contentDOMElementTag: 'div',
+    });
   },
 
-  atom: true,
+  inline: false,
+  group: "block",
   draggable: true,
+  atom: false,
 });
 
 interface SimpleRichEditorProps {
@@ -1315,7 +1243,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       Subscript,
       Superscript,
       TextAlign.configure({
-        types: ["heading", "paragraph", "resizableImage"],
+        types: ["heading", "paragraph"],
       }),
       FontFamily.configure({
         types: ["textStyle"],
@@ -1336,12 +1264,11 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           target: "_blank",
         },
       }),
-      ResizableImage.configure({
+      InlineImage.configure({
         HTMLAttributes: {
           class: "editor-image",
         },
         allowBase64: true,
-        inline: false,
       }),
       Table.configure({
         resizable: true,
@@ -1439,14 +1366,15 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           const reader = new FileReader();
           reader.onload = () => {
             const result = reader.result as string;
-            // Insert in a paragraph so it can be aligned
+            // Insert inline image with text wrapping support
             currentEditor
               .chain()
               .focus()
-              .setResizableImage({
+              .setInlineImage({
                 src: result,
                 alt: file.name,
                 title: file.name,
+                float: "none",
               })
               .run();
 
@@ -1544,11 +1472,11 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         const imageHtml = `<figure><img src="${imageSrc}" alt="${state.imageCaption}" title="${state.imageCaption}" /><figcaption>${state.imageCaption}</figcaption></figure>`;
         currentEditor.chain().focus().insertContent(imageHtml).run();
       } else {
-        // Insert resizable image using the extension command
+        // Insert inline image using the extension command
         currentEditor
           .chain()
           .focus()
-          .setResizableImage({ src: imageSrc, alt: "", title: "" })
+          .setInlineImage({ src: imageSrc, alt: "", title: "", float: "none" })
           .run();
       }
       updateState({
@@ -2643,50 +2571,60 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        /* Absolutely positioned resizable images */
-        .advanced-rich-editor [data-node-view-wrapper] {
-          position: absolute !important;
-          z-index: 1;
-        }
-
-        .advanced-rich-editor [data-node-view-wrapper].ProseMirror-selectednode {
-          z-index: 1000 !important;
-        }
-
-        /* Images behind text styling */
-        .advanced-rich-editor [data-node-view-wrapper][data-layer="behind"] {
-          z-index: 1 !important;
-        }
-
-        .advanced-rich-editor [data-node-view-wrapper][data-layer="overlay"] {
-          z-index: 100 !important;
-        }
-
-        /* Ensure text content is above background images but still allows them to show through */
-        .advanced-rich-editor .ProseMirror p,
-        .advanced-rich-editor .ProseMirror h1,
-        .advanced-rich-editor .ProseMirror h2,
-        .advanced-rich-editor .ProseMirror h3,
-        .advanced-rich-editor .ProseMirror h4,
-        .advanced-rich-editor .ProseMirror h5,
-        .advanced-rich-editor .ProseMirror h6,
-        .advanced-rich-editor .ProseMirror div,
-        .advanced-rich-editor .ProseMirror ul,
-        .advanced-rich-editor .ProseMirror ol,
-        .advanced-rich-editor .ProseMirror blockquote {
+        /* Inline images with text wrapping support */
+        .advanced-rich-editor .inline-image-wrapper {
+          display: inline-block;
           position: relative;
-          z-index: 10;
+          box-sizing: border-box;
+          flex-shrink: 0;
+          vertical-align: top;
         }
 
-        /* Clean text styling */
-        .advanced-rich-editor .ProseMirror p,
-        .advanced-rich-editor .ProseMirror h1,
-        .advanced-rich-editor .ProseMirror h2,
-        .advanced-rich-editor .ProseMirror h3,
-        .advanced-rich-editor .ProseMirror h4,
-        .advanced-rich-editor .ProseMirror h5,
-        .advanced-rich-editor .ProseMirror h6 {
-          background-color: transparent;
+        .advanced-rich-editor .inline-image-wrapper.ProseMirror-selectednode {
+          outline: none !important;
+        }
+
+        .advanced-rich-editor .inline-image-wrapper img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+          pointer-events: none;
+        }
+
+        /* Float left - text wraps to the right */
+        .advanced-rich-editor .inline-image-wrapper[data-float="left"] {
+          float: left;
+          margin: 0 16px 8px 0;
+        }
+
+        /* Float right - text wraps to the left */
+        .advanced-rich-editor .inline-image-wrapper[data-float="right"] {
+          float: right;
+          margin: 0 0 8px 16px;
+        }
+
+        /* No float - inline/block behavior */
+        .advanced-rich-editor .inline-image-wrapper[data-float="none"] {
+          display: block;
+          margin: 8px auto;
+          float: none;
+          clear: both;
+        }
+
+        /* Prevent width expansion during drag */
+        .advanced-rich-editor .ProseMirror-hideselection .inline-image-wrapper {
+          opacity: 0.5;
+          width: auto !important;
+          max-width: none !important;
+        }
+
+        /* Dragging visual feedback */
+        .advanced-rich-editor [draggable="true"].inline-image-wrapper {
+          cursor: grab;
+        }
+
+        .advanced-rich-editor [draggable="true"].inline-image-wrapper:active {
+          cursor: grabbing;
         }
 
         /* Drag indicators and handles */
