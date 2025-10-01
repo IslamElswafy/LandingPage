@@ -1,4 +1,4 @@
-import React, {
+﻿import React, {
   useState,
   useCallback,
   useRef,
@@ -107,7 +107,8 @@ import { ReactNodeViewRenderer, NodeViewWrapper } from "@tiptap/react";
 
 const lowlight = createLowlight(common);
 
-const generateAnchorId = () => `anchor-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const generateAnchorId = () =>
+  `anchor-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 // Inline Image Component with Word-like Text Wrapping and Drag-Drop
 const InlineImageComponent: React.FC<{
@@ -115,11 +116,25 @@ const InlineImageComponent: React.FC<{
   updateAttributes: (attrs: any) => void;
   selected: boolean;
 }> = ({ node, updateAttributes, selected }) => {
-  const { src, alt, title, width, height, float, opacity, anchorId, anchorOffset } = node.attrs;
+  const {
+    src,
+    alt,
+    title,
+    width,
+    height,
+    float,
+    opacity,
+    anchorId,
+    anchorOffset,
+  } = node.attrs;
 
   // Debug logging
   useEffect(() => {
-    console.log('InlineImageComponent mounted', { selected, draggable: true, float });
+    console.log("InlineImageComponent mounted", {
+      selected,
+      draggable: true,
+      float,
+    });
   }, [selected, float]);
 
   // Ensure anchor metadata exists for this image node
@@ -127,9 +142,9 @@ const InlineImageComponent: React.FC<{
     if (!anchorId) {
       updateAttributes({
         anchorId: generateAnchorId(),
-        anchorOffset: typeof anchorOffset === 'number' ? anchorOffset : 0,
+        anchorOffset: typeof anchorOffset === "number" ? anchorOffset : 0,
       });
-    } else if (typeof anchorOffset !== 'number') {
+    } else if (typeof anchorOffset !== "number") {
       updateAttributes({ anchorOffset: 0 });
     }
   }, [anchorId, anchorOffset, updateAttributes]);
@@ -143,7 +158,9 @@ const InlineImageComponent: React.FC<{
     width: width || "auto",
     height: height || "auto",
   });
-  const [floatState, setFloatState] = useState<"left" | "right" | "none">(float || "none"); // Text wrapping position
+  const [floatState, setFloatState] = useState<"left" | "right" | "none">(
+    float || "none"
+  ); // Text wrapping position
   const [imageOpacity, setImageOpacity] = useState(opacity || 100); // 0-100
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({
@@ -241,7 +258,11 @@ const InlineImageComponent: React.FC<{
 
   // Toggle float position (text wrapping)
   const toggleFloat = useCallback(() => {
-    const floatCycle: Array<"none" | "left" | "right"> = ["none", "left", "right"];
+    const floatCycle: Array<"none" | "left" | "right"> = [
+      "none",
+      "left",
+      "right",
+    ];
     const currentIndex = floatCycle.indexOf(floatState);
     const nextFloat = floatCycle[(currentIndex + 1) % floatCycle.length];
     setFloatState(nextFloat);
@@ -289,7 +310,13 @@ const InlineImageComponent: React.FC<{
 
       return newLocked;
     });
-  }, [aspectRatio, currentDimensions, floatState, imageOpacity, updateAttributes]);
+  }, [
+    aspectRatio,
+    currentDimensions,
+    floatState,
+    imageOpacity,
+    updateAttributes,
+  ]);
 
   // Handle opacity change
   const handleOpacityChange = useCallback(
@@ -331,8 +358,14 @@ const InlineImageComponent: React.FC<{
       setResizeStart({
         x: e.clientX,
         y: e.clientY,
-        width: typeof currentDimensions.width === 'number' ? currentDimensions.width : 0,
-        height: typeof currentDimensions.height === 'number' ? currentDimensions.height : 0,
+        width:
+          typeof currentDimensions.width === "number"
+            ? currentDimensions.width
+            : 0,
+        height:
+          typeof currentDimensions.height === "number"
+            ? currentDimensions.height
+            : 0,
       });
     },
     [currentDimensions]
@@ -379,7 +412,15 @@ const InlineImageComponent: React.FC<{
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isResizing, resizeStart, aspectRatioLocked, aspectRatio, floatState, imageOpacity, updateAttributes]);
+  }, [
+    isResizing,
+    resizeStart,
+    aspectRatioLocked,
+    aspectRatio,
+    floatState,
+    imageOpacity,
+    updateAttributes,
+  ]);
 
   const widthValue =
     currentDimensions.width === "auto"
@@ -448,8 +489,8 @@ const InlineImageComponent: React.FC<{
           data-drag-handle
           sx={{
             position: "absolute",
-            top: "-8px",
-            left: "-8px",
+            top: "-15px",
+            left: "-15px",
             backgroundColor: "#4caf50",
             color: "white",
             width: 24,
@@ -481,8 +522,8 @@ const InlineImageComponent: React.FC<{
           onMouseDown={handleResizeStart}
           sx={{
             position: "absolute",
-            bottom: "-8px",
-            right: "-8px",
+            bottom: "-15px",
+            right: "-15px",
             backgroundColor: "#1976d2",
             color: "white",
             width: 20,
@@ -510,20 +551,24 @@ const InlineImageComponent: React.FC<{
           onClick={toggleFloat}
           sx={{
             position: "absolute",
-            top: "-12px",
+            top: "-20px",
             right: "16px",
             backgroundColor:
-              floatState === "left" ? "#ff9800" :
-              floatState === "right" ? "#4caf50" :
-              "#1976d2",
+              floatState === "left"
+                ? "#ff9800"
+                : floatState === "right"
+                ? "#4caf50"
+                : "#1976d2",
             color: "white",
             width: 24,
             height: 24,
             "&:hover": {
               backgroundColor:
-                floatState === "left" ? "#f57c00" :
-                floatState === "right" ? "#45a049" :
-                "#1565c0",
+                floatState === "left"
+                  ? "#f57c00"
+                  : floatState === "right"
+                  ? "#45a049"
+                  : "#1565c0",
             },
             boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
@@ -536,11 +581,11 @@ const InlineImageComponent: React.FC<{
           }
         >
           {floatState === "none" ? (
-            <MenuButtonAlignCenter fontSize="small" />
+            <MenuButtonAlignCenter />
           ) : floatState === "left" ? (
-            <MenuButtonAlignLeft fontSize="small" />
+            <MenuButtonAlignLeft />
           ) : (
-            <MenuButtonAlignRight fontSize="small" />
+            <MenuButtonAlignRight />
           )}
         </IconButton>
       )}
@@ -552,8 +597,8 @@ const InlineImageComponent: React.FC<{
           onClick={handleShowControls}
           sx={{
             position: "absolute",
-            top: "-12px",
-            right: "-12px",
+            top: "-15px",
+            right: "-15px",
             backgroundColor: "#1976d2",
             color: "white",
             width: 24,
@@ -705,7 +750,12 @@ const InlineImageComponent: React.FC<{
               Size: {currentDimensions.width} × {currentDimensions.height}
             </Typography>
             <Typography variant="caption" sx={{ color: "#ccc" }}>
-              Wrap: {floatState === "none" ? "None" : floatState === "left" ? "Right" : "Left"}
+              Wrap:{" "}
+              {floatState === "none"
+                ? "None"
+                : floatState === "left"
+                ? "Right"
+                : "Left"}
             </Typography>
           </Box>
 
@@ -732,20 +782,28 @@ const InlineImageComponent: React.FC<{
               sx={{
                 minWidth: 80,
                 backgroundColor:
-                  floatState === "left" ? "#ff9800" :
-                  floatState === "right" ? "#4caf50" :
-                  "#1976d2",
+                  floatState === "left"
+                    ? "#ff9800"
+                    : floatState === "right"
+                    ? "#4caf50"
+                    : "#1976d2",
                 color: "white",
                 borderColor: "#1976d2",
                 "&:hover": {
                   backgroundColor:
-                    floatState === "left" ? "#f57c00" :
-                    floatState === "right" ? "#45a049" :
-                    "#1565c0",
+                    floatState === "left"
+                      ? "#f57c00"
+                      : floatState === "right"
+                      ? "#45a049"
+                      : "#1565c0",
                 },
               }}
             >
-              {floatState === "none" ? "None" : floatState === "left" ? "Right" : "Left"}
+              {floatState === "none"
+                ? "None"
+                : floatState === "left"
+                ? "Right"
+                : "Left"}
             </Button>
           </Box>
 
@@ -833,7 +891,7 @@ const InlineImage = Image.extend({
 
   addAttributes() {
     return {
-      ...this.parent?.() || {},
+      ...((this as any).parent?.() || {}),
       width: {
         default: null,
         parseHTML: (element: HTMLElement) => element.getAttribute("width"),
@@ -895,7 +953,7 @@ const InlineImage = Image.extend({
 
   addCommands() {
     return {
-      ...this.parent?.() || {},
+      ...((this as any).parent?.() || {}),
       setInlineImage:
         (attributes: any = {}) =>
         ({ commands }: { commands: any }) => {
@@ -921,8 +979,7 @@ const InlineImage = Image.extend({
 
   addNodeView() {
     return ReactNodeViewRenderer(InlineImageComponent, {
-      draggable: true,
-      contentDOMElementTag: 'div',
+      contentDOMElementTag: "div",
     });
   },
 
@@ -1491,7 +1548,6 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       ? externalPreviewMode
       : state.isPreviewMode;
 
-
   // Load saved layout state
   const loadSavedState = useCallback(() => {
     const savedJsonContent = localStorage.getItem("editor-content-json");
@@ -1599,10 +1655,13 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
 
       // Apply border class after table creation
       setTimeout(() => {
-        const tables = currentEditor.view.dom.querySelectorAll('table:last-child');
+        const tables =
+          currentEditor.view.dom.querySelectorAll("table:last-child");
         if (tables.length > 0) {
           const lastTable = tables[tables.length - 1];
-          lastTable.className = `editor-table${state.tableBorders ? ' bordered' : ''}`;
+          lastTable.className = `editor-table${
+            state.tableBorders ? " bordered" : ""
+          }`;
         }
       }, 100);
 
@@ -1612,13 +1671,19 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         showNotification: true,
       });
     } catch (error) {
-      console.error('Error inserting table:', error);
+      console.error("Error inserting table:", error);
       updateState({
-        notification: 'Failed to insert table. Please try again.',
+        notification: "Failed to insert table. Please try again.",
         showNotification: true,
       });
     }
-  }, [currentEditor, state.tableRows, state.tableCols, state.tableBorders, updateState]);
+  }, [
+    currentEditor,
+    state.tableRows,
+    state.tableCols,
+    state.tableBorders,
+    updateState,
+  ]);
 
   const applyFontSize = useCallback(
     (size: string) => {
@@ -1694,12 +1759,13 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         });
       } else {
         updateState({
-          notification: "Cannot add column. Make sure cursor is in a table cell.",
+          notification:
+            "Cannot add column. Make sure cursor is in a table cell.",
           showNotification: true,
         });
       }
     } catch (error) {
-      console.error('Add column before error:', error);
+      console.error("Add column before error:", error);
     }
   }, [currentEditor, updateState]);
 
@@ -1714,12 +1780,13 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         });
       } else {
         updateState({
-          notification: "Cannot add column. Make sure cursor is in a table cell.",
+          notification:
+            "Cannot add column. Make sure cursor is in a table cell.",
           showNotification: true,
         });
       }
     } catch (error) {
-      console.error('Add column after error:', error);
+      console.error("Add column after error:", error);
     }
   }, [currentEditor, updateState]);
 
@@ -1734,12 +1801,13 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         });
       } else {
         updateState({
-          notification: "Cannot delete column. Make sure cursor is in a table cell.",
+          notification:
+            "Cannot delete column. Make sure cursor is in a table cell.",
           showNotification: true,
         });
       }
     } catch (error) {
-      console.error('Delete column error:', error);
+      console.error("Delete column error:", error);
     }
   }, [currentEditor, updateState]);
 
@@ -1759,7 +1827,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         });
       }
     } catch (error) {
-      console.error('Add row before error:', error);
+      console.error("Add row before error:", error);
     }
   }, [currentEditor, updateState]);
 
@@ -1779,7 +1847,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         });
       }
     } catch (error) {
-      console.error('Add row after error:', error);
+      console.error("Add row after error:", error);
     }
   }, [currentEditor, updateState]);
 
@@ -1794,12 +1862,13 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         });
       } else {
         updateState({
-          notification: "Cannot delete row. Make sure cursor is in a table cell.",
+          notification:
+            "Cannot delete row. Make sure cursor is in a table cell.",
           showNotification: true,
         });
       }
     } catch (error) {
-      console.error('Delete row error:', error);
+      console.error("Delete row error:", error);
     }
   }, [currentEditor, updateState]);
 
@@ -2318,7 +2387,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         }}
       >
         <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <TableChart color="primary" />
             Insert Table
           </Box>
@@ -2326,13 +2395,18 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         <DialogContent>
           <Box sx={{ py: 2 }}>
             {/* Size Controls */}
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
               <TextField
                 label="Rows"
                 type="number"
                 value={state.tableRows}
                 onChange={(e) =>
-                  updateState({ tableRows: Math.max(1, Math.min(20, Number(e.target.value) || 1)) })
+                  updateState({
+                    tableRows: Math.max(
+                      1,
+                      Math.min(20, Number(e.target.value) || 1)
+                    ),
+                  })
                 }
                 inputProps={{ min: 1, max: 20 }}
                 sx={{ width: 120 }}
@@ -2343,7 +2417,12 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
                 type="number"
                 value={state.tableCols}
                 onChange={(e) =>
-                  updateState({ tableCols: Math.max(1, Math.min(10, Number(e.target.value) || 1)) })
+                  updateState({
+                    tableCols: Math.max(
+                      1,
+                      Math.min(10, Number(e.target.value) || 1)
+                    ),
+                  })
                 }
                 inputProps={{ min: 1, max: 10 }}
                 sx={{ width: 120 }}
@@ -2358,64 +2437,87 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
               </Typography>
               <Box
                 sx={{
-                  border: '1px solid #e0e0e0',
+                  border: "1px solid #e0e0e0",
                   borderRadius: 1,
                   p: 2,
-                  backgroundColor: '#fafafa',
-                  overflow: 'auto',
+                  backgroundColor: "#fafafa",
+                  overflow: "auto",
                   maxHeight: 200,
                 }}
               >
                 <table
                   style={{
-                    borderCollapse: 'collapse',
-                    width: '100%',
-                    fontSize: '12px',
+                    borderCollapse: "collapse",
+                    width: "100%",
+                    fontSize: "12px",
                   }}
                 >
                   <tbody>
-                    {Array.from({ length: Math.min(state.tableRows, 6) }, (_, rowIndex) => (
-                      <tr key={rowIndex}>
-                        {Array.from({ length: Math.min(state.tableCols, 8) }, (_, colIndex) => (
-                          rowIndex === 0 ? (
-                            <th
-                              key={colIndex}
-                              style={{
-                                border: state.tableBorders ? '1px solid #ccc' : '1px solid transparent',
-                                padding: '4px 8px',
-                                backgroundColor: '#f5f5f5',
-                                fontWeight: 'bold',
-                                minWidth: '60px',
-                                textAlign: 'left',
-                              }}
-                            >
-                              H{colIndex + 1}
-                            </th>
-                          ) : (
+                    {Array.from(
+                      { length: Math.min(state.tableRows, 6) },
+                      (_, rowIndex) => (
+                        <tr key={rowIndex}>
+                          {Array.from(
+                            { length: Math.min(state.tableCols, 8) },
+                            (_, colIndex) =>
+                              rowIndex === 0 ? (
+                                <th
+                                  key={colIndex}
+                                  style={{
+                                    border: state.tableBorders
+                                      ? "1px solid #ccc"
+                                      : "1px solid transparent",
+                                    padding: "4px 8px",
+                                    backgroundColor: "#f5f5f5",
+                                    fontWeight: "bold",
+                                    minWidth: "60px",
+                                    textAlign: "left",
+                                  }}
+                                >
+                                  H{colIndex + 1}
+                                </th>
+                              ) : (
+                                <td
+                                  key={colIndex}
+                                  style={{
+                                    border: state.tableBorders
+                                      ? "1px solid #ccc"
+                                      : "1px solid transparent",
+                                    padding: "4px 8px",
+                                    minWidth: "60px",
+                                  }}
+                                >
+                                  {rowIndex},{colIndex + 1}
+                                </td>
+                              )
+                          )}
+                          {state.tableCols > 8 && (
                             <td
-                              key={colIndex}
                               style={{
-                                border: state.tableBorders ? '1px solid #ccc' : '1px solid transparent',
-                                padding: '4px 8px',
-                                minWidth: '60px',
+                                padding: "4px 8px",
+                                fontStyle: "italic",
+                                color: "#666",
                               }}
                             >
-                              {rowIndex},{colIndex + 1}
+                              +{state.tableCols - 8} more
                             </td>
-                          )
-                        ))}
-                        {state.tableCols > 8 && (
-                          <td style={{ padding: '4px 8px', fontStyle: 'italic', color: '#666' }}>
-                            +{state.tableCols - 8} more
-                          </td>
-                        )}
-                      </tr>
-                    ))}
+                          )}
+                        </tr>
+                      )
+                    )}
                     {state.tableRows > 6 && (
                       <tr>
                         <td
-                          colSpan={Math.min(state.tableCols, 8) + (state.tableCols > 8 ? 1 : 0)}
-                          style={{ padding: '4px 8px', fontStyle: 'italic', color: '#666', textAlign: 'center' }}
+                          colSpan={
+                            Math.min(state.tableCols, 8) +
+                            (state.tableCols > 8 ? 1 : 0)
+                          }
+                          style={{
+                            padding: "4px 8px",
+                            fontStyle: "italic",
+                            color: "#666",
+                            textAlign: "center",
+                          }}
                         >
                           +{state.tableRows - 6} more rows
                         </td>
@@ -2427,7 +2529,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
             </Box>
 
             {/* Options */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -2438,12 +2540,15 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
 
                       // Toggle borders on all existing tables immediately
                       if (currentEditor) {
-                        const tables = currentEditor.view.dom.querySelectorAll('table.editor-table');
+                        const tables =
+                          currentEditor.view.dom.querySelectorAll(
+                            "table.editor-table"
+                          );
                         tables.forEach((table: Element) => {
                           if (newBorderState) {
-                            table.classList.add('bordered');
+                            table.classList.add("bordered");
                           } else {
-                            table.classList.remove('bordered');
+                            table.classList.remove("bordered");
                           }
                         });
                       }
@@ -2458,16 +2563,27 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
                 <Typography variant="subtitle2" gutterBottom>
                   Quick Sizes:
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                   {[
-                    [2, 2], [3, 3], [3, 4], [4, 4], [5, 3], [6, 4]
+                    [2, 2],
+                    [3, 3],
+                    [3, 4],
+                    [4, 4],
+                    [5, 3],
+                    [6, 4],
                   ].map(([rows, cols]) => (
                     <Button
                       key={`${rows}x${cols}`}
-                      variant={state.tableRows === rows && state.tableCols === cols ? "contained" : "outlined"}
+                      variant={
+                        state.tableRows === rows && state.tableCols === cols
+                          ? "contained"
+                          : "outlined"
+                      }
                       size="small"
-                      onClick={() => updateState({ tableRows: rows, tableCols: cols })}
-                      sx={{ minWidth: 'auto', px: 1 }}
+                      onClick={() =>
+                        updateState({ tableRows: rows, tableCols: cols })
+                      }
+                      sx={{ minWidth: "auto", px: 1 }}
                     >
                       {rows}×{cols}
                     </Button>
