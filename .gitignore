@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# BMAD (local only)
+.bmad-core/
+.bmad-*/
