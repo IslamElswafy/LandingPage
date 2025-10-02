@@ -7,10 +7,7 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import FontSize from "@tiptap/extension-font-size";
-import { Table } from "@tiptap/extension-table";
 import TableRow from "@tiptap/extension-table-row";
-import TableCell from "@tiptap/extension-table-cell";
-import TableHeader from "@tiptap/extension-table-header";
 import Link from "@tiptap/extension-link";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
@@ -22,6 +19,9 @@ import Gapcursor from "@tiptap/extension-gapcursor";
 import { common, createLowlight } from "lowlight";
 
 import InlineImage from "./InlineImageExtension";
+import CustomTable from "./CustomTable";
+import CustomTableCell from "./CustomTableCell";
+import CustomTableHeader from "./CustomTableHeader";
 
 const lowlight = createLowlight(common);
 
@@ -63,15 +63,15 @@ export const useEditorExtensions = (
         },
         allowBase64: true,
       }),
-      Table.configure({
+      CustomTable.configure({
         resizable: true,
         HTMLAttributes: {
           class: tableBorders ? "editor-table bordered" : "editor-table",
         },
       }),
       TableRow,
-      TableHeader,
-      TableCell,
+      CustomTableHeader,
+      CustomTableCell,
       CodeBlockLowlight.configure({
         lowlight,
         HTMLAttributes: {

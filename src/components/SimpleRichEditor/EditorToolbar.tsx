@@ -33,7 +33,13 @@ import {
   Code,
   Delete,
   EmojiEmotions,
+  BorderAll,
+  BorderClear,
+  BorderColor,
+  BorderStyle,
   FormatQuote,
+  FormatColorFill,
+  FormatColorReset,
   Image as ImageIcon,
   Link as LinkIcon,
   RemoveCircle,
@@ -65,6 +71,17 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onAddRowAfter,
   onDeleteRow,
   onDeleteTable,
+  tableBorderColor,
+  tableBorderWidth,
+  tableBorderStyle,
+  rowHighlightColor,
+  columnHighlightColor,
+  onSetTableBorderColor,
+  onSetTableBorderWidth,
+  onSetTableBorderStyle,
+  onClearTableBorders,
+  onSetRowBackground,
+  onSetColumnBackground,
 }) => (
   <MenuControlsContainer>
     <MenuSelectFontFamily options={fontFamilyOptions} />
@@ -222,6 +239,115 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
             }}
           >
             <Delete />
+          </IconButton>
+        </Tooltip>
+
+        <MenuDivider />
+
+        <Tooltip title="Set Table Border Color">
+          <IconButton
+            size="small"
+            onClick={() => {
+              const value = window.prompt(
+                "Enter table border color (CSS value, e.g. #1976d2 or red)",
+                tableBorderColor
+              );
+              if (value) {
+                onSetTableBorderColor(value.trim());
+              }
+            }}
+          >
+            <BorderColor />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Set Table Border Width">
+          <IconButton
+            size="small"
+            onClick={() => {
+              const value = window.prompt(
+                "Enter table border width in pixels",
+                tableBorderWidth
+              );
+              if (value !== null) {
+                onSetTableBorderWidth(value.trim());
+              }
+            }}
+          >
+            <BorderAll />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Set Table Border Style">
+          <IconButton
+            size="small"
+            onClick={() => {
+              const value = window.prompt(
+                "Enter table border style (solid, dashed, dotted, double, groove, ridge, none)",
+                tableBorderStyle
+              );
+              if (value) {
+                onSetTableBorderStyle(value.trim());
+              }
+            }}
+          >
+            <BorderStyle />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Remove Table Borders">
+          <IconButton size="small" onClick={onClearTableBorders}>
+            <BorderClear />
+          </IconButton>
+        </Tooltip>
+
+        <MenuDivider />
+
+        <Tooltip title="Set Row Background">
+          <IconButton
+            size="small"
+            onClick={() => {
+              const value = window.prompt(
+                "Enter row background color (CSS value, e.g. #e3f2fd)",
+                rowHighlightColor
+              );
+              if (value !== null) {
+                const trimmed = value.trim();
+                onSetRowBackground(trimmed.length > 0 ? trimmed : null);
+              }
+            }}
+          >
+            <FormatColorFill />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Clear Row Background">
+          <IconButton size="small" onClick={() => onSetRowBackground(null)}>
+            <FormatColorReset />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Set Column Background">
+          <IconButton
+            size="small"
+            onClick={() => {
+              const value = window.prompt(
+                "Enter column background color (CSS value, e.g. #fff3e0)",
+                columnHighlightColor
+              );
+              if (value !== null) {
+                const trimmed = value.trim();
+                onSetColumnBackground(trimmed.length > 0 ? trimmed : null);
+              }
+            }}
+          >
+            <FormatColorFill sx={{ transform: "rotate(90deg)" }} />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Clear Column Background">
+          <IconButton size="small" onClick={() => onSetColumnBackground(null)}>
+            <FormatColorReset sx={{ transform: "rotate(90deg)" }} />
           </IconButton>
         </Tooltip>
       </>

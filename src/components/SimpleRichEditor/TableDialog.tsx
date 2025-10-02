@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  MenuItem,
   Switch,
   TextField,
   Typography,
@@ -28,10 +29,16 @@ const TableDialog: React.FC<TableDialogProps> = ({
   rows,
   cols,
   showBorders,
+  borderColor,
+  borderWidth,
+  borderStyle,
   onClose,
   onRowsChange,
   onColsChange,
   onToggleBorders,
+  onBorderColorChange,
+  onBorderWidthChange,
+  onBorderStyleChange,
   onQuickSizeSelect,
   onInsert,
 }) => (
@@ -76,6 +83,45 @@ const TableDialog: React.FC<TableDialogProps> = ({
           />
         </Box>
 
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+          <TextField
+            label="Border Color"
+            type="color"
+            value={borderColor}
+            onChange={(event) => onBorderColorChange(event.target.value)}
+            sx={{ width: 140 }}
+            size="small"
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            label="Border Width (px)"
+            type="number"
+            value={borderWidth}
+            onChange={(event) =>
+              onBorderWidthChange(String(Math.max(0, Math.min(12, Number(event.target.value) || 0))))
+            }
+            inputProps={{ min: 0, max: 12 }}
+            sx={{ width: 160 }}
+            size="small"
+          />
+          <TextField
+            select
+            label="Border Style"
+            value={borderStyle}
+            onChange={(event) => onBorderStyleChange(event.target.value)}
+            sx={{ minWidth: 160 }}
+            size="small"
+          >
+            <MenuItem value="solid">Solid</MenuItem>
+            <MenuItem value="dashed">Dashed</MenuItem>
+            <MenuItem value="dotted">Dotted</MenuItem>
+            <MenuItem value="double">Double</MenuItem>
+            <MenuItem value="groove">Groove</MenuItem>
+            <MenuItem value="ridge">Ridge</MenuItem>
+            <MenuItem value="none">None</MenuItem>
+          </TextField>
+        </Box>
+
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle2" gutterBottom>
             Preview ({rows} × {cols})
@@ -105,7 +151,11 @@ const TableDialog: React.FC<TableDialogProps> = ({
                         <th
                           key={colIndex}
                           style={{
-                            border: showBorders ? "1px solid #ccc" : "1px solid transparent",
+                            border: showBorders
+                              ? `${borderWidth || "0"}px ${borderStyle} ${
+                                  borderStyle === "none" ? "transparent" : borderColor
+                                }`
+                              : "1px solid transparent",
                             padding: "4px 8px",
                             backgroundColor: "#f5f5f5",
                             fontWeight: "bold",
@@ -119,7 +169,11 @@ const TableDialog: React.FC<TableDialogProps> = ({
                         <td
                           key={colIndex}
                           style={{
-                            border: showBorders ? "1px solid #ccc" : "1px solid transparent",
+                            border: showBorders
+                              ? `${borderWidth || "0"}px ${borderStyle} ${
+                                  borderStyle === "none" ? "transparent" : borderColor
+                                }`
+                              : "1px solid transparent",
                             padding: "4px 8px",
                             minWidth: "60px",
                           }}

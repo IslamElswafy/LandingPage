@@ -28,6 +28,11 @@ export interface EditorState {
   tableBorders: boolean;
   tableRows: number;
   tableCols: number;
+  tableBorderColor: string;
+  tableBorderWidth: string;
+  tableBorderStyle: string;
+  rowHighlightColor: string;
+  columnHighlightColor: string;
   emojiCategory: string;
   emojiSearch: string;
   isFullscreen: boolean;
@@ -66,6 +71,17 @@ export interface EditorToolbarProps {
   onAddRowAfter: () => void;
   onDeleteRow: () => void;
   onDeleteTable: () => void;
+  tableBorderColor: string;
+  tableBorderWidth: string;
+  tableBorderStyle: string;
+  rowHighlightColor: string;
+  columnHighlightColor: string;
+  onSetTableBorderColor: (color: string) => void;
+  onSetTableBorderWidth: (width: string) => void;
+  onSetTableBorderStyle: (style: string) => void;
+  onClearTableBorders: () => void;
+  onSetRowBackground: (color: string | null) => void;
+  onSetColumnBackground: (color: string | null) => void;
 }
 
 export interface EmojiPickerProps {
@@ -100,10 +116,16 @@ export interface TableDialogProps {
   rows: number;
   cols: number;
   showBorders: boolean;
+  borderColor: string;
+  borderWidth: string;
+  borderStyle: string;
   onClose: () => void;
   onRowsChange: (value: number) => void;
   onColsChange: (value: number) => void;
   onToggleBorders: (value: boolean) => void;
+  onBorderColorChange: (color: string) => void;
+  onBorderWidthChange: (width: string) => void;
+  onBorderStyleChange: (style: string) => void;
   onQuickSizeSelect: (rows: number, cols: number) => void;
   onInsert: () => void;
 }

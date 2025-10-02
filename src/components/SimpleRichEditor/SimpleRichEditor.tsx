@@ -213,13 +213,30 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         })
         .run();
 
+      const borderWidthPx = state.tableBorderWidth.endsWith("px")
+        ? state.tableBorderWidth
+        : state.tableBorderWidth + "px";
+
+      editor
+        .chain()
+        .focus()
+        .updateAttributes("table", {
+          borderColor: state.tableBorderColor,
+          borderWidth: borderWidthPx,
+          borderStyle: state.tableBorderStyle,
+        })
+        .run();
+
       window.setTimeout(() => {
         const tables = editor.view.dom.querySelectorAll("table:last-child");
         if (tables.length > 0) {
-          const lastTable = tables[tables.length - 1];
+          const lastTable = tables[tables.length - 1] as HTMLElement;
           lastTable.className = state.tableBorders
             ? "editor-table bordered"
             : "editor-table";
+          lastTable.style.setProperty("--table-border-color", state.tableBorderColor);
+          lastTable.style.setProperty("--table-border-width", borderWidthPx);
+          lastTable.style.setProperty("--table-border-style", state.tableBorderStyle);
         }
       }, 100);
 
@@ -236,7 +253,16 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         showNotification: true,
       });
     }
-  }, [editor, state.tableBorders, state.tableCols, state.tableRows, updateState]);
+  }, [
+    editor,
+    state.tableBorderColor,
+    state.tableBorderStyle,
+    state.tableBorderWidth,
+    state.tableBorders,
+    state.tableCols,
+    state.tableRows,
+    updateState,
+  ]);
 
   const applyFontSize = useCallback(
     (size: string) => {
@@ -381,6 +407,235 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       });
     }
   }, [editor, updateState]);
+
+  const applyTableAttributes = useCallback(
+    (attributes: { borderColor?: string; borderWidth?: string; borderStyle?: string }) => {
+      if (!editor) {
+        return false;
+      }
+      if (!editor.isActive("table")) {
+        updateState({
+          notification: "Place the cursor inside a table to adjust its borders.",
+          showNotification: true,
+        });
+        return false;
+      }
+
+      const tableAttributes: Record<string, string> = {};
+      if (attributes.borderColor !== undefined) {
+        tableAttributes.borderColor = attributes.borderColor;
+      }
+      if (attributes.borderWidth !== undefined) {
+        tableAttributes.borderWidth = attributes.borderWidth;
+      }
+      if (attributes.borderStyle !== undefined) {
+        tableAttributes.borderStyle = attributes.borderStyle;
+      }
+
+      if (Object.keys(tableAttributes).length === 0) {
+        return true;
+      }
+
+      const success = editor
+        .chain()
+        .focus()
+        .updateAttributes("table", tableAttributes)
+        .run();
+
+      if (!success) {
+        updateState({
+          notification: "Unable to update the table borders. Try selecting the table cell again.",
+          showNotification: true,
+        });
+      }
+
+      return success;
+    },
+    [editor, updateState]
+  );
+
+  const setTableBorderColor = useCallback(
+    (color: string) => {
+      const normalized = color.trim();
+      if (!normalized) {
+        updateState({
+          notification: "Please provide a valid CSS color value.",
+          showNotification: true,
+        });
+        return;
+      }
+
+      if (!applyTableAttributes({ borderColor: normalized })) {
+        return;
+      }
+
+      updateState({
+        tableBorderColor: normalized,
+        notification: "Table border color updated successfully!",
+        showNotification: true,
+      });
+    },
+    [applyTableAttributes, updateState]
+  );
+
+  const setTableBorderWidth = useCallback(
+    (widthValue: string) => {
+      const sanitized = widthValue.replace(/px$/i, "").trim();
+      if (!sanitized) {
+        updateState({
+          notification: "Please provide a numeric border width.",
+          showNotification: true,
+        });
+        return;
+      }
+
+      const parsed = Number.parseFloat(sanitized);
+      if (Number.isNaN(parsed) || parsed < 0) {
+        updateState({
+          notification: "Border width must be a non-negative number.",
+          showNotification: true,
+        });
+        return;
+      }
+
+      const clamped = Math.min(12, parsed);
+      const formatted = String(clamped);
+      const pixelWidth = formatted + "px";
+
+      if (!applyTableAttributes({ borderWidth: pixelWidth })) {
+        return;
+      }
+
+      updateState({
+        tableBorderWidth: formatted,
+        notification: "Table border width updated successfully!",
+        showNotification: true,
+      });
+    },
+    [applyTableAttributes, updateState]
+  );
+
+  const setTableBorderStyle = useCallback(
+    (styleValue: string) => {
+      const normalized = styleValue.trim();
+      if (!normalized) {
+        updateState({
+          notification: "Please provide a border style.",
+          showNotification: true,
+        });
+        return;
+      }
+
+      const allowedStyles = new Set([
+        "solid",
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "ridge",
+        "none",
+      ]);
+
+      const lower = normalized.toLowerCase();
+      const finalStyle = allowedStyles.has(lower) ? lower : normalized;
+
+      if (!applyTableAttributes({ borderStyle: finalStyle })) {
+        return;
+      }
+
+      updateState({
+        tableBorderStyle: finalStyle,
+        notification: "Table border style updated successfully!",
+        showNotification: true,
+      });
+    },
+    [applyTableAttributes, updateState]
+  );
+
+  const clearTableBorders = useCallback(() => {
+    if (!applyTableAttributes({ borderWidth: "0px", borderStyle: "none" })) {
+      return;
+    }
+
+    updateState({
+      tableBorderWidth: "0",
+      tableBorderStyle: "none",
+      notification: "Table borders removed.",
+      showNotification: true,
+    });
+  }, [applyTableAttributes, updateState]);
+
+  const setRowBackground = useCallback(
+    (color: string | null) => {
+      if (!editor) {
+        return;
+      }
+      if (!editor.isActive("table")) {
+        updateState({
+          notification: "Select the table cells you want to style, then try again.",
+          showNotification: true,
+        });
+        return;
+      }
+
+      const success = editor
+        .chain()
+        .focus()
+        .setCellAttribute("backgroundColor", color ?? null)
+        .run();
+
+      if (!success) {
+        updateState({
+          notification: "Select the table cells you want to style, then try again.",
+          showNotification: true,
+        });
+        return;
+      }
+
+      updateState({
+        ...(color ? { rowHighlightColor: color } : {}),
+        notification: color ? "Selected cells background updated." : "Cell backgrounds cleared.",
+        showNotification: true,
+      });
+    },
+    [editor, updateState]
+  );
+
+  const setColumnBackground = useCallback(
+    (color: string | null) => {
+      if (!editor) {
+        return;
+      }
+      if (!editor.isActive("table")) {
+        updateState({
+          notification: "Select the table cells you want to style, then try again.",
+          showNotification: true,
+        });
+        return;
+      }
+
+      const success = editor
+        .chain()
+        .focus()
+        .setCellAttribute("backgroundColor", color ?? null)
+        .run();
+
+      if (!success) {
+        updateState({
+          notification: "Select the table cells you want to style, then try again.",
+          showNotification: true,
+        });
+        return;
+      }
+
+      updateState({
+        ...(color ? { columnHighlightColor: color } : {}),
+        notification: color ? "Selected cells background updated." : "Cell backgrounds cleared.",
+        showNotification: true,
+      });
+    },
+    [editor, updateState]
+  );
 
   useEffect(() => {
     if (!editor) {
@@ -528,6 +783,17 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
               onAddRowAfter={addRowAfter}
               onDeleteRow={deleteRow}
               onDeleteTable={deleteTable}
+              tableBorderColor={state.tableBorderColor}
+              tableBorderWidth={state.tableBorderWidth}
+              tableBorderStyle={state.tableBorderStyle}
+              rowHighlightColor={state.rowHighlightColor}
+              columnHighlightColor={state.columnHighlightColor}
+              onSetTableBorderColor={setTableBorderColor}
+              onSetTableBorderWidth={setTableBorderWidth}
+              onSetTableBorderStyle={setTableBorderStyle}
+              onClearTableBorders={clearTableBorders}
+              onSetRowBackground={setRowBackground}
+              onSetColumnBackground={setColumnBackground}
             />
           )}
           editorProps={{
@@ -575,6 +841,9 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         rows={state.tableRows}
         cols={state.tableCols}
         showBorders={state.tableBorders}
+        borderColor={state.tableBorderColor}
+        borderWidth={state.tableBorderWidth}
+        borderStyle={state.tableBorderStyle}
         onClose={() => updateState({ showTableDialog: false })}
         onRowsChange={(value) => updateState({ tableRows: value })}
         onColsChange={(value) => updateState({ tableCols: value })}
@@ -591,6 +860,9 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
             });
           }
         }}
+        onBorderColorChange={(color) => updateState({ tableBorderColor: color })}
+        onBorderWidthChange={(width) => updateState({ tableBorderWidth: width })}
+        onBorderStyleChange={(style) => updateState({ tableBorderStyle: style })}
         onQuickSizeSelect={(rows, cols) =>
           updateState({ tableRows: rows, tableCols: cols })
         }

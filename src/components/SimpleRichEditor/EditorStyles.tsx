@@ -40,16 +40,9 @@ const EditorStyles: React.FC = () => (
           overflow: hidden;
           table-layout: fixed;
           width: 100%;
-        }
-
-        .advanced-rich-editor .editor-table.bordered td,
-        .advanced-rich-editor .editor-table.bordered th {
-          border: 2px solid #e0e0e0;
-          box-sizing: border-box;
-          min-width: 1em;
-          padding: 8px 12px;
-          position: relative;
-          vertical-align: top;
+          --table-border-color: #e0e0e0;
+          --table-border-width: 2px;
+          --table-border-style: solid;
         }
 
         .advanced-rich-editor .editor-table td,
@@ -58,6 +51,23 @@ const EditorStyles: React.FC = () => (
           padding: 8px 12px;
           position: relative;
           vertical-align: top;
+          box-sizing: border-box;
+          border-style: var(--cell-border-style, var(--table-border-style, solid));
+          border-width: var(--cell-border-width, 0);
+          border-color: var(--cell-border-color, transparent);
+        }
+
+        .advanced-rich-editor .editor-table.bordered td,
+        .advanced-rich-editor .editor-table.bordered th {
+          border-color: var(--cell-border-color, var(--table-border-color, #e0e0e0));
+          border-width: var(--cell-border-width, var(--table-border-width, 2px));
+          border-style: var(--cell-border-style, var(--table-border-style, solid));
+        }
+
+        .advanced-rich-editor .editor-table:not(.bordered) td,
+        .advanced-rich-editor .editor-table:not(.bordered) th {
+          border-width: 0;
+          border-color: transparent;
         }
 
         .advanced-rich-editor .editor-table th {
