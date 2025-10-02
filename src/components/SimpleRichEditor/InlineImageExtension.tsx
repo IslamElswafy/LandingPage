@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+﻿import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Button, IconButton, InputAdornment, Popover, Slider, TextField, Typography } from "@mui/material";
 import { FormatAlignCenter, FormatAlignLeft, FormatAlignRight, Layers, Lock, LockOpen, OpenWith, PhotoSizeSelectActual } from "@mui/icons-material";
 import Image from "@tiptap/extension-image";
@@ -59,6 +59,10 @@ const InlineImageComponent: React.FC<{
   const [controlsAnchorEl, setControlsAnchorEl] = useState<HTMLElement | null>(
     null
   );
+  const [controlsAnchorPosition, setControlsAnchorPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -224,6 +228,27 @@ const InlineImageComponent: React.FC<{
   const handleShowControls = useCallback(
     (event: React.MouseEvent<HTMLElement>) => {
       event.stopPropagation();
+
+      const rect = event.currentTarget.getBoundingClientRect();
+      const viewportLeft = window.scrollX;
+      const viewportRight = viewportLeft + window.innerWidth;
+      const desiredLeft = rect.right + window.scrollX + 24;
+      const popoverWidth = 360;
+      const left = Math.max(
+        viewportLeft + 16,
+        Math.min(desiredLeft, viewportRight - popoverWidth)
+      );
+
+      const viewportTop = window.scrollY;
+      const viewportBottom = viewportTop + window.innerHeight;
+      const desiredTop = rect.top + window.scrollY - 16;
+      const popoverHeight = 480;
+      const top = Math.max(
+        viewportTop + 16,
+        Math.min(desiredTop, viewportBottom - popoverHeight)
+      );
+
+      setControlsAnchorPosition({ top, left });
       setControlsAnchorEl(event.currentTarget);
       setShowControls(true);
     },
@@ -233,6 +258,7 @@ const InlineImageComponent: React.FC<{
   // Hide controls
   const handleHideControls = useCallback(() => {
     setControlsAnchorEl(null);
+    setControlsAnchorPosition(null);
     setShowControls(false);
   }, []);
 
@@ -504,14 +530,16 @@ const InlineImageComponent: React.FC<{
       <Popover
         open={showControls}
         anchorEl={controlsAnchorEl}
+        anchorReference={controlsAnchorPosition ? "anchorPosition" : "anchorEl"}
+        anchorPosition={controlsAnchorPosition ?? undefined}
         onClose={handleHideControls}
         anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "right",
+          vertical: "top",
+          horizontal: "left",
         }}
         transformOrigin={{
           vertical: "top",
-          horizontal: "right",
+          horizontal: "left",
         }}
         PaperProps={{
           sx: {
@@ -616,7 +644,7 @@ const InlineImageComponent: React.FC<{
             }}
           >
             <Typography variant="caption" sx={{ color: "#ccc" }}>
-              Original: {naturalDimensions.width} × {naturalDimensions.height}
+              Original: {naturalDimensions.width} Ã— {naturalDimensions.height}
             </Typography>
             {aspectRatio && (
               <Typography variant="caption" sx={{ color: "#ccc" }}>
@@ -634,7 +662,7 @@ const InlineImageComponent: React.FC<{
             }}
           >
             <Typography variant="caption" sx={{ color: "#ccc" }}>
-              Size: {currentDimensions.width} × {currentDimensions.height}
+              Size: {currentDimensions.width} Ã— {currentDimensions.height}
             </Typography>
             <Typography variant="caption" sx={{ color: "#ccc" }}>
               Wrap:{" "}
@@ -878,3 +906,7 @@ const InlineImage = Image.extend({
 
 export { InlineImageComponent, generateAnchorId };
 export default InlineImage;
+
+
+
+
