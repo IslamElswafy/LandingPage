@@ -227,6 +227,12 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         })
         .run();
 
+      syncActiveTableDom({
+        borderColor: state.tableBorderColor,
+        borderWidth: borderWidthPx,
+        borderStyle: state.tableBorderStyle,
+      });
+
       window.setTimeout(() => {
         const tables = editor.view.dom.querySelectorAll("table:last-child");
         if (tables.length > 0) {
@@ -237,6 +243,12 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           lastTable.style.setProperty("--table-border-color", state.tableBorderColor);
           lastTable.style.setProperty("--table-border-width", borderWidthPx);
           lastTable.style.setProperty("--table-border-style", state.tableBorderStyle);
+          lastTable.querySelectorAll("th, td").forEach((cell) => {
+            const htmlCell = cell as HTMLElement;
+            htmlCell.style.setProperty("--cell-border-color", state.tableBorderColor);
+            htmlCell.style.setProperty("--cell-border-width", borderWidthPx);
+            htmlCell.style.setProperty("--cell-border-style", state.tableBorderStyle);
+          });
         }
       }, 100);
 
@@ -408,6 +420,87 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
     }
   }, [editor, updateState]);
 
+  const getActiveTableElement = useCallback((): HTMLTableElement | null => {
+    if (!editor) {
+      return null;
+    }
+
+    const { state, view } = editor;
+    const { $from } = state.selection;
+
+    for (let depth = $from.depth; depth > 0; depth -= 1) {
+      const node = $from.node(depth);
+      if (node.type.name === "table") {
+        const pos = $from.before(depth);
+        const dom = view.nodeDOM(pos);
+        if (dom instanceof HTMLTableElement) {
+          return dom;
+        }
+        if (dom instanceof HTMLElement) {
+          const table = dom.querySelector("table.editor-table");
+          if (table instanceof HTMLTableElement) {
+            return table;
+          }
+        }
+      }
+    }
+
+    const domContext = view.domAtPos(state.selection.from);
+    const contextNode =
+      domContext?.node instanceof Element
+        ? domContext.node
+        : domContext?.node?.parentElement ?? null;
+
+    if (contextNode) {
+      const table = contextNode.closest("table.editor-table");
+      if (table instanceof HTMLTableElement) {
+        return table;
+      }
+    }
+
+    return null;
+  }, [editor]);
+
+  const syncActiveTableDom = useCallback(
+    (attributes: { borderColor?: string; borderWidth?: string; borderStyle?: string }) => {
+      const tableElement = getActiveTableElement();
+      if (!tableElement) {
+        return;
+      }
+
+      const setProperty = (element: HTMLElement, property: string, value?: string) => {
+        if (value === undefined || value === null) {
+          element.style.removeProperty(property);
+        } else {
+          element.style.setProperty(property, value);
+        }
+      };
+
+      if (attributes.borderColor !== undefined) {
+        setProperty(tableElement, "--table-border-color", attributes.borderColor);
+      }
+      if (attributes.borderWidth !== undefined) {
+        setProperty(tableElement, "--table-border-width", attributes.borderWidth);
+      }
+      if (attributes.borderStyle !== undefined) {
+        setProperty(tableElement, "--table-border-style", attributes.borderStyle);
+      }
+
+      tableElement.querySelectorAll<HTMLElement>("th, td").forEach((cell) => {
+        if (attributes.borderColor !== undefined) {
+          setProperty(cell, "--cell-border-color", attributes.borderColor);
+        }
+        if (attributes.borderWidth !== undefined) {
+          setProperty(cell, "--cell-border-width", attributes.borderWidth);
+        }
+        if (attributes.borderStyle !== undefined) {
+          setProperty(cell, "--cell-border-style", attributes.borderStyle);
+        }
+      });
+    },
+    [getActiveTableElement]
+  );
+
   const applyTableAttributes = useCallback(
     (attributes: { borderColor?: string; borderWidth?: string; borderStyle?: string }) => {
       if (!editor) {
@@ -449,9 +542,13 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         });
       }
 
+      if (success) {
+        syncActiveTableDom(attributes);
+      }
+
       return success;
     },
-    [editor, updateState]
+    [editor, syncActiveTableDom, updateState]
   );
 
   const setTableBorderColor = useCallback(
