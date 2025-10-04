@@ -4,35 +4,16 @@ const EditorStyles: React.FC = () => (
   <style>{`
         .advanced-rich-editor .ProseMirror {
           outline: none;
-          /* Ensure scrolling behavior and visible scrollbar styling */
-          max-height: 400px;
-          overflow-y: auto;
-          scrollbar-gutter: stable both-edges;
+          /* Allow the editor to expand instead of showing an internal scrollbar */
+          min-height: 400px;
+          overflow-y: visible;
+          white-space: pre-wrap;
+          word-break: break-word;
+          overflow-wrap: anywhere;
           /* Enable relative positioning for absolutely positioned images */
           position: relative;
         }
 
-        /* WebKit scrollbar styling */
-        .advanced-rich-editor .ProseMirror::-webkit-scrollbar {
-          width: 10px;
-        }
-        .advanced-rich-editor .ProseMirror::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 8px;
-        }
-        .advanced-rich-editor .ProseMirror::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 8px;
-        }
-        .advanced-rich-editor .ProseMirror::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-
-        /* Firefox scrollbar styling */
-        .advanced-rich-editor .ProseMirror {
-          scrollbar-width: thin;
-          scrollbar-color: #c1c1c1 #f1f1f1;
-        }
 
         .advanced-rich-editor .editor-table {
           border-collapse: collapse;
@@ -55,6 +36,9 @@ const EditorStyles: React.FC = () => (
           border-style: var(--cell-border-style, var(--table-border-style, solid));
           border-width: var(--cell-border-width, 0);
           border-color: var(--cell-border-color, transparent);
+          white-space: normal;
+          word-break: break-word;
+          overflow-wrap: anywhere;
         }
 
         .advanced-rich-editor .editor-table.bordered td,

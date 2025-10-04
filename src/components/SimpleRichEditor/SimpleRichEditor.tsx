@@ -896,7 +896,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           editorProps={{
             attributes: {
               style:
-                "min-height: 400px; max-height: 400px; overflow-y: auto; scrollbar-gutter: stable both-edges; padding: 16px; outline: none; line-height: 1.6;",
+                "min-height: 400px; height: auto; overflow-y: visible; padding: 16px; outline: none; line-height: 1.6; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;",
               placeholder,
             },
           }}
