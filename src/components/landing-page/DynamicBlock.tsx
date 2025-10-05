@@ -1,7 +1,31 @@
-import { useRef } from "react";
+﻿import { useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { ChangeEvent, DragEvent, MouseEvent } from "react";
+import type { ChangeEvent, DragEvent, MouseEvent, CSSProperties } from "react";
 import type { BlockData, StyleSettings } from "../../types/app";
+
+const DEFAULT_BORDER_SIDES: Array<"top" | "right" | "bottom" | "left"> = [
+  "top",
+  "right",
+  "bottom",
+  "left",
+];
+const BORDER_SIDE_PROPERTIES: Record<
+  "top" | "right" | "bottom" | "left",
+  keyof CSSProperties
+> = {
+  top: "borderTop",
+  right: "borderRight",
+  bottom: "borderBottom",
+  left: "borderLeft",
+};
+
+const ELEVATION_SHADOWS: Record<string, string> = {
+  shadow: "0 18px 40px rgba(15, 23, 42, 0.25)",
+  flat: "none",
+  "shadow-soft": "0 10px 25px rgba(15, 23, 42, 0.18)",
+  "shadow-strong": "0 28px 65px rgba(15, 23, 42, 0.35)",
+};
+
 const DynamicBlock = ({
   block,
   defaultStyleSettings,
@@ -18,6 +42,7 @@ const DynamicBlock = ({
   onImageUpload,
   onImageDelete,
   onBlockClick,
+  onToggleResizeLock,
   isSelected,
   onReadMore,
   onDeleteBlock,
@@ -33,21 +58,23 @@ const DynamicBlock = ({
   onDragEnter: (e: DragEvent) => void;
   onDragLeave: (e: DragEvent) => void;
   onDoubleClick: (blockId: string) => void;
-  onResizeStart: (
-    e: MouseEvent,
-    blockId: string,
-    direction: string
-  ) => void;
+  onResizeStart: (e: MouseEvent, blockId: string, direction: string) => void;
   onImageUpload: (blockId: string, imageUrl: string) => void;
   onImageDelete: (blockId: string) => void;
   onBlockSelect: (blockId: string) => void;
   onBlockClick: (blockId: string) => void;
+  onToggleResizeLock: (blockId: string) => void;
   isSelected: boolean;
   onReadMore: (blockId: string) => void;
   onDeleteBlock: (blockId: string) => void;
 }) => {
   const { t } = useTranslation();
   const blockRef = useRef<HTMLElement>(null);
+  const isResizeLocked = Boolean(block.isResizeLocked);
+  const lockTitle = isResizeLocked
+    ? t("blocks.unlockResize", { defaultValue: "Unlock resize" })
+    : t("blocks.lockResize", { defaultValue: "Lock resize" });
+  const lockIcon = isResizeLocked ? "\u{1F512}" : "\u{1F513}";
 
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -72,6 +99,7 @@ const DynamicBlock = ({
 
     if (block.isManuallyResized) classes.push("manually-resized");
     if (block.isFullWidth) classes.push("full-width");
+    if (block.isResizeLocked) classes.push("resize-locked");
     if (isSelected) classes.push("selected");
     if (styleSettings.stylePreset) classes.push(styleSettings.stylePreset);
     if (styleSettings.animation) classes.push(styleSettings.animation);
@@ -83,26 +111,62 @@ const DynamicBlock = ({
     return classes.join(" ");
   };
 
+  const getBorderStyle = (styleSettings: StyleSettings): CSSProperties => {
+    if (styleSettings.border !== "with-border") {
+      return { border: "none" };
+    }
+
+    const activeSides =
+      styleSettings.borderSides !== undefined
+        ? styleSettings.borderSides
+        : DEFAULT_BORDER_SIDES;
+    const borderColor = styleSettings.borderColor || "#111111";
+    const borderWidth = styleSettings.borderWidth ?? 1;
+    const borderValue = `${borderWidth}px solid ${borderColor}`;
+
+    const styles: CSSProperties = {};
+    DEFAULT_BORDER_SIDES.forEach((side) => {
+      const prop = BORDER_SIDE_PROPERTIES[side];
+      const value = activeSides.includes(side) ? borderValue : "none";
+      Object.assign(styles, {
+        [prop]: value,
+      });
+    });
+
+    return styles;
+  };
+
+  const getElevationStyle = (styleSettings: StyleSettings): CSSProperties => {
+    const elevationKey = styleSettings.elevation || "shadow";
+    const boxShadow =
+      ELEVATION_SHADOWS[elevationKey] ?? ELEVATION_SHADOWS.shadow;
+
+    return {
+      boxShadow,
+    };
+  };
+
   const getBlockStyle = () => {
-    const baseStyle = getBackgroundStyle();
     const styleSettings = block.styleSettings || defaultStyleSettings;
+    const baseStyle = getBackgroundStyle();
     const opacity =
       styleSettings.opacity !== undefined ? styleSettings.opacity / 100 : 1;
 
-    if (block.isManuallyResized) {
-      return {
-        ...baseStyle,
-        width: block.width ? `${block.width}px` : "auto",
-        height: block.height ? `${block.height}px` : "auto",
-        position: "relative" as const,
-        zIndex: 10,
-        opacity: opacity,
-      };
-    }
+    const sizeStyle: CSSProperties = block.isManuallyResized
+      ? {
+          width: block.width ? `${block.width}px` : "auto",
+          height: block.height ? `${block.height}px` : "auto",
+          position: "relative" as const,
+          zIndex: 10,
+        }
+      : {};
 
     return {
       ...baseStyle,
-      opacity: opacity,
+      ...sizeStyle,
+      opacity,
+      ...getBorderStyle(styleSettings),
+      ...getElevationStyle(styleSettings),
     };
   };
 
@@ -164,7 +228,7 @@ const DynamicBlock = ({
           htmlFor={`image-upload-${block.id}`}
           className="upload-btn-block"
         >
-          📷
+          {"\u{1F4F7}"}
         </label>
         {block.backgroundImage && (
           <button
@@ -172,9 +236,22 @@ const DynamicBlock = ({
             onClick={handleImageDelete}
             title={t("style.deleteBackgroundImage")}
           >
-            🗑️
+            {"\u{1F5D1}"}
           </button>
         )}
+        <button
+          className={`resize-lock-btn${isResizeLocked ? " locked" : ""}`}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleResizeLock(block.id);
+          }}
+          title={lockTitle}
+          aria-label={lockTitle}
+          aria-pressed={isResizeLocked}
+        >
+          {lockIcon}
+        </button>
         <button
           className="delete-block-btn"
           onClick={(e) => {
@@ -183,12 +260,11 @@ const DynamicBlock = ({
           }}
           title={t("blocks.deleteBlock")}
         >
-          ❌
+          {"\u{274C}"}
         </button>
       </div>
-
       {/* Resize handles */}
-      {showHandles && (
+      {showHandles && !isResizeLocked && (
         <>
           <div
             className="resize-handle se"
@@ -229,4 +305,3 @@ const DynamicBlock = ({
 };
 
 export default DynamicBlock;
-

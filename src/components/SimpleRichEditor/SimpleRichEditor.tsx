@@ -106,7 +106,9 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
   }, [editor, updateState]);
 
   const isPreviewMode =
-    externalPreviewMode !== undefined ? externalPreviewMode : state.isPreviewMode;
+    externalPreviewMode !== undefined
+      ? externalPreviewMode
+      : state.isPreviewMode;
 
   const loadSavedState = useCallback(() => {
     const savedJsonContent = window.localStorage.getItem("editor-content-json");
@@ -114,7 +116,10 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       try {
         const jsonContent = JSON.parse(savedJsonContent);
         editor.commands.setContent(jsonContent);
-        updateState({ notification: "Saved layout loaded!", showNotification: true });
+        updateState({
+          notification: "Saved layout loaded!",
+          showNotification: true,
+        });
       } catch (error) {
         console.error("Error loading saved state:", error);
       }
@@ -154,7 +159,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           state.imageCaption +
           '" /><figcaption>' +
           state.imageCaption +
-          '</figcaption></figure>';
+          "</figcaption></figure>";
         editor.chain().focus().insertContent(imageHtml).run();
       } else {
         const chain = editor.chain() as any;
@@ -240,14 +245,26 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           lastTable.className = state.tableBorders
             ? "editor-table bordered"
             : "editor-table";
-          lastTable.style.setProperty("--table-border-color", state.tableBorderColor);
+          lastTable.style.setProperty(
+            "--table-border-color",
+            state.tableBorderColor
+          );
           lastTable.style.setProperty("--table-border-width", borderWidthPx);
-          lastTable.style.setProperty("--table-border-style", state.tableBorderStyle);
+          lastTable.style.setProperty(
+            "--table-border-style",
+            state.tableBorderStyle
+          );
           lastTable.querySelectorAll("th, td").forEach((cell) => {
             const htmlCell = cell as HTMLElement;
-            htmlCell.style.setProperty("--cell-border-color", state.tableBorderColor);
+            htmlCell.style.setProperty(
+              "--cell-border-color",
+              state.tableBorderColor
+            );
             htmlCell.style.setProperty("--cell-border-width", borderWidthPx);
-            htmlCell.style.setProperty("--cell-border-style", state.tableBorderStyle);
+            htmlCell.style.setProperty(
+              "--cell-border-style",
+              state.tableBorderStyle
+            );
           });
         }
       }, 100);
@@ -255,7 +272,11 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       updateState({
         showTableDialog: false,
         notification:
-          "Table " + state.tableRows + "×" + state.tableCols + " inserted successfully!",
+          "Table " +
+          state.tableRows +
+          "×" +
+          state.tableCols +
+          " inserted successfully!",
         showNotification: true,
       });
     } catch (error) {
@@ -281,7 +302,11 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       if (!editor) {
         return;
       }
-      editor.chain().focus().setFontSize(size + "px").run();
+      editor
+        .chain()
+        .focus()
+        .setFontSize(size + "px")
+        .run();
       updateState({ fontSize: size });
     },
     [editor, updateState]
@@ -311,7 +336,10 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       return;
     }
     editor.chain().focus().deleteTable().run();
-    updateState({ notification: "Table deleted successfully!", showNotification: true });
+    updateState({
+      notification: "Table deleted successfully!",
+      showNotification: true,
+    });
   }, [editor, updateState]);
 
   const mergeCells = useCallback(() => {
@@ -319,7 +347,10 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       return;
     }
     editor.chain().focus().mergeCells().run();
-    updateState({ notification: "Cells merged successfully!", showNotification: true });
+    updateState({
+      notification: "Cells merged successfully!",
+      showNotification: true,
+    });
   }, [editor, updateState]);
 
   const splitCell = useCallback(() => {
@@ -327,7 +358,10 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       return;
     }
     editor.chain().focus().splitCell().run();
-    updateState({ notification: "Cell split successfully!", showNotification: true });
+    updateState({
+      notification: "Cell split successfully!",
+      showNotification: true,
+    });
   }, [editor, updateState]);
 
   const addColumnBefore = useCallback(() => {
@@ -336,7 +370,10 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
     }
     if (editor.can().addColumnBefore()) {
       editor.chain().focus().addColumnBefore().run();
-      updateState({ notification: "Column added before!", showNotification: true });
+      updateState({
+        notification: "Column added before!",
+        showNotification: true,
+      });
     } else {
       updateState({
         notification: "Cannot add column. Make sure cursor is in a table cell.",
@@ -351,7 +388,10 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
     }
     if (editor.can().addColumnAfter()) {
       editor.chain().focus().addColumnAfter().run();
-      updateState({ notification: "Column added after!", showNotification: true });
+      updateState({
+        notification: "Column added after!",
+        showNotification: true,
+      });
     } else {
       updateState({
         notification: "Cannot add column. Make sure cursor is in a table cell.",
@@ -369,7 +409,8 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       updateState({ notification: "Column deleted!", showNotification: true });
     } else {
       updateState({
-        notification: "Cannot delete column. Make sure cursor is in a table cell.",
+        notification:
+          "Cannot delete column. Make sure cursor is in a table cell.",
         showNotification: true,
       });
     }
@@ -381,7 +422,10 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
     }
     if (editor.can().addRowBefore()) {
       editor.chain().focus().addRowBefore().run();
-      updateState({ notification: "Row added before!", showNotification: true });
+      updateState({
+        notification: "Row added before!",
+        showNotification: true,
+      });
     } else {
       updateState({
         notification: "Cannot add row. Make sure cursor is in a table cell.",
@@ -462,13 +506,21 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
   }, [editor]);
 
   const syncActiveTableDom = useCallback(
-    (attributes: { borderColor?: string; borderWidth?: string; borderStyle?: string }) => {
+    (attributes: {
+      borderColor?: string;
+      borderWidth?: string;
+      borderStyle?: string;
+    }) => {
       const tableElement = getActiveTableElement();
       if (!tableElement) {
         return;
       }
 
-      const setProperty = (element: HTMLElement, property: string, value?: string) => {
+      const setProperty = (
+        element: HTMLElement,
+        property: string,
+        value?: string
+      ) => {
         if (value === undefined || value === null) {
           element.style.removeProperty(property);
         } else {
@@ -477,13 +529,25 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       };
 
       if (attributes.borderColor !== undefined) {
-        setProperty(tableElement, "--table-border-color", attributes.borderColor);
+        setProperty(
+          tableElement,
+          "--table-border-color",
+          attributes.borderColor
+        );
       }
       if (attributes.borderWidth !== undefined) {
-        setProperty(tableElement, "--table-border-width", attributes.borderWidth);
+        setProperty(
+          tableElement,
+          "--table-border-width",
+          attributes.borderWidth
+        );
       }
       if (attributes.borderStyle !== undefined) {
-        setProperty(tableElement, "--table-border-style", attributes.borderStyle);
+        setProperty(
+          tableElement,
+          "--table-border-style",
+          attributes.borderStyle
+        );
       }
 
       tableElement.querySelectorAll<HTMLElement>("th, td").forEach((cell) => {
@@ -502,13 +566,18 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
   );
 
   const applyTableAttributes = useCallback(
-    (attributes: { borderColor?: string; borderWidth?: string; borderStyle?: string }) => {
+    (attributes: {
+      borderColor?: string;
+      borderWidth?: string;
+      borderStyle?: string;
+    }) => {
       if (!editor) {
         return false;
       }
       if (!editor.isActive("table")) {
         updateState({
-          notification: "Place the cursor inside a table to adjust its borders.",
+          notification:
+            "Place the cursor inside a table to adjust its borders.",
           showNotification: true,
         });
         return false;
@@ -537,7 +606,8 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
 
       if (!success) {
         updateState({
-          notification: "Unable to update the table borders. Try selecting the table cell again.",
+          notification:
+            "Unable to update the table borders. Try selecting the table cell again.",
           showNotification: true,
         });
       }
@@ -669,7 +739,8 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       }
       if (!editor.isActive("table")) {
         updateState({
-          notification: "Select the table cells you want to style, then try again.",
+          notification:
+            "Select the table cells you want to style, then try again.",
           showNotification: true,
         });
         return;
@@ -683,7 +754,8 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
 
       if (!success) {
         updateState({
-          notification: "Select the table cells you want to style, then try again.",
+          notification:
+            "Select the table cells you want to style, then try again.",
           showNotification: true,
         });
         return;
@@ -691,7 +763,9 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
 
       updateState({
         ...(color ? { rowHighlightColor: color } : {}),
-        notification: color ? "Selected cells background updated." : "Cell backgrounds cleared.",
+        notification: color
+          ? "Selected cells background updated."
+          : "Cell backgrounds cleared.",
         showNotification: true,
       });
     },
@@ -705,7 +779,8 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       }
       if (!editor.isActive("table")) {
         updateState({
-          notification: "Select the table cells you want to style, then try again.",
+          notification:
+            "Select the table cells you want to style, then try again.",
           showNotification: true,
         });
         return;
@@ -719,7 +794,8 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
 
       if (!success) {
         updateState({
-          notification: "Select the table cells you want to style, then try again.",
+          notification:
+            "Select the table cells you want to style, then try again.",
           showNotification: true,
         });
         return;
@@ -727,7 +803,9 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
 
       updateState({
         ...(color ? { columnHighlightColor: color } : {}),
-        notification: color ? "Selected cells background updated." : "Cell backgrounds cleared.",
+        notification: color
+          ? "Selected cells background updated."
+          : "Cell backgrounds cleared.",
         showNotification: true,
       });
     },
@@ -909,7 +987,9 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         activeCategory={state.emojiCategory}
         search={state.emojiSearch}
         filteredEmojis={filteredEmojis}
-        onCategoryChange={(category) => updateState({ emojiCategory: category })}
+        onCategoryChange={(category) =>
+          updateState({ emojiCategory: category })
+        }
         onSearchChange={(value) => updateState({ emojiSearch: value })}
         onSelectEmoji={insertEmoji}
         onClose={() => updateState({ showEmojiPicker: false })}
@@ -947,7 +1027,8 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         onToggleBorders={(value) => {
           updateState({ tableBorders: value });
           if (editor) {
-            const tables = editor.view.dom.querySelectorAll("table.editor-table");
+            const tables =
+              editor.view.dom.querySelectorAll("table.editor-table");
             tables.forEach((table) => {
               if (value) {
                 table.classList.add("bordered");
@@ -957,9 +1038,15 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
             });
           }
         }}
-        onBorderColorChange={(color) => updateState({ tableBorderColor: color })}
-        onBorderWidthChange={(width) => updateState({ tableBorderWidth: width })}
-        onBorderStyleChange={(style) => updateState({ tableBorderStyle: style })}
+        onBorderColorChange={(color) =>
+          updateState({ tableBorderColor: color })
+        }
+        onBorderWidthChange={(width) =>
+          updateState({ tableBorderWidth: width })
+        }
+        onBorderStyleChange={(style) =>
+          updateState({ tableBorderStyle: style })
+        }
         onQuickSizeSelect={(rows, cols) =>
           updateState({ tableRows: rows, tableCols: cols })
         }

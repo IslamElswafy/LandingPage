@@ -1,3 +1,5 @@
+export type BorderSide = "top" | "right" | "bottom" | "left";
+
 export interface StyleSettings {
   stylePreset: string;
   opacity: number;
@@ -6,6 +8,9 @@ export interface StyleSettings {
   elevation: string;
   border: string;
   background: string;
+  borderSides?: BorderSide[];
+  borderColor?: string;
+  borderWidth?: number;
 }
 
 export interface ContentItem {
@@ -30,6 +35,7 @@ export interface BlockData {
   x?: number;
   y?: number;
   isManuallyResized?: boolean;
+  isResizeLocked?: boolean;
   isFullWidth?: boolean;
   styleSettings?: StyleSettings;
   content?: string;
@@ -134,3 +140,4 @@ export interface ResizeState {
   startLeft: number;
   startTop: number;
 }
+

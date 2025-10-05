@@ -128,14 +128,20 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onSetRowBackground,
   onSetColumnBackground,
 }) => {
-  const [borderColorAnchorEl, setBorderColorAnchorEl] = useState<null | HTMLElement>(null);
-  const [borderWidthAnchorEl, setBorderWidthAnchorEl] = useState<null | HTMLElement>(null);
-  const [borderStyleAnchorEl, setBorderStyleAnchorEl] = useState<null | HTMLElement>(null);
+  const [borderColorAnchorEl, setBorderColorAnchorEl] =
+    useState<null | HTMLElement>(null);
+  const [borderWidthAnchorEl, setBorderWidthAnchorEl] =
+    useState<null | HTMLElement>(null);
+  const [borderStyleAnchorEl, setBorderStyleAnchorEl] =
+    useState<null | HTMLElement>(null);
   const [pendingBorderWidth, setPendingBorderWidth] = useState<number>(
     Number.parseFloat(tableBorderWidth || "0") || 0
   );
-  const [rowColorAnchorEl, setRowColorAnchorEl] = useState<null | HTMLElement>(null);
-  const [columnColorAnchorEl, setColumnColorAnchorEl] = useState<null | HTMLElement>(null);
+  const [rowColorAnchorEl, setRowColorAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const [columnColorAnchorEl, setColumnColorAnchorEl] =
+    useState<null | HTMLElement>(null);
 
   useEffect(() => {
     if (borderWidthAnchorEl) {
@@ -156,7 +162,10 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
     setPendingBorderWidth(value);
   };
 
-  const handleBorderWidthCommit = (_event: React.SyntheticEvent | Event, value: number | number[]) => {
+  const handleBorderWidthCommit = (
+    _event: React.SyntheticEvent | Event,
+    value: number | number[]
+  ) => {
     if (Array.isArray(value)) {
       return;
     }
@@ -171,7 +180,10 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
     handleColorMenuClose();
   };
 
-  const handleBorderStyleChange = (_event: React.MouseEvent<HTMLElement>, value: string | null) => {
+  const handleBorderStyleChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    value: string | null
+  ) => {
     if (!value) {
       return;
     }
@@ -197,478 +209,495 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
 
   const renderColorSwatches = useMemo(
     () =>
-      (palette: string[], selected: string, onSelect: (color: string) => void) => (
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {palette.map((color) => {
-            const isSelected = color.toLowerCase() === selected.toLowerCase();
-            return (
-              <ButtonBase
-                key={color}
-                onClick={() => onSelect(color)}
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 1,
-                  backgroundColor: color,
-                  border: isSelected ? "2px solid #1976d2" : "2px solid transparent",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
-                  transition: "transform 0.2s ease",
-                  "&:hover": {
-                    transform: "scale(1.06)",
-                  },
-                }}
-              />
-            );
-          })}
-        </Box>
-      ),
+      (
+        palette: string[],
+        selected: string,
+        onSelect: (color: string) => void
+      ) =>
+        (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {palette.map((color) => {
+              const isSelected = color.toLowerCase() === selected.toLowerCase();
+              return (
+                <ButtonBase
+                  key={color}
+                  onClick={() => onSelect(color)}
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 1,
+                    backgroundColor: color,
+                    border: isSelected
+                      ? "2px solid #1976d2"
+                      : "2px solid transparent",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+                    transition: "transform 0.2s ease",
+                    "&:hover": {
+                      transform: "scale(1.06)",
+                    },
+                  }}
+                />
+              );
+            })}
+          </Box>
+        ),
     []
   );
 
   return (
     <MenuControlsContainer>
-    <MenuSelectFontFamily options={fontFamilyOptions} />
+      <MenuSelectFontFamily options={fontFamilyOptions} />
 
-    <Select
-      value={fontSize}
-      onChange={(event) => onFontSizeChange(event.target.value)}
-      size="small"
-      sx={{ minWidth: 80, mr: 1 }}
-    >
-      {fontSizeOptions.map((size) => (
-        <MenuItem key={size} value={size}>
-          {size}px
-        </MenuItem>
-      ))}
-    </Select>
+      <Select
+        value={fontSize}
+        onChange={(event) => onFontSizeChange(event.target.value)}
+        size="small"
+        sx={{ minWidth: 80, mr: 1 }}
+      >
+        {fontSizeOptions.map((size) => (
+          <MenuItem key={size} value={size}>
+            {size}px
+          </MenuItem>
+        ))}
+      </Select>
 
-    <MenuDivider />
+      <MenuDivider />
 
-    <MenuButtonBold />
-    <MenuButtonItalic />
-    <MenuButtonUnderline />
-    <MenuButtonStrikethrough />
-    <MenuButtonSubscript />
-    <MenuButtonSuperscript />
+      <MenuButtonBold />
+      <MenuButtonItalic />
+      <MenuButtonUnderline />
+      <MenuButtonStrikethrough />
+      <MenuButtonSubscript />
+      <MenuButtonSuperscript />
 
-    <MenuDivider />
+      <MenuDivider />
 
-    <MenuButtonTextColor />
-    <MenuButtonHighlightColor />
+      <MenuButtonTextColor />
+      <MenuButtonHighlightColor />
 
-    <MenuDivider />
+      <MenuDivider />
 
-    <MenuSelectHeading />
+      <MenuSelectHeading />
 
-    <MenuDivider />
+      <MenuDivider />
 
-    <MenuButtonBulletedList />
-    <MenuButtonOrderedList />
+      <MenuButtonBulletedList />
+      <MenuButtonOrderedList />
 
-    <MenuDivider />
+      <MenuDivider />
 
-    <MenuButtonAlignLeft />
-    <MenuButtonAlignCenter />
-    <MenuButtonAlignRight />
+      <MenuButtonAlignLeft />
+      <MenuButtonAlignCenter />
+      <MenuButtonAlignRight />
 
-    <MenuDivider />
+      <MenuDivider />
 
-    <Tooltip title="Insert Link">
-      <IconButton size="small" onClick={onInsertLink}>
-        <LinkIcon />
-      </IconButton>
-    </Tooltip>
+      <Tooltip title="Insert Link">
+        <IconButton size="small" onClick={onInsertLink}>
+          <LinkIcon />
+        </IconButton>
+      </Tooltip>
 
-    <Tooltip title="Insert Code Block">
-      <IconButton size="small" onClick={onInsertCodeBlock}>
-        <Code />
-      </IconButton>
-    </Tooltip>
+      <Tooltip title="Insert Code Block">
+        <IconButton size="small" onClick={onInsertCodeBlock}>
+          <Code />
+        </IconButton>
+      </Tooltip>
 
-    <Tooltip title="Insert Quote">
-      <IconButton size="small" onClick={onInsertBlockquote}>
-        <FormatQuote />
-      </IconButton>
-    </Tooltip>
+      <Tooltip title="Insert Quote">
+        <IconButton size="small" onClick={onInsertBlockquote}>
+          <FormatQuote />
+        </IconButton>
+      </Tooltip>
 
-    <Tooltip title="Insert Image">
-      <IconButton size="small" onClick={onOpenImageDialog}>
-        <ImageIcon />
-      </IconButton>
-    </Tooltip>
+      <Tooltip title="Insert Image">
+        <IconButton size="small" onClick={onOpenImageDialog}>
+          <ImageIcon />
+        </IconButton>
+      </Tooltip>
 
-    <Tooltip title="Insert Table">
-      <IconButton size="small" onClick={onOpenTableDialog}>
-        <TableChart />
-      </IconButton>
-    </Tooltip>
+      <Tooltip title="Insert Table">
+        <IconButton size="small" onClick={onOpenTableDialog}>
+          <TableChart />
+        </IconButton>
+      </Tooltip>
 
-    {editor?.isActive("table") && (
-      <>
-        <MenuDivider />
+      {editor?.isActive("table") && (
+        <>
+          <MenuDivider />
 
-        <Tooltip title="Merge Cells">
-          <IconButton size="small" onClick={onMergeCells}>
-            <CallMerge />
-          </IconButton>
-        </Tooltip>
+          <Tooltip title="Merge Cells">
+            <IconButton size="small" onClick={onMergeCells}>
+              <CallMerge />
+            </IconButton>
+          </Tooltip>
 
-        <Tooltip title="Split Cell">
-          <IconButton size="small" onClick={onSplitCell}>
-            <CallSplit />
-          </IconButton>
-        </Tooltip>
+          <Tooltip title="Split Cell">
+            <IconButton size="small" onClick={onSplitCell}>
+              <CallSplit />
+            </IconButton>
+          </Tooltip>
 
-        <MenuDivider />
+          <MenuDivider />
 
-        <Tooltip title="Add Row Before">
-          <IconButton size="small" onClick={onAddRowBefore}>
-            <AddBox />
-          </IconButton>
-        </Tooltip>
+          <Tooltip title="Add Row Before">
+            <IconButton size="small" onClick={onAddRowBefore}>
+              <AddBox />
+            </IconButton>
+          </Tooltip>
 
-        <Tooltip title="Add Row After">
-          <IconButton size="small" onClick={onAddRowAfter}>
-            <TableRows />
-          </IconButton>
-        </Tooltip>
+          <Tooltip title="Add Row After">
+            <IconButton size="small" onClick={onAddRowAfter}>
+              <TableRows />
+            </IconButton>
+          </Tooltip>
 
-        <Tooltip title="Delete Row">
-          <IconButton
-            size="small"
-            onClick={onDeleteRow}
-            sx={{ color: "warning.main" }}
+          <Tooltip title="Delete Row">
+            <IconButton
+              size="small"
+              onClick={onDeleteRow}
+              sx={{ color: "warning.main" }}
+            >
+              <RemoveCircle />
+            </IconButton>
+          </Tooltip>
+
+          <MenuDivider />
+
+          <Tooltip title="Add Column Before">
+            <IconButton size="small" onClick={onAddColumnBefore}>
+              <AddBox sx={{ transform: "rotate(90deg)" }} />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Add Column After">
+            <IconButton size="small" onClick={onAddColumnAfter}>
+              <ViewColumn />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Delete Column">
+            <IconButton
+              size="small"
+              onClick={onDeleteColumn}
+              sx={{ color: "warning.main" }}
+            >
+              <RemoveCircle sx={{ transform: "rotate(90deg)" }} />
+            </IconButton>
+          </Tooltip>
+
+          <MenuDivider />
+
+          <Tooltip title="Delete Table">
+            <IconButton
+              size="small"
+              onClick={onDeleteTable}
+              sx={{
+                color: "error.main",
+                "&:hover": {
+                  backgroundColor: "error.light",
+                  color: "error.contrastText",
+                },
+              }}
+            >
+              <Delete />
+            </IconButton>
+          </Tooltip>
+
+          <MenuDivider />
+
+          <Tooltip title="Table Border Color">
+            <IconButton
+              size="small"
+              onClick={(event) => setBorderColorAnchorEl(event.currentTarget)}
+              sx={{
+                color: safeBorderColor,
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <BorderColor />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Table Border Width">
+            <IconButton
+              size="small"
+              onClick={(event) => setBorderWidthAnchorEl(event.currentTarget)}
+            >
+              <BorderAll />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Table Border Style">
+            <IconButton
+              size="small"
+              onClick={(event) => setBorderStyleAnchorEl(event.currentTarget)}
+            >
+              <BorderStyle />
+            </IconButton>
+          </Tooltip>
+
+          <Menu
+            anchorEl={borderColorAnchorEl}
+            open={openColorMenu}
+            onClose={handleColorMenuClose}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            transformOrigin={{ vertical: "top", horizontal: "left" }}
           >
-            <RemoveCircle />
-          </IconButton>
-        </Tooltip>
-
-        <MenuDivider />
-
-        <Tooltip title="Add Column Before">
-          <IconButton size="small" onClick={onAddColumnBefore}>
-            <AddBox sx={{ transform: "rotate(90deg)" }} />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title="Add Column After">
-          <IconButton size="small" onClick={onAddColumnAfter}>
-            <ViewColumn />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title="Delete Column">
-          <IconButton
-            size="small"
-            onClick={onDeleteColumn}
-            sx={{ color: "warning.main" }}
-          >
-            <RemoveCircle sx={{ transform: "rotate(90deg)" }} />
-          </IconButton>
-        </Tooltip>
-
-        <MenuDivider />
-
-        <Tooltip title="Delete Table">
-          <IconButton
-            size="small"
-            onClick={onDeleteTable}
-            sx={{
-              color: "error.main",
-              "&:hover": {
-                backgroundColor: "error.light",
-                color: "error.contrastText",
-              },
-            }}
-          >
-            <Delete />
-          </IconButton>
-        </Tooltip>
-
-        <MenuDivider />
-
-        <Tooltip title="Table Border Color">
-          <IconButton
-            size="small"
-            onClick={(event) => setBorderColorAnchorEl(event.currentTarget)}
-            sx={{
-              color: safeBorderColor,
-              border: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <BorderColor />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title="Table Border Width">
-          <IconButton
-            size="small"
-            onClick={(event) => setBorderWidthAnchorEl(event.currentTarget)}
-          >
-            <BorderAll />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title="Table Border Style">
-          <IconButton
-            size="small"
-            onClick={(event) => setBorderStyleAnchorEl(event.currentTarget)}
-          >
-            <BorderStyle />
-          </IconButton>
-        </Tooltip>
-
-        <Menu
-          anchorEl={borderColorAnchorEl}
-          open={openColorMenu}
-          onClose={handleColorMenuClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "left" }}
-        >
-          <Box sx={{ p: 2, width: 220 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Border Color
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {BORDER_COLOR_SWATCHES.map((color) => {
-                const isSelected = color.toLowerCase() === safeBorderColor.toLowerCase();
-                return (
-                  <ButtonBase
-                    key={color}
-                    onClick={() => handleBorderColorSelect(color)}
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      backgroundColor: color,
-                      border: isSelected ? "2px solid #1976d2" : "2px solid transparent",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
-                      transition: "transform 0.2s ease",
-                      "&:hover": {
-                        transform: "scale(1.1)",
-                      },
-                    }}
-                  />
-                );
-              })}
+            <Box sx={{ p: 2, width: 220 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Border Color
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {BORDER_COLOR_SWATCHES.map((color) => {
+                  const isSelected =
+                    color.toLowerCase() === safeBorderColor.toLowerCase();
+                  return (
+                    <ButtonBase
+                      key={color}
+                      onClick={() => handleBorderColorSelect(color)}
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        backgroundColor: color,
+                        border: isSelected
+                          ? "2px solid #1976d2"
+                          : "2px solid transparent",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+                        transition: "transform 0.2s ease",
+                        "&:hover": {
+                          transform: "scale(1.1)",
+                        },
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+              <TextField
+                label="Custom Color"
+                type="color"
+                value={safeBorderColor}
+                onChange={(event) => onSetTableBorderColor(event.target.value)}
+                size="small"
+                sx={{ mt: 2, width: "100%" }}
+                InputLabelProps={{ shrink: true }}
+              />
             </Box>
-            <TextField
-              label="Custom Color"
-              type="color"
-              value={safeBorderColor}
-              onChange={(event) => onSetTableBorderColor(event.target.value)}
-              size="small"
-              sx={{ mt: 2, width: "100%" }}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
-        </Menu>
+          </Menu>
 
-        <Menu
-          anchorEl={borderWidthAnchorEl}
-          open={openWidthMenu}
-          onClose={() => setBorderWidthAnchorEl(null)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "left" }}
-        >
-          <Box sx={{ p: 2, width: 240 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Border Width ({pendingBorderWidth}px)
-            </Typography>
-            <Slider
-              min={0}
-              max={12}
-              step={1}
-              value={pendingBorderWidth}
-              valueLabelDisplay="auto"
-              onChange={handleBorderWidthChange}
-              onChangeCommitted={handleBorderWidthCommit}
-            />
-          </Box>
-        </Menu>
+          <Menu
+            anchorEl={borderWidthAnchorEl}
+            open={openWidthMenu}
+            onClose={() => setBorderWidthAnchorEl(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            transformOrigin={{ vertical: "top", horizontal: "left" }}
+          >
+            <Box sx={{ p: 2, width: 240 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Border Width ({pendingBorderWidth}px)
+              </Typography>
+              <Slider
+                min={0}
+                max={12}
+                step={1}
+                value={pendingBorderWidth}
+                valueLabelDisplay="auto"
+                onChange={handleBorderWidthChange}
+                onChangeCommitted={handleBorderWidthCommit}
+              />
+            </Box>
+          </Menu>
 
-        <Menu
-          anchorEl={borderStyleAnchorEl}
-          open={openStyleMenu}
-          onClose={() => setBorderStyleAnchorEl(null)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "left" }}
-        >
-          <Box sx={{ p: 2, width: 260 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Border Style
-            </Typography>
-            <ToggleButtonGroup
-              value={tableBorderStyle || "solid"}
-              exclusive
-              fullWidth
-              size="small"
-              onChange={handleBorderStyleChange}
-              sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
-            >
-              {BORDER_STYLE_OPTIONS.map((option) => (
-                <ToggleButton
-                  key={option.value}
-                  value={option.value}
-                  sx={{ flex: "1 1 45%", textTransform: "capitalize" }}
-                >
-                  {option.label}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-          </Box>
-        </Menu>
+          <Menu
+            anchorEl={borderStyleAnchorEl}
+            open={openStyleMenu}
+            onClose={() => setBorderStyleAnchorEl(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            transformOrigin={{ vertical: "top", horizontal: "left" }}
+          >
+            <Box sx={{ p: 2, width: 260 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Border Style
+              </Typography>
+              <ToggleButtonGroup
+                value={tableBorderStyle || "solid"}
+                exclusive
+                fullWidth
+                size="small"
+                onChange={handleBorderStyleChange}
+                sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
+              >
+                {BORDER_STYLE_OPTIONS.map((option) => (
+                  <ToggleButton
+                    key={option.value}
+                    value={option.value}
+                    sx={{ flex: "1 1 45%", textTransform: "capitalize" }}
+                  >
+                    {option.label}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            </Box>
+          </Menu>
 
-        <Menu
-          anchorEl={rowColorAnchorEl}
-          open={openRowMenu}
-          onClose={handleRowMenuClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "left" }}
-        >
-          <Box sx={{ p: 2, width: 240 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Row Background
-            </Typography>
-            {renderColorSwatches(HIGHLIGHT_SWATCHES, rowHighlightColorSafe, (color) =>
-              handleRowColorSelect(color)
-            )}
-            <TextField
-              label="Custom"
-              type="color"
-              value={rowHighlightColorSafe}
-              onChange={(event) => onSetRowBackground(event.target.value)}
+          <Menu
+            anchorEl={rowColorAnchorEl}
+            open={openRowMenu}
+            onClose={handleRowMenuClose}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            transformOrigin={{ vertical: "top", horizontal: "left" }}
+          >
+            <Box sx={{ p: 2, width: 240 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Row Background
+              </Typography>
+              {renderColorSwatches(
+                HIGHLIGHT_SWATCHES,
+                rowHighlightColorSafe,
+                (color) => handleRowColorSelect(color)
+              )}
+              <TextField
+                label="Custom"
+                type="color"
+                value={rowHighlightColorSafe}
+                onChange={(event) => onSetRowBackground(event.target.value)}
+                size="small"
+                sx={{ mt: 2, width: "100%" }}
+                InputLabelProps={{ shrink: true }}
+              />
+              <ButtonBase
+                onClick={() => handleRowColorSelect(null)}
+                sx={{
+                  mt: 2,
+                  width: "100%",
+                  py: 1,
+                  borderRadius: 1,
+                  border: "1px dashed",
+                  borderColor: "divider",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 1,
+                }}
+              >
+                <FormatColorReset fontSize="small" />
+                <Typography variant="body2">Clear background</Typography>
+              </ButtonBase>
+            </Box>
+          </Menu>
+
+          <Menu
+            anchorEl={columnColorAnchorEl}
+            open={openColumnMenu}
+            onClose={handleColumnMenuClose}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            transformOrigin={{ vertical: "top", horizontal: "left" }}
+          >
+            <Box sx={{ p: 2, width: 240 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Column Background
+              </Typography>
+              {renderColorSwatches(
+                HIGHLIGHT_SWATCHES,
+                columnHighlightColorSafe,
+                (color) => handleColumnColorSelect(color)
+              )}
+              <TextField
+                label="Custom"
+                type="color"
+                value={columnHighlightColorSafe}
+                onChange={(event) => onSetColumnBackground(event.target.value)}
+                size="small"
+                sx={{ mt: 2, width: "100%" }}
+                InputLabelProps={{ shrink: true }}
+              />
+              <ButtonBase
+                onClick={() => handleColumnColorSelect(null)}
+                sx={{
+                  mt: 2,
+                  width: "100%",
+                  py: 1,
+                  borderRadius: 1,
+                  border: "1px dashed",
+                  borderColor: "divider",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 1,
+                }}
+              >
+                <FormatColorReset fontSize="small" />
+                <Typography variant="body2">Clear background</Typography>
+              </ButtonBase>
+            </Box>
+          </Menu>
+
+          <Tooltip title="Remove Table Borders">
+            <IconButton size="small" onClick={onClearTableBorders}>
+              <BorderClear />
+            </IconButton>
+          </Tooltip>
+
+          <MenuDivider />
+
+          <Tooltip title="Row Background">
+            <IconButton
               size="small"
-              sx={{ mt: 2, width: "100%" }}
-              InputLabelProps={{ shrink: true }}
-            />
-            <ButtonBase
-              onClick={() => handleRowColorSelect(null)}
+              onClick={(event) => setRowColorAnchorEl(event.currentTarget)}
               sx={{
-                mt: 2,
-                width: "100%",
-                py: 1,
-                borderRadius: 1,
-                border: "1px dashed",
+                color: rowHighlightColorSafe,
+                border: "1px solid",
                 borderColor: "divider",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 1,
               }}
             >
-              <FormatColorReset fontSize="small" />
-              <Typography variant="body2">Clear background</Typography>
-            </ButtonBase>
-          </Box>
-        </Menu>
+              <FormatColorFill />
+            </IconButton>
+          </Tooltip>
 
-        <Menu
-          anchorEl={columnColorAnchorEl}
-          open={openColumnMenu}
-          onClose={handleColumnMenuClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "left" }}
-        >
-          <Box sx={{ p: 2, width: 240 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Column Background
-            </Typography>
-            {renderColorSwatches(HIGHLIGHT_SWATCHES, columnHighlightColorSafe, (color) =>
-              handleColumnColorSelect(color)
-            )}
-            <TextField
-              label="Custom"
-              type="color"
-              value={columnHighlightColorSafe}
-              onChange={(event) => onSetColumnBackground(event.target.value)}
+          <Tooltip title="Clear Row Background">
+            <IconButton size="small" onClick={() => onSetRowBackground(null)}>
+              <FormatColorReset />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Column Background">
+            <IconButton
               size="small"
-              sx={{ mt: 2, width: "100%" }}
-              InputLabelProps={{ shrink: true }}
-            />
-            <ButtonBase
-              onClick={() => handleColumnColorSelect(null)}
+              onClick={(event) => setColumnColorAnchorEl(event.currentTarget)}
               sx={{
-                mt: 2,
-                width: "100%",
-                py: 1,
-                borderRadius: 1,
-                border: "1px dashed",
+                color: columnHighlightColorSafe,
+                border: "1px solid",
                 borderColor: "divider",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 1,
               }}
             >
-              <FormatColorReset fontSize="small" />
-              <Typography variant="body2">Clear background</Typography>
-            </ButtonBase>
-          </Box>
-        </Menu>
+              <FormatColorFill sx={{ transform: "rotate(90deg)" }} />
+            </IconButton>
+          </Tooltip>
 
-        <Tooltip title="Remove Table Borders">
-          <IconButton size="small" onClick={onClearTableBorders}>
-            <BorderClear />
-          </IconButton>
-        </Tooltip>
+          <Tooltip title="Clear Column Background">
+            <IconButton
+              size="small"
+              onClick={() => onSetColumnBackground(null)}
+            >
+              <FormatColorReset sx={{ transform: "rotate(90deg)" }} />
+            </IconButton>
+          </Tooltip>
+        </>
+      )}
 
-        <MenuDivider />
+      <Tooltip title={isEmojiPickerOpen ? "Hide Emoji Picker" : "Insert Emoji"}>
+        <IconButton size="small" onClick={onToggleEmojiPicker}>
+          <EmojiEmotions />
+        </IconButton>
+      </Tooltip>
 
-        <Tooltip title="Row Background">
-          <IconButton
-            size="small"
-            onClick={(event) => setRowColorAnchorEl(event.currentTarget)}
-            sx={{
-              color: rowHighlightColorSafe,
-              border: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <FormatColorFill />
-          </IconButton>
-        </Tooltip>
+      <MenuDivider />
 
-        <Tooltip title="Clear Row Background">
-          <IconButton size="small" onClick={() => onSetRowBackground(null)}>
-            <FormatColorReset />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title="Column Background">
-          <IconButton
-            size="small"
-            onClick={(event) => setColumnColorAnchorEl(event.currentTarget)}
-            sx={{
-              color: columnHighlightColorSafe,
-              border: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <FormatColorFill sx={{ transform: "rotate(90deg)" }} />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title="Clear Column Background">
-          <IconButton size="small" onClick={() => onSetColumnBackground(null)}>
-            <FormatColorReset sx={{ transform: "rotate(90deg)" }} />
-          </IconButton>
-        </Tooltip>
-      </>
-    )}
-
-    <Tooltip title={isEmojiPickerOpen ? "Hide Emoji Picker" : "Insert Emoji"}>
-      <IconButton size="small" onClick={onToggleEmojiPicker}>
-        <EmojiEmotions />
-      </IconButton>
-    </Tooltip>
-
-    <MenuDivider />
-
-    <MenuButtonUndo />
-    <MenuButtonRedo />
-  </MenuControlsContainer>
+      <MenuButtonUndo />
+      <MenuButtonRedo />
+    </MenuControlsContainer>
   );
 };
 

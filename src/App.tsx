@@ -20,6 +20,7 @@ import { useNotifications } from "./hooks/useNotifications";
 import type { ToastNotificationData } from "./types/notifications";
 import type {
   StyleSettings,
+  BorderSide,
   ContentItem,
   BlockData,
   CarouselImage,
@@ -65,6 +66,7 @@ function App() {
       backgroundImage:
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
+      isResizeLocked: false,
       content:
         "**Innovation** is at the heart of everything we do. We constantly push the boundaries of what's possible, bringing you cutting-edge solutions that transform the way you work and live.\n\nOur innovative approach includes:\n- Revolutionary technology\n- User-centered design\n- Sustainable practices\n- Continuous improvement",
       contentType: "text" as const,
@@ -76,6 +78,7 @@ function App() {
       backgroundImage:
         "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
+      isResizeLocked: false,
       content:
         "*Streamline your workflow* with our powerful automation tools. Say goodbye to repetitive tasks and hello to increased productivity and efficiency.",
       contentType: "text" as const,
@@ -87,6 +90,7 @@ function App() {
       backgroundImage:
         "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
+      isResizeLocked: false,
     },
     {
       id: "4",
@@ -95,6 +99,7 @@ function App() {
       backgroundImage:
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
+      isResizeLocked: false,
     },
     {
       id: "5",
@@ -103,6 +108,7 @@ function App() {
       backgroundImage:
         "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1200&auto=format&fit=crop",
       isManuallyResized: false,
+      isResizeLocked: false,
     },
     {
       id: "6",
@@ -113,6 +119,7 @@ function App() {
       gradientColors: ["#000000", "#333333"],
       gradientDirection: "135deg",
       isManuallyResized: false,
+      isResizeLocked: false,
     },
     {
       id: "7",
@@ -122,6 +129,7 @@ function App() {
       gradientColors: ["#ff6b6b", "#4ecdc4"],
       gradientDirection: "45deg",
       isManuallyResized: false,
+      isResizeLocked: false,
       styleSettings: {
         stylePreset: "",
         opacity: 100,
@@ -130,6 +138,9 @@ function App() {
         elevation: "shadow",
         border: "no-border",
         background: "bg-gradient",
+        borderSides: ["top", "right", "bottom", "left"],
+        borderColor: "#111111",
+        borderWidth: 1,
       },
     },
   ]);
@@ -142,6 +153,9 @@ function App() {
     elevation: "shadow",
     border: "no-border",
     background: "bg-image",
+    borderSides: ["top", "right", "bottom", "left"],
+    borderColor: "#111111",
+    borderWidth: 1,
   });
 
   const [autoRotate, setAutoRotate] = useState(false);
@@ -502,6 +516,7 @@ function App() {
           ? {
               ...block,
               isManuallyResized: false,
+      isResizeLocked: false,
               isFullWidth: false,
               width: undefined,
               height: undefined,
@@ -518,6 +533,11 @@ function App() {
   ) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const targetBlock = blocks.find((block) => block.id === blockId);
+    if (targetBlock?.isResizeLocked) {
+      return;
+    }
 
     const element = e.currentTarget.parentElement;
     if (!element) return;
@@ -544,52 +564,92 @@ function App() {
     );
   };
 
-  const handleStyleChange = (key: keyof StyleSettings, value: string) => {
+  const normalizeStyleValue = (
+    key: keyof StyleSettings,
+    value: string | number | BorderSide[],
+    current?: StyleSettings[keyof StyleSettings]
+  ): StyleSettings[keyof StyleSettings] => {
+    if (key === "opacity" || key === "borderWidth") {
+      const numeric = typeof value === "number" ? value : Number(value);
+      if (Number.isNaN(numeric)) {
+        return (typeof current === "number" ? current : 0) as StyleSettings[keyof StyleSettings];
+      }
+      return numeric as StyleSettings[keyof StyleSettings];
+    }
+
+    if (key === "borderSides") {
+      if (Array.isArray(value)) {
+        return value as StyleSettings[keyof StyleSettings];
+      }
+      if (Array.isArray(current)) {
+        return current;
+      }
+      return [value as BorderSide] as StyleSettings[keyof StyleSettings];
+    }
+
+    return String(value) as StyleSettings[keyof StyleSettings];
+  };
+
+  const handleStyleChange = (
+    key: keyof StyleSettings,
+    value: string | number | BorderSide[]
+  ) => {
     setStyleSettings((prev) => ({
       ...prev,
-      [key]: value,
+      [key]: normalizeStyleValue(key, value, prev[key]),
     }));
   };
 
   const handleSelectedBlockStyleChange = (
     key: keyof StyleSettings,
-    value: string
+    value: string | number | BorderSide[]
   ) => {
     if (!selectedBlockId) return;
 
     setBlocks((prev) =>
       prev.map((block) => {
-        if (block.id === selectedBlockId) {
-          const updatedBlock = {
-            ...block,
-            styleSettings: {
-              ...block.styleSettings,
-              [key]: value as string, // ensure value is string
-            },
-          } as BlockData;
+        if (block.id !== selectedBlockId) return block;
 
-          // Set isGradient property based on background type
-          if (key === "background") {
-            if (value === "bg-gradient") {
-              updatedBlock.isGradient = true;
-              // Initialize gradient colors if not set
-              if (!updatedBlock.gradientColors) {
-                updatedBlock.gradientColors = ["#667eea", "#764ba2"];
-              }
-              if (!updatedBlock.gradientDirection) {
-                updatedBlock.gradientDirection = "135deg";
-              }
-            } else {
-              updatedBlock.isGradient = false;
+        const baseStyle: StyleSettings = {
+          ...styleSettings,
+          ...(block.styleSettings || {}),
+        };
+
+        const normalizedValue = normalizeStyleValue(
+          key,
+          value,
+          baseStyle[key]
+        );
+
+        const nextStyle: StyleSettings = {
+          ...baseStyle,
+          [key]: normalizedValue,
+        };
+
+        const updatedBlock: BlockData = {
+          ...block,
+          styleSettings: nextStyle,
+        };
+
+        if (key === "background" && typeof normalizedValue === "string") {
+          if (normalizedValue === "bg-gradient") {
+            updatedBlock.isGradient = true;
+            if (!updatedBlock.gradientColors) {
+              updatedBlock.gradientColors = ["#667eea", "#764ba2"];
             }
+            if (!updatedBlock.gradientDirection) {
+              updatedBlock.gradientDirection = "135deg";
+            }
+          } else {
+            updatedBlock.isGradient = false;
           }
-
-          return updatedBlock;
         }
-        return block;
+
+        return updatedBlock;
       })
     );
   };
+
 
   const handleNavbarSettingsChange = (
     key: keyof NavbarSettings,
@@ -626,6 +686,7 @@ function App() {
       prev.map((block) => ({
         ...block,
         isManuallyResized: false,
+      isResizeLocked: false,
         isFullWidth: false,
         width: undefined,
         height: undefined,
@@ -686,9 +747,26 @@ function App() {
       gradientColors: ["#333333", "#666666"],
       gradientDirection: "135deg",
       isManuallyResized: false,
+      isResizeLocked: false,
     };
     setBlocks((prev) => [...prev, newBlock]);
     setSelectedBlockId(newId);
+  };
+
+
+  const handleToggleResizeLock = (blockId: string) => {
+    setBlocks((prev) =>
+      prev.map((block) =>
+        block.id === blockId
+          ? { ...block, isResizeLocked: !block.isResizeLocked }
+          : block
+      )
+    );
+    setResizeState((prev) =>
+      prev.currentBlockId === blockId
+        ? { ...prev, isResizing: false, currentBlockId: null }
+        : prev
+    );
   };
 
   const handleBlockSelection = (blockId: string) => {
@@ -1289,6 +1367,7 @@ function App() {
                   onImageDelete={handleImageDelete}
                   onBlockSelect={handleBlockSelection}
                   onBlockClick={handleBlockClick}
+                  onToggleResizeLock={handleToggleResizeLock}
                   isSelected={selectedBlockId === block.id}
                   onReadMore={handleReadMore}
                   onDeleteBlock={handleDeleteBlock}
@@ -1406,3 +1485,4 @@ function App() {
 }
 
 export default App;
+

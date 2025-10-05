@@ -15,12 +15,19 @@ const EditorStyles: React.FC = () => (
         }
 
 
+        .advanced-rich-editor .tableWrapper {
+          overflow-x: hidden !important;
+          overflow-y: visible;
+          width: 100%;
+          max-width: 100%;
+        }
+
         .advanced-rich-editor .editor-table {
           border-collapse: collapse;
           margin: 16px 0;
-          overflow: hidden;
-          table-layout: fixed;
           width: 100%;
+          max-width: 100%;
+          table-layout: fixed;
           --table-border-color: #e0e0e0;
           --table-border-width: 2px;
           --table-border-style: solid;
