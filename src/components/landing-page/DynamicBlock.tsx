@@ -205,15 +205,18 @@ const DynamicBlock = ({
       onDoubleClick={() => onDoubleClick(block.id)}
       onClick={() => onBlockClick(block.id)}
     >
-      <button
-        className="cta"
-        onClick={(e) => {
-          e.stopPropagation();
-          onReadMore(block.id);
-        }}
-      >
-        Read More
-      </button>
+      {/* Content area - pushed to bottom via flex */}
+      <div style={{ marginTop: 'auto' }}>
+        <button
+          className="cta"
+          onClick={(e) => {
+            e.stopPropagation();
+            onReadMore(block.id);
+          }}
+        >
+          Read More
+        </button>
+      </div>
 
       {/* Block Image Controls */}
       <div className="block-image-controls">

@@ -17,6 +17,7 @@ import PageBackgroundControlsPopup from "./components/landing-page/PageBackgroun
 import ReplyModal from "./components/landing-page/ReplyModal";
 import VisitorStatistics from "./components/landing-page/VisitorStatistics";
 import { useNotifications } from "./hooks/useNotifications";
+import { useMasonryGrid } from "./hooks/useMasonryGrid";
 import type { ToastNotificationData } from "./types/notifications";
 import type {
   StyleSettings,
@@ -384,6 +385,10 @@ function App() {
     startLeft: 0,
     startTop: 0,
   });
+
+  // Initialize masonry grid hook (10px row height, 16px gap)
+  // Hook automatically recalculates layout when cards resize
+  const masonryGridRef = useMasonryGrid(10, 16);
 
   // Visitor tracking functionality
   const trackVisitor = () => {
@@ -1347,7 +1352,11 @@ function App() {
               onImagesChange={setHeroImages}
             />
 
-            <section className="grid" id="grid">
+            <section
+              className="grid"
+              id="grid"
+              ref={masonryGridRef as React.RefObject<HTMLElement>}
+            >
               {blocks.map((block) => (
                 <DynamicBlock
                   key={block.id}

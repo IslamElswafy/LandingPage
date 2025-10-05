@@ -18,6 +18,7 @@ export interface EditorState {
   showEmojiPicker: boolean;
   showImageDialog: boolean;
   showTableDialog: boolean;
+  showLinkDialog: boolean;
   showSettingsDialog: boolean;
   showExportDialog: boolean;
   imageUrl: string;
@@ -57,7 +58,7 @@ export interface EditorToolbarProps {
   onFontSizeChange: (value: string) => void;
   onOpenImageDialog: () => void;
   onOpenTableDialog: () => void;
-  onInsertLink: () => void;
+  onOpenLinkDialog: () => void;
   onInsertCodeBlock: () => void;
   onInsertBlockquote: () => void;
   onToggleEmojiPicker: () => void;
@@ -128,4 +129,10 @@ export interface TableDialogProps {
   onBorderStyleChange: (style: string) => void;
   onQuickSizeSelect: (rows: number, cols: number) => void;
   onInsert: () => void;
+}
+
+export interface LinkDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onInsertLink: (url: string) => void;
 }
