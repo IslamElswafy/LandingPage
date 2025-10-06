@@ -102,7 +102,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onFontSizeChange,
   onOpenImageDialog,
   onOpenTableDialog,
-  onInsertLink,
+  onOpenLinkDialog,
   onInsertCodeBlock,
   onInsertBlockquote,
   onToggleEmojiPicker,
@@ -293,7 +293,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
       <MenuDivider />
 
       <Tooltip title="Insert Link">
-        <IconButton size="small" onClick={onInsertLink}>
+        <IconButton size="small" onClick={onOpenLinkDialog}>
           <LinkIcon />
         </IconButton>
       </Tooltip>

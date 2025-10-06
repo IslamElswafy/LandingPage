@@ -9,6 +9,7 @@ export const useEditorState = (
     showEmojiPicker: false,
     showImageDialog: false,
     showTableDialog: false,
+    showLinkDialog: false,
     showSettingsDialog: false,
     showExportDialog: false,
     imageUrl: "",

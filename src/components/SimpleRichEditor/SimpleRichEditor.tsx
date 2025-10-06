@@ -8,6 +8,7 @@ import type { Editor } from "@tiptap/react";
 import EmojiPicker from "./EmojiPicker";
 import ImageDialog from "./ImageDialog";
 import TableDialog from "./TableDialog";
+import LinkDialog from "./LinkDialog";
 import EditorStyles from "./EditorStyles";
 import EditorToolbar from "./EditorToolbar";
 import { useEditorExtensions } from "./extensions";
@@ -312,16 +313,17 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
     [editor, updateState]
   );
 
-  const insertLink = useCallback(() => {
-    if (!editor) {
-      return;
-    }
-    const url = window.prompt("Enter link URL:");
-    if (url) {
+  const insertLink = useCallback(
+    (url: string) => {
+      if (!editor) {
+        return;
+      }
+
       editor.chain().focus().setLink({ href: url }).run();
       updateState({ notification: "Link inserted!", showNotification: true });
-    }
-  }, [editor, updateState]);
+    },
+    [editor, updateState]
+  );
 
   const insertCodeBlock = useCallback(() => {
     editor?.chain().focus().toggleCodeBlock().run();
@@ -942,7 +944,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
               onFontSizeChange={applyFontSize}
               onOpenImageDialog={() => updateState({ showImageDialog: true })}
               onOpenTableDialog={() => updateState({ showTableDialog: true })}
-              onInsertLink={insertLink}
+              onOpenLinkDialog={() => updateState({ showLinkDialog: true })}
               onInsertCodeBlock={insertCodeBlock}
               onInsertBlockquote={insertBlockquote}
               onToggleEmojiPicker={() =>
@@ -1051,6 +1053,12 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           updateState({ tableRows: rows, tableCols: cols })
         }
         onInsert={insertTable}
+      />
+
+      <LinkDialog
+        open={state.showLinkDialog}
+        onClose={() => updateState({ showLinkDialog: false })}
+        onInsertLink={insertLink}
       />
 
       <Snackbar
