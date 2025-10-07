@@ -268,6 +268,48 @@ const EditorStyles: React.FC = () => (
           clear: both;
         }
 
+        .advanced-rich-editor div[data-youtube-video] {
+          position: relative;
+          display: inline-block;
+          max-width: 100%;
+          min-width: 240px;
+          min-height: 180px;
+          background-color: #000;
+          border-radius: 12px;
+          overflow: hidden;
+          resize: both;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+
+        .advanced-rich-editor div[data-youtube-video] iframe {
+          width: 100%;
+          height: 100%;
+          border: 0;
+          display: block;
+        }
+
+        .advanced-rich-editor div[data-youtube-video]::after {
+          content: "";
+          position: absolute;
+          right: 10px;
+          bottom: 10px;
+          width: 14px;
+          height: 14px;
+          border-radius: 4px;
+          background: rgba(255,255,255,0.75);
+          border: 2px solid rgba(25,118,210,0.8);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+          pointer-events: none;
+        }
+
+        .advanced-rich-editor .editor-video-caption {
+          color: #666;
+          font-size: 0.875rem;
+          font-style: italic;
+          text-align: center;
+          margin: 8px auto 24px;
+        }
+
         .advanced-rich-editor figure img {
           max-width: 100%;
           height: auto;

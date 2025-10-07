@@ -21,6 +21,14 @@ import {
 } from "./hooks";
 import type { SimpleRichEditorProps } from "./types";
 
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
   content,
   onChange,
@@ -149,17 +157,30 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
       return;
     }
 
-    const handleInsertion = (imageSrc: string) => {
+    const resetDialogState = (message: string) => {
+      updateState({
+        showImageDialog: false,
+        imageUrl: "",
+        imageCaption: "",
+        selectedImageFile: null,
+        imageInputMode: "url",
+        notification: message,
+        showNotification: true,
+      });
+    };
+
+    const insertImageContent = (imageSrc: string) => {
       if (state.imageCaption) {
+        const safeCaption = escapeHtml(state.imageCaption);
         const imageHtml =
           '<figure><img src="' +
           imageSrc +
           '" alt="' +
-          state.imageCaption +
+          safeCaption +
           '" title="' +
-          state.imageCaption +
+          safeCaption +
           '" /><figcaption>' +
-          state.imageCaption +
+          safeCaption +
           "</figcaption></figure>";
         editor.chain().focus().insertContent(imageHtml).run();
       } else {
@@ -170,27 +191,48 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           .run();
       }
 
-      updateState({
-        showImageDialog: false,
-        imageUrl: "",
-        imageCaption: "",
-        selectedImageFile: null,
-        imageInputMode: "url",
-        notification: "Image inserted successfully!",
-        showNotification: true,
-      });
+      resetDialogState("Image inserted successfully!");
     };
 
     if (state.imageInputMode === "url") {
-      if (!state.imageUrl) {
+      const trimmedUrl = state.imageUrl.trim();
+      if (!trimmedUrl) {
         return;
       }
-      handleInsertion(state.imageUrl);
+
+      const youtubeChain = editor.chain() as any;
+      const embedded = youtubeChain
+        .focus()
+        .setYoutubeVideo({
+          src: trimmedUrl,
+          width: 560,
+          height: 315,
+        })
+        .run();
+
+      if (embedded) {
+        if (state.imageCaption) {
+          editor
+            .chain()
+            .focus()
+            .insertContent(
+              '<p class="editor-video-caption">' +
+                escapeHtml(state.imageCaption) +
+                "</p>"
+            )
+            .run();
+        }
+
+        resetDialogState("Video embedded successfully!");
+        return;
+      }
+
+      insertImageContent(trimmedUrl);
     } else if (state.imageInputMode === "file" && state.selectedImageFile) {
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        handleInsertion(result);
+        insertImageContent(result);
       };
       reader.readAsDataURL(state.selectedImageFile);
     }

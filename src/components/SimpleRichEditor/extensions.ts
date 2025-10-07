@@ -16,6 +16,7 @@ import Blockquote from "@tiptap/extension-blockquote";
 import Placeholder from "@tiptap/extension-placeholder";
 import Dropcursor from "@tiptap/extension-dropcursor";
 import Gapcursor from "@tiptap/extension-gapcursor";
+import Youtube from "@tiptap/extension-youtube";
 import { common, createLowlight } from "lowlight";
 
 import InlineImage from "./InlineImageExtension";
@@ -55,6 +56,21 @@ export const useEditorExtensions = (
           class: "editor-link",
           rel: "noopener noreferrer",
           target: "_blank",
+        },
+      }),
+      Youtube.configure({
+        width: 560,
+        height: 315,
+        nocookie: false,
+        allowFullscreen: true,
+        controls: true,
+        addPasteHandler: true,
+        HTMLAttributes: {
+          class: "editor-youtube-frame",
+          loading: "lazy",
+          referrerpolicy: "strict-origin-when-cross-origin",
+          allow:
+            "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",
         },
       }),
       InlineImage.configure({
