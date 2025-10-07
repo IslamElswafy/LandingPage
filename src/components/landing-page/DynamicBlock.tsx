@@ -58,6 +58,7 @@ const DynamicBlock = ({
   isSelected,
   onReadMore,
   onDeleteBlock,
+  onShareBlock,
 }: {
   block: BlockData;
   defaultStyleSettings: StyleSettings;
@@ -78,6 +79,7 @@ const DynamicBlock = ({
   onToggleResizeLock: (blockId: string) => void;
   isSelected: boolean;
   onReadMore: (blockId: string) => void;
+  onShareBlock?: (blockId: string) => void;
   onDeleteBlock: (blockId: string) => void;
 }) => {
   const { t } = useTranslation();
@@ -103,6 +105,12 @@ const DynamicBlock = ({
 
   const handleImageDelete = () => {
     onImageDelete(block.id);
+  };
+
+  const handleShareBlock = () => {
+    if (onShareBlock) {
+      onShareBlock(block.id);
+    }
   };
 
   const getStyleClasses = () => {
@@ -287,6 +295,18 @@ const DynamicBlock = ({
         >
           {lockIcon}
         </button>
+        {onShareBlock && (
+          <button
+            className="share-block-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShareBlock();
+            }}
+            title={t("blocks.shareBlock", { defaultValue: "Share this card" })}
+          >
+            {"\u{1F517}"}
+          </button>
+        )}
         <button
           className="delete-block-btn"
           onClick={(e) => {

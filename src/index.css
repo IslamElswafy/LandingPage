@@ -979,14 +979,16 @@ header:not(.apple-header) nav a:hover {
 
 /* Manually resized cards - can span multiple columns for width control */
 .card.manually-resized {
-  border: 2px dashed rgba(59, 130, 246, 0.5) !important;
+  outline: 2px dashed rgba(59, 130, 246, 0.5);
+  outline-offset: 4px;
   /* Width will be set via inline styles, grid-column-end calculated by JS */
 }
 
 /* Full-width cards - span all columns */
 .card.full-width {
   grid-column: 1 / -1;
-  border: 2px dashed rgba(34, 197, 94, 0.5) !important;
+  outline: 2px dashed rgba(34, 197, 94, 0.5);
+  outline-offset: 4px;
   position: relative;
 }
 
