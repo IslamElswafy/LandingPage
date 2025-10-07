@@ -133,6 +133,7 @@ export interface NavigationItem {
   customUrl?: string;
   isVisible: boolean;
   order: number;
+  icon?: string; // SVG path data for the icon
 }
 
 export interface ResizeState {
@@ -146,4 +147,3 @@ export interface ResizeState {
   startLeft: number;
   startTop: number;
 }
-

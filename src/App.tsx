@@ -298,14 +298,29 @@ function App() {
     });
 
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([
-    { id: "nav_1", label: "Home", view: "home", isVisible: true, order: 1 },
-    { id: "nav_2", label: "About", view: "about", isVisible: true, order: 2 },
+    {
+      id: "nav_1",
+      label: "Home",
+      view: "home",
+      isVisible: true,
+      order: 1,
+      icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10",
+    },
+    {
+      id: "nav_2",
+      label: "About",
+      view: "about",
+      isVisible: true,
+      order: 2,
+      icon: "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M12 16v-4 M12 8h.01",
+    },
     {
       id: "nav_3",
       label: "Contact",
       view: "contact",
       isVisible: true,
       order: 3,
+      icon: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6",
     },
   ]);
 
@@ -905,7 +920,8 @@ function App() {
 
   // Share block handler
   const handleShareBlock = (blockId: string) => {
-    const shareUrl = window.location.origin + window.location.pathname + "?cardId=" + blockId;
+    const shareUrl =
+      window.location.origin + window.location.pathname + "?cardId=" + blockId;
     navigator.clipboard.writeText(shareUrl).then(
       () => {
         showSuccess(
@@ -914,10 +930,7 @@ function App() {
         );
       },
       () => {
-        showError(
-          "Copy Failed",
-          "Failed to copy the link. Please try again."
-        );
+        showError("Copy Failed", "Failed to copy the link. Please try again.");
       }
     );
   };
@@ -935,9 +948,16 @@ function App() {
         const cardTitle = sharedBlock.title || sharedBlock.tag;
         showInfo("Shared Card", "Opening shared card: " + cardTitle);
 
-        window.history.replaceState({}, document.title, window.location.pathname);
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
       } else {
-        showWarning("Card Not Found", "The shared card with ID " + sharedCardId + " was not found.");
+        showWarning(
+          "Card Not Found",
+          "The shared card with ID " + sharedCardId + " was not found."
+        );
       }
     }
   }, []);
@@ -1115,8 +1135,27 @@ function App() {
                         : ""
                     }`}
                     onClick={() => handleNavItemClick(item)}
-                    style={{ color: navbarSettings.textColor }}
+                    style={{
+                      color: navbarSettings.textColor,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
                   >
+                    {item.icon && (
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d={item.icon} />
+                      </svg>
+                    )}
                     {item.view === "home"
                       ? t("navigation.home")
                       : item.view === "about"
