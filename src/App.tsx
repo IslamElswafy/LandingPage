@@ -262,6 +262,7 @@ function App() {
     backgroundColor: "#1d1d1f",
     textColor: "#f5f5f7",
     logoColor: "#f5f5f7",
+    logoUrl: wjlIcon,
     transparency: 95,
     isVisible: true,
     isSticky: true,
@@ -1115,7 +1116,7 @@ function App() {
             {navbarSettings.showLogo && (
               <div style={{ color: navbarSettings.logoColor }}>
                 <img
-                  src={wjlIcon}
+                  src={navbarSettings.logoUrl || wjlIcon}
                   width="35"
                   height="50"
                   style={{ objectFit: "contain" }}

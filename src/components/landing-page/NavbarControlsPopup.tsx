@@ -1,5 +1,8 @@
 import { useTranslation } from "react-i18next";
 import type { NavigationItem, NavbarSettings } from "../../types/app";
+import { useCallback, type ChangeEvent } from "react";
+import defaultLogo from "/wjl_Icon.png";
+
 const NavbarControlsPopup = ({
   isOpen,
   onClose,
@@ -16,6 +19,29 @@ const NavbarControlsPopup = ({
   onNavigationItemsChange: (items: NavigationItem[]) => void;
 }) => {
   const { t, i18n } = useTranslation();
+
+  const handleLogoUpload = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const input = event.target;
+      const file = input.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          onNavbarSettingsChange("logoUrl", reader.result);
+        }
+        input.value = "";
+      };
+      reader.readAsDataURL(file);
+    },
+    [onNavbarSettingsChange]
+  );
+
+  const handleLogoReset = useCallback(() => {
+    onNavbarSettingsChange("logoUrl", defaultLogo);
+  }, [onNavbarSettingsChange]);
+
   if (!isOpen) return null;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -233,6 +259,45 @@ const NavbarControlsPopup = ({
               />
               {t("settings.showLogo")}
             </label>
+            {navbarSettings.showLogo && (
+              <div className="file-input-group">
+                <label htmlFor="nav-logo-upload">Logo Image</label>
+                <input
+                  id="nav-logo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                />
+                <div className="logo-preview">
+                  <img
+                    src={navbarSettings.logoUrl || defaultLogo}
+                    alt="Logo preview"
+                    style={{
+                      width: "64px",
+                      height: "64px",
+                      objectFit: "contain",
+                      display: "block",
+                      marginTop: "8px",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="reset-button"
+                    onClick={handleLogoReset}
+                    style={{
+                      marginTop: "8px",
+                      background: "transparent",
+                      border: "1px solid #ccc",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Reset Logo
+                  </button>
+                </div>
+              </div>
+            )}
 
             <label>
               <input

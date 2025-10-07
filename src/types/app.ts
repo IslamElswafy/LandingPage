@@ -48,6 +48,9 @@ export interface BlockData {
   contentImage?: string;
   contentType?: "text" | "image" | "both";
   contentItems?: ContentItem[];
+  readMoreButtonText?: string;
+  readMoreButtonPosition?: "bottom-left" | "bottom-center" | "bottom-right";
+  showReadMoreButton?: boolean;
 }
 
 export interface CarouselImage {

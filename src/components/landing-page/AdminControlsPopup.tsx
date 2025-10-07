@@ -94,7 +94,10 @@ const AdminControlsPopup = ({
   onAddNewBlock: () => void;
   selectedBlockId: string | null;
   selectedBlock: BlockData | null;
-  onSelectedBlockStyleChange: (key: keyof StyleSettings, value: StyleSettingValue) => void;
+  onSelectedBlockStyleChange: (
+    key: keyof StyleSettings,
+    value: StyleSettingValue
+  ) => void;
   setBlocks: Dispatch<SetStateAction<BlockData[]>>;
 }) => {
   const { t } = useTranslation();
@@ -176,10 +179,7 @@ const AdminControlsPopup = ({
         if (numericValue === undefined) {
           height = undefined;
         } else if (effectiveRatio && effectiveRatio > 0) {
-          height = clampDimension(
-            numericValue * effectiveRatio,
-            "height"
-          );
+          height = clampDimension(numericValue * effectiveRatio, "height");
         }
       }
     } else {
@@ -391,6 +391,7 @@ const AdminControlsPopup = ({
             </div>
           )}
 
+          {/* Style Settings Group */}
           <div className="control-group">
             <label>Style Preset:</label>
             <select
@@ -408,6 +409,17 @@ const AdminControlsPopup = ({
               <option value="style-dark">Dark</option>
             </select>
 
+            <label>Animation:</label>
+            <select
+              value={currentSettings.animation}
+              onChange={(e) => handleSettingChange("animation", e.target.value)}
+            >
+              <option value="">None</option>
+              <option value="animate-bounce">Bounce</option>
+              <option value="animate-pulse">Pulse</option>
+              <option value="animate-rotate">Rotate</option>
+            </select>
+
             <label>Opacity:</label>
             <div className="opacity-control">
               <input
@@ -415,9 +427,7 @@ const AdminControlsPopup = ({
                 min="1"
                 max="100"
                 value={currentSettings.opacity}
-                onChange={(e) =>
-                  handleSettingChange("opacity", e.target.value)
-                }
+                onChange={(e) => handleSettingChange("opacity", e.target.value)}
                 style={{
                   width: "100%",
                   marginBottom: "5px",
@@ -427,182 +437,10 @@ const AdminControlsPopup = ({
                 {currentSettings.opacity}%
               </span>
             </div>
-
-            <label>Animation:</label>
-            <select
-              value={currentSettings.animation}
-              onChange={(e) =>
-                handleSettingChange("animation", e.target.value)
-              }
-            >
-              <option value="">None</option>
-              <option value="animate-bounce">Bounce</option>
-              <option value="animate-pulse">Pulse</option>
-              <option value="animate-rotate">Rotate</option>
-            </select>
-
-            <label>Corners:</label>
-            <select
-              value={currentSettings.corners}
-              onChange={(e) => {
-                const value = e.target.value;
-                handleSettingChange("corners", value);
-                if (value === "rounded") {
-                  if (
-                    !currentSettings.cornerSides ||
-                    currentSettings.cornerSides.length === 0
-                  ) {
-                    handleSettingChange("cornerSides", CORNER_SIDES);
-                  }
-                } else {
-                  handleSettingChange("cornerSides", []);
-                }
-              }}
-            >
-              <option value="rounded">Rounded</option>
-              <option value="">Square</option>
-            </select>
-
-            {currentSettings.corners === "rounded" && (
-              <div className="border-control-group">
-                <label>Rounded corners:</label>
-                <div className="border-sides-options">
-                  {CORNER_SIDES.map((corner) => (
-                    <label key={corner} className="border-side-option">
-                      <input
-                        type="checkbox"
-                        checked={activeCornerSides.includes(corner)}
-                        onChange={() => handleCornerSideToggle(corner)}
-                      />
-                      {CORNER_SIDE_LABELS[corner]}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <label>Elevation:</label>
-            <select
-              value={currentSettings.elevation}
-              onChange={(e) =>
-                handleSettingChange("elevation", e.target.value)
-              }
-            >
-              <option value="shadow">Shadow</option>
-              <option value="flat">{t("blocks.flat")}</option>
-            </select>
           </div>
 
+          {/* Background Settings Group */}
           <div className="control-group">
-            <label>Border:</label>
-            <select
-              value={currentSettings.border}
-              onChange={(e) =>
-                handleSettingChange("border", e.target.value)
-              }
-            >
-              <option value="no-border">No border</option>
-              <option value="with-border">With border</option>
-            </select>
-
-            {currentSettings.border === "with-border" && (
-              <div className="border-control-group">
-                <label>Border Sides:</label>
-                <div className="border-sides-options">
-                  {BORDER_SIDES.map((side) => (
-                    <label key={side} className="border-side-option">
-                      <input
-                        type="checkbox"
-                        checked={activeBorderSides.includes(side)}
-                        onChange={() => handleBorderSideToggle(side)}
-                      />
-                      {BORDER_SIDE_LABELS[side]}
-                    </label>
-                  ))}
-                </div>
-
-                <label>Border Color:</label>
-                <div className="color-input-container">
-                  <input
-                    type="color"
-                    value={borderColorValue}
-                    onChange={(e) =>
-                      handleSettingChange("borderColor", e.target.value)
-                    }
-                    className="color-input"
-                  />
-                  <input
-                    type="text"
-                    value={borderColorValue}
-                    onChange={(e) =>
-                      handleSettingChange("borderColor", e.target.value)
-                    }
-                    className="color-text-input"
-                    placeholder="#111111"
-                  />
-                </div>
-
-                <label>Border Thickness:</label>
-                <select
-                  value={String(borderWidthValue)}
-                  onChange={(e) =>
-                    handleSettingChange("borderWidth", Number(e.target.value))
-                  }
-                >
-                  <option value="1">Thin</option>
-                  <option value="2">Medium</option>
-                  <option value="4">Bold</option>
-                </select>
-              </div>
-            )}
-            {isBlockSelected && (
-              <div className="dimension-control">
-                <label>Dimensions (px)</label>
-                <div className="dimension-inputs">
-                  <div className="dimension-input">
-                    <span>W</span>
-                    <input
-                      type="number"
-                      min="1"
-                      
-                      value={selectedBlock?.width ?? ""}
-                      onChange={(e) => handleDimensionChange("width", e.target.value)}
-                      placeholder="auto"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className={`dimension-lock-toggle${isDimensionLockEnabled ? " locked" : ""}`}
-                    onClick={toggleDimensionLock}
-                    title={dimensionLockTitle}
-                    aria-pressed={isDimensionLockEnabled}
-                    aria-label={dimensionLockTitle}
-                  >
-                    {dimensionLockIcon}
-                  </button>
-                  <div className="dimension-input">
-                    <span>H</span>
-                    <input
-                      type="number"
-                      min="1"
-                      
-                      value={selectedBlock?.height ?? ""}
-                      onChange={(e) => handleDimensionChange("height", e.target.value)}
-                      placeholder="auto"
-                    />
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="dimension-reset-btn"
-                  onClick={handleResetDimensions}
-                  disabled={!selectedBlock?.width && !selectedBlock?.height}
-                >
-                  Reset size
-                </button>
-              </div>
-            )}
-
             <label>Background:</label>
             <select
               value={currentSettings.background}
@@ -802,7 +640,249 @@ const AdminControlsPopup = ({
                 </div>
               </div>
             )}
+          </div>
 
+          {/* Border & Corners Group */}
+          <div className="control-group">
+            <label>Border:</label>
+            <select
+              value={currentSettings.border}
+              onChange={(e) => handleSettingChange("border", e.target.value)}
+            >
+              <option value="no-border">No border</option>
+              <option value="with-border">With border</option>
+            </select>
+
+            {currentSettings.border === "with-border" && (
+              <div className="border-control-group">
+                <label>Border Sides:</label>
+                <div className="border-sides-options">
+                  {BORDER_SIDES.map((side) => (
+                    <label key={side} className="border-side-option">
+                      <input
+                        type="checkbox"
+                        checked={activeBorderSides.includes(side)}
+                        onChange={() => handleBorderSideToggle(side)}
+                      />
+                      {BORDER_SIDE_LABELS[side]}
+                    </label>
+                  ))}
+                </div>
+
+                <label>Border Color:</label>
+                <div className="color-input-container">
+                  <input
+                    type="color"
+                    value={borderColorValue}
+                    onChange={(e) =>
+                      handleSettingChange("borderColor", e.target.value)
+                    }
+                    className="color-input"
+                  />
+                  <input
+                    type="text"
+                    value={borderColorValue}
+                    onChange={(e) =>
+                      handleSettingChange("borderColor", e.target.value)
+                    }
+                    className="color-text-input"
+                    placeholder="#111111"
+                  />
+                </div>
+
+                <label>Border Thickness:</label>
+                <select
+                  value={String(borderWidthValue)}
+                  onChange={(e) =>
+                    handleSettingChange("borderWidth", Number(e.target.value))
+                  }
+                >
+                  <option value="1">Thin</option>
+                  <option value="2">Medium</option>
+                  <option value="4">Bold</option>
+                </select>
+              </div>
+            )}
+
+            <label>Corners:</label>
+            <select
+              value={currentSettings.corners}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleSettingChange("corners", value);
+                if (value === "rounded") {
+                  if (
+                    !currentSettings.cornerSides ||
+                    currentSettings.cornerSides.length === 0
+                  ) {
+                    handleSettingChange("cornerSides", CORNER_SIDES);
+                  }
+                } else {
+                  handleSettingChange("cornerSides", []);
+                }
+              }}
+            >
+              <option value="rounded">Rounded</option>
+              <option value="">Square</option>
+            </select>
+
+            {currentSettings.corners === "rounded" && (
+              <div className="border-control-group">
+                <label>Rounded corners:</label>
+                <div className="border-sides-options">
+                  {CORNER_SIDES.map((corner) => (
+                    <label key={corner} className="border-side-option">
+                      <input
+                        type="checkbox"
+                        checked={activeCornerSides.includes(corner)}
+                        onChange={() => handleCornerSideToggle(corner)}
+                      />
+                      {CORNER_SIDE_LABELS[corner]}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <label>Elevation:</label>
+            <select
+              value={currentSettings.elevation}
+              onChange={(e) => handleSettingChange("elevation", e.target.value)}
+            >
+              <option value="shadow">Shadow</option>
+              <option value="flat">{t("blocks.flat")}</option>
+            </select>
+          </div>
+
+          {/* Dimensions Group (Block Selected Only) */}
+          {isBlockSelected && (
+            <div className="control-group">
+              <div className="dimension-control">
+                <label>Dimensions (px)</label>
+                <div className="dimension-inputs">
+                  <div className="dimension-input">
+                    <span>W</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={selectedBlock?.width ?? ""}
+                      onChange={(e) =>
+                        handleDimensionChange("width", e.target.value)
+                      }
+                      placeholder="auto"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className={`dimension-lock-toggle${
+                      isDimensionLockEnabled ? " locked" : ""
+                    }`}
+                    onClick={toggleDimensionLock}
+                    title={dimensionLockTitle}
+                    aria-pressed={isDimensionLockEnabled}
+                    aria-label={dimensionLockTitle}
+                  >
+                    {dimensionLockIcon}
+                  </button>
+                  <div className="dimension-input">
+                    <span>H</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={selectedBlock?.height ?? ""}
+                      onChange={(e) =>
+                        handleDimensionChange("height", e.target.value)
+                      }
+                      placeholder="auto"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="dimension-reset-btn"
+                  onClick={handleResetDimensions}
+                  disabled={!selectedBlock?.width && !selectedBlock?.height}
+                >
+                  Reset size
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Read More Button Controls (Block Selected Only) */}
+          {isBlockSelected && (
+            <div className="control-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={selectedBlock?.showReadMoreButton ?? true}
+                  onChange={(e) => {
+                    if (selectedBlock) {
+                      setBlocks((prev) =>
+                        prev.map((block) =>
+                          block.id === selectedBlock.id
+                            ? { ...block, showReadMoreButton: e.target.checked }
+                            : block
+                        )
+                      );
+                    }
+                  }}
+                />
+                Show Read More Button
+              </label>
+
+              {selectedBlock?.showReadMoreButton !== false && (
+                <>
+                  <label>Read More Button Text:</label>
+                  <input
+                    type="text"
+                    value={selectedBlock?.readMoreButtonText || "Read More"}
+                    onChange={(e) => {
+                      if (selectedBlock) {
+                        setBlocks((prev) =>
+                          prev.map((block) =>
+                            block.id === selectedBlock.id
+                              ? { ...block, readMoreButtonText: e.target.value }
+                              : block
+                          )
+                        );
+                      }
+                    }}
+                    placeholder="Read More"
+                  />
+
+                  <label>Button Position:</label>
+                  <select
+                    value={selectedBlock?.readMoreButtonPosition || "bottom-left"}
+                    onChange={(e) => {
+                      if (selectedBlock) {
+                        setBlocks((prev) =>
+                          prev.map((block) =>
+                            block.id === selectedBlock.id
+                              ? {
+                                  ...block,
+                                  readMoreButtonPosition: e.target.value as
+                                    | "bottom-left"
+                                    | "bottom-center"
+                                    | "bottom-right",
+                                }
+                              : block
+                          )
+                        );
+                      }
+                    }}
+                  >
+                    <option value="bottom-left">Bottom Left</option>
+                    <option value="bottom-center">Bottom Center</option>
+                    <option value="bottom-right">Bottom Right</option>
+                  </select>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Global Controls Group */}
+          <div className="control-group">
             <label>
               <input
                 type="checkbox"
@@ -829,7 +909,10 @@ const AdminControlsPopup = ({
               />
               Enable drag & drop
             </label>
+          </div>
 
+          {/* Action Buttons Group */}
+          <div className="control-group">
             <button type="button" onClick={onResetAllCards}>
               Reset All Cards
             </button>
@@ -857,19 +940,3 @@ const AdminControlsPopup = ({
 };
 
 export default AdminControlsPopup;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

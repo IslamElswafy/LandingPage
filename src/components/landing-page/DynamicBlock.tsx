@@ -246,17 +246,30 @@ const DynamicBlock = ({
       onClick={() => onBlockClick(block.id)}
     >
       {/* Content area - pushed to bottom via flex */}
-      <div style={{ marginTop: 'auto' }}>
-        <button
-          className="cta"
-          onClick={(e) => {
-            e.stopPropagation();
-            onReadMore(block.id);
+      {block.showReadMoreButton !== false && (
+        <div
+          style={{
+            marginTop: "auto",
+            display: "flex",
+            justifyContent:
+              block.readMoreButtonPosition === "bottom-center"
+                ? "center"
+                : block.readMoreButtonPosition === "bottom-right"
+                ? "flex-end"
+                : "flex-start",
           }}
         >
-          Read More
-        </button>
-      </div>
+          <button
+            className="cta"
+            onClick={(e) => {
+              e.stopPropagation();
+              onReadMore(block.id);
+            }}
+          >
+            {block.readMoreButtonText || "Read More"}
+          </button>
+        </div>
+      )}
 
       {/* Block Image Controls */}
       <div className="block-image-controls">
