@@ -1,9 +1,14 @@
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import type { Dispatch, SetStateAction, CSSProperties } from "react";
-import type { BlockData, StyleSettings, BorderSide } from "../../types/app";
+import type {
+  BlockData,
+  StyleSettings,
+  BorderSide,
+  CornerSide,
+} from "../../types/app";
 
-type StyleSettingValue = string | number | BorderSide[];
+type StyleSettingValue = string | number | BorderSide[] | CornerSide[];
 const BORDER_SIDES: BorderSide[] = ["top", "right", "bottom", "left"];
 const BORDER_SIDE_LABELS: Record<BorderSide, string> = {
   top: "Top",
@@ -18,6 +23,25 @@ const BORDER_SIDE_PROPERTIES: Record<BorderSide, keyof CSSProperties> = {
   left: "borderLeft",
 };
 
+const CORNER_SIDES: CornerSide[] = [
+  "top-left",
+  "top-right",
+  "bottom-right",
+  "bottom-left",
+];
+const CORNER_SIDE_LABELS: Record<CornerSide, string> = {
+  "top-left": "Top Left",
+  "top-right": "Top Right",
+  "bottom-right": "Bottom Right",
+  "bottom-left": "Bottom Left",
+};
+const CORNER_SIDE_PROPERTIES: Record<CornerSide, keyof CSSProperties> = {
+  "top-left": "borderTopLeftRadius",
+  "top-right": "borderTopRightRadius",
+  "bottom-right": "borderBottomRightRadius",
+  "bottom-left": "borderBottomLeftRadius",
+};
+
 const ELEVATION_SHADOWS: Record<string, string> = {
   shadow: "0 18px 40px rgba(15, 23, 42, 0.25)",
   flat: "none",
@@ -25,12 +49,7 @@ const ELEVATION_SHADOWS: Record<string, string> = {
   "shadow-strong": "0 28px 65px rgba(15, 23, 42, 0.35)",
 };
 
-// Keep manual entry consistent with drag resize limits from legacy implementation
-const MIN_WIDTH = 150;
-const MAX_WIDTH = 500;
-const MIN_HEIGHT = 100;
-const MAX_HEIGHT = 400;
-
+// No dimension constraints - full control over width and height
 const clampDimension = (
   value: number | undefined,
   dimension: "width" | "height"
@@ -38,11 +57,7 @@ const clampDimension = (
   if (value === undefined) return undefined;
   if (!Number.isFinite(value)) return undefined;
 
-  const min = dimension === "width" ? MIN_WIDTH : MIN_HEIGHT;
-  const max = dimension === "width" ? MAX_WIDTH : MAX_HEIGHT;
-  const clamped = Math.min(max, Math.max(min, value));
-
-  return Math.round(clamped);
+  return Math.round(value);
 };
 
 const AdminControlsPopup = ({
@@ -207,6 +222,12 @@ const AdminControlsPopup = ({
     });
   };
 
+  const activeCornerSides =
+    currentSettings.cornerSides !== undefined
+      ? currentSettings.cornerSides
+      : currentSettings.corners === "rounded"
+      ? CORNER_SIDES
+      : [];
   const activeBorderSides =
     currentSettings.borderSides !== undefined
       ? currentSettings.borderSides
@@ -236,6 +257,17 @@ const AdminControlsPopup = ({
     handleSettingChange("borderSides", nextSides);
   };
 
+  const handleCornerSideToggle = (corner: CornerSide) => {
+    const currentSet = new Set(activeCornerSides);
+    if (currentSet.has(corner)) {
+      currentSet.delete(corner);
+    } else {
+      currentSet.add(corner);
+    }
+    const nextCorners = CORNER_SIDES.filter((option) => currentSet.has(option));
+    handleSettingChange("cornerSides", nextCorners);
+  };
+
   const previewBorderStyle: CSSProperties = {};
   if (currentSettings.border === "with-border") {
     const borderValue = `${borderWidthValue}px solid ${borderColorValue}`;
@@ -248,6 +280,18 @@ const AdminControlsPopup = ({
     });
   } else {
     previewBorderStyle.border = "none";
+  }
+
+  const previewCornerStyle: CSSProperties = {};
+  if (currentSettings.corners === "rounded") {
+    CORNER_SIDES.forEach((corner) => {
+      const prop = CORNER_SIDE_PROPERTIES[corner];
+      previewCornerStyle[prop] = activeCornerSides.includes(corner)
+        ? "var(--radius)"
+        : "0";
+    });
+  } else {
+    previewCornerStyle.borderRadius = "0";
   }
 
   const previewElevationStyle: CSSProperties = {
@@ -329,8 +373,6 @@ const AdminControlsPopup = ({
                     backgroundPosition: "center",
                     width: "100%",
                     height: "100%",
-                    borderRadius:
-                      currentSettings.corners === "rounded" ? "8px" : "0",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -341,6 +383,7 @@ const AdminControlsPopup = ({
                     overflow: "hidden",
                     opacity: currentSettings.opacity / 100,
                     ...previewBorderStyle,
+                    ...previewCornerStyle,
                     ...previewElevationStyle,
                   }}
                 ></div>
@@ -401,13 +444,42 @@ const AdminControlsPopup = ({
             <label>Corners:</label>
             <select
               value={currentSettings.corners}
-              onChange={(e) =>
-                handleSettingChange("corners", e.target.value)
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                handleSettingChange("corners", value);
+                if (value === "rounded") {
+                  if (
+                    !currentSettings.cornerSides ||
+                    currentSettings.cornerSides.length === 0
+                  ) {
+                    handleSettingChange("cornerSides", CORNER_SIDES);
+                  }
+                } else {
+                  handleSettingChange("cornerSides", []);
+                }
+              }}
             >
               <option value="rounded">Rounded</option>
               <option value="">Square</option>
             </select>
+
+            {currentSettings.corners === "rounded" && (
+              <div className="border-control-group">
+                <label>Rounded corners:</label>
+                <div className="border-sides-options">
+                  {CORNER_SIDES.map((corner) => (
+                    <label key={corner} className="border-side-option">
+                      <input
+                        type="checkbox"
+                        checked={activeCornerSides.includes(corner)}
+                        onChange={() => handleCornerSideToggle(corner)}
+                      />
+                      {CORNER_SIDE_LABELS[corner]}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <label>Elevation:</label>
             <select
@@ -491,8 +563,8 @@ const AdminControlsPopup = ({
                     <span>W</span>
                     <input
                       type="number"
-                      min={MIN_WIDTH}
-                      max={MAX_WIDTH}
+                      min="1"
+                      
                       value={selectedBlock?.width ?? ""}
                       onChange={(e) => handleDimensionChange("width", e.target.value)}
                       placeholder="auto"
@@ -512,8 +584,8 @@ const AdminControlsPopup = ({
                     <span>H</span>
                     <input
                       type="number"
-                      min={MIN_HEIGHT}
-                      max={MAX_HEIGHT}
+                      min="1"
+                      
                       value={selectedBlock?.height ?? ""}
                       onChange={(e) => handleDimensionChange("height", e.target.value)}
                       placeholder="auto"

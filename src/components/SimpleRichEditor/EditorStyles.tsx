@@ -4,9 +4,11 @@ const EditorStyles: React.FC = () => (
   <style>{`
         .advanced-rich-editor .ProseMirror {
           outline: none;
-          /* Allow the editor to expand instead of showing an internal scrollbar */
+          /* Allow the editor to expand while preserving scroll for overflow */
           min-height: 400px;
-          overflow-y: visible;
+          height: 100%;
+          max-height: 100%;
+          overflow-y: auto;
           white-space: pre-wrap;
           word-break: break-word;
           overflow-wrap: anywhere;

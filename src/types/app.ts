@@ -1,4 +1,9 @@
 export type BorderSide = "top" | "right" | "bottom" | "left";
+export type CornerSide =
+  | "top-left"
+  | "top-right"
+  | "bottom-right"
+  | "bottom-left";
 
 export interface StyleSettings {
   stylePreset: string;
@@ -8,6 +13,7 @@ export interface StyleSettings {
   elevation: string;
   border: string;
   background: string;
+  cornerSides?: CornerSide[];
   borderSides?: BorderSide[];
   borderColor?: string;
   borderWidth?: number;

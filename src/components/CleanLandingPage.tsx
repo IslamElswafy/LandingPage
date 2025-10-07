@@ -1,4 +1,8 @@
 import React from "react";
+import type { CSSProperties } from "react";
+
+type BorderSide = "top" | "right" | "bottom" | "left";
+type CornerSide = "top-left" | "top-right" | "bottom-right" | "bottom-left";
 
 // Types
 interface BlockData {
@@ -29,10 +33,35 @@ interface StyleSettings {
   stylePreset: string;
   animation: string;
   corners: string;
+  cornerSides?: CornerSide[];
+  opacity?: number;
   elevation: string;
   border: string;
   background: string;
+  borderSides?: BorderSide[];
+  borderColor?: string;
+  borderWidth?: number;
 }
+
+const DEFAULT_BORDER_SIDES: BorderSide[] = ["top", "right", "bottom", "left"];
+const BORDER_SIDE_PROPERTIES: Record<BorderSide, keyof CSSProperties> = {
+  top: "borderTop",
+  right: "borderRight",
+  bottom: "borderBottom",
+  left: "borderLeft",
+};
+const DEFAULT_CORNER_SIDES: CornerSide[] = [
+  "top-left",
+  "top-right",
+  "bottom-right",
+  "bottom-left",
+];
+const CORNER_SIDE_PROPERTIES: Record<CornerSide, keyof CSSProperties> = {
+  "top-left": "borderTopLeftRadius",
+  "top-right": "borderTopRightRadius",
+  "bottom-right": "borderBottomRightRadius",
+  "bottom-left": "borderBottomLeftRadius",
+};
 
 // Clean Hero Carousel Component (without admin controls)
 const CleanHeroCarousel = ({
@@ -146,24 +175,32 @@ const CleanDynamicBlock = ({
     return classes.join(" ");
   };
 
-  const getBlockStyle = () => {
-    const baseStyle = getBackgroundStyle();
+  const getBlockStyle = (): CSSProperties => {
+    const styleSettings = block.styleSettings || defaultStyleSettings;
+    const baseStyle = getBackgroundStyle(styleSettings);
+    const sizeStyle = block.isManuallyResized
+      ? {
+          width: block.width ? `${block.width}px` : "auto",
+          height: block.height ? `${block.height}px` : "auto",
+          position: "relative" as const,
+          zIndex: 10,
+        }
+      : {};
+    const opacity =
+      styleSettings.opacity !== undefined ? styleSettings.opacity / 100 : 1;
 
-    if (block.isManuallyResized) {
-      return {
-        ...baseStyle,
-        width: block.width ? `${block.width}px` : "auto",
-        height: block.height ? `${block.height}px` : "auto",
-        position: "relative" as const,
-        zIndex: 10,
-      };
-    }
-
-    return baseStyle;
+    return {
+      ...baseStyle,
+      ...sizeStyle,
+      opacity,
+      ...getCornerStyle(styleSettings),
+      ...getBorderStyle(styleSettings),
+    };
   };
 
-  const getBackgroundStyle = () => {
-    const styleSettings = block.styleSettings || defaultStyleSettings;
+  const getBackgroundStyle = (
+    styleSettings: StyleSettings
+  ): CSSProperties => {
     if (styleSettings.background === "bg-image" && block.backgroundImage) {
       return { backgroundImage: `url('${block.backgroundImage}')` };
     } else if (styleSettings.background === "bg-gradient" && block.isGradient) {
@@ -174,6 +211,49 @@ const CleanDynamicBlock = ({
       return { backgroundColor: block.backgroundColor || "#111" };
     }
     return {};
+  };
+
+  const getBorderStyle = (styleSettings: StyleSettings): CSSProperties => {
+    if (styleSettings.border !== "with-border") {
+      return { border: "none" };
+    }
+
+    const activeSides =
+      styleSettings.borderSides && styleSettings.borderSides.length > 0
+        ? styleSettings.borderSides
+        : DEFAULT_BORDER_SIDES;
+    const borderColor = styleSettings.borderColor || "#111111";
+    const borderWidth = styleSettings.borderWidth ?? 1;
+    const borderValue = `${borderWidth}px solid ${borderColor}`;
+
+    const styles: CSSProperties = {};
+    DEFAULT_BORDER_SIDES.forEach((side) => {
+      const prop = BORDER_SIDE_PROPERTIES[side];
+      styles[prop] = activeSides.includes(side) ? borderValue : "none";
+    });
+
+    return styles;
+  };
+
+  const getCornerStyle = (styleSettings: StyleSettings): CSSProperties => {
+    if (styleSettings.corners !== "rounded") {
+      return { borderRadius: "0" };
+    }
+
+    const activeCorners =
+      styleSettings.cornerSides && styleSettings.cornerSides.length > 0
+        ? styleSettings.cornerSides
+        : DEFAULT_CORNER_SIDES;
+
+    const styles: CSSProperties = {};
+    DEFAULT_CORNER_SIDES.forEach((corner) => {
+      const prop = CORNER_SIDE_PROPERTIES[corner];
+      styles[prop] = activeCorners.includes(corner)
+        ? "var(--radius)"
+        : "0";
+    });
+
+    return styles;
   };
 
   return (

@@ -1,13 +1,19 @@
 ﻿import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { ChangeEvent, DragEvent, MouseEvent, CSSProperties } from "react";
-import type { BlockData, StyleSettings } from "../../types/app";
+import type { BlockData, StyleSettings, CornerSide } from "../../types/app";
 
 const DEFAULT_BORDER_SIDES: Array<"top" | "right" | "bottom" | "left"> = [
   "top",
   "right",
   "bottom",
   "left",
+];
+const DEFAULT_CORNER_SIDES: CornerSide[] = [
+  "top-left",
+  "top-right",
+  "bottom-right",
+  "bottom-left",
 ];
 const BORDER_SIDE_PROPERTIES: Record<
   "top" | "right" | "bottom" | "left",
@@ -17,6 +23,12 @@ const BORDER_SIDE_PROPERTIES: Record<
   right: "borderRight",
   bottom: "borderBottom",
   left: "borderLeft",
+};
+const CORNER_SIDE_PROPERTIES: Record<CornerSide, keyof CSSProperties> = {
+  "top-left": "borderTopLeftRadius",
+  "top-right": "borderTopRightRadius",
+  "bottom-right": "borderBottomRightRadius",
+  "bottom-left": "borderBottomLeftRadius",
 };
 
 const ELEVATION_SHADOWS: Record<string, string> = {
@@ -136,6 +148,25 @@ const DynamicBlock = ({
     return styles;
   };
 
+  const getCornerStyle = (styleSettings: StyleSettings): CSSProperties => {
+    if (styleSettings.corners !== "rounded") {
+      return { borderRadius: "0" };
+    }
+
+    const activeCorners =
+      styleSettings.cornerSides && styleSettings.cornerSides.length > 0
+        ? styleSettings.cornerSides
+        : DEFAULT_CORNER_SIDES;
+
+    const styles: CSSProperties = {};
+    DEFAULT_CORNER_SIDES.forEach((corner) => {
+      const prop = CORNER_SIDE_PROPERTIES[corner];
+      styles[prop] = activeCorners.includes(corner) ? "var(--radius)" : "0";
+    });
+
+    return styles;
+  };
+
   const getElevationStyle = (styleSettings: StyleSettings): CSSProperties => {
     const elevationKey = styleSettings.elevation || "shadow";
     const boxShadow =
@@ -165,6 +196,7 @@ const DynamicBlock = ({
       ...baseStyle,
       ...sizeStyle,
       opacity,
+      ...getCornerStyle(styleSettings),
       ...getBorderStyle(styleSettings),
       ...getElevationStyle(styleSettings),
     };

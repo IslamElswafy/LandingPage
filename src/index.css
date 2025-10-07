@@ -951,7 +951,8 @@ header:not(.apple-header) nav a:hover {
   position: relative;
 
   /* Card visual styles */
-  min-height: 120px;
+
+  height: 120px;
   padding: 14px;
   color: #fff;
   background: #111;

@@ -861,6 +861,11 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
         borderRadius: state.isFullscreen ? 0 : 2,
         boxShadow: state.isFullscreen ? 0 : 1,
         border: isPreviewMode ? "3px solid #2196f3" : "none",
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        minHeight: 0,
+        overflow: state.isFullscreen ? "hidden" : "visible",
       }}
       {...rootProps}
     >
@@ -913,11 +918,36 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
 
       <input {...getInputProps()} />
 
-      <Box ref={editorRef}>
+      <Box
+        ref={editorRef}
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
         <RichTextEditor
           extensions={extensions}
           content={content}
           editable={!readOnly && !isPreviewMode}
+          RichTextFieldProps={{
+            sx: {
+              display: "flex",
+              flexDirection: "column",
+              flex: 1,
+              minHeight: 0,
+            },
+            RichTextContentProps: {
+              sx: {
+                flex: 1,
+                minHeight: "400px",
+                maxHeight: "100%",
+                overflowY: "auto",
+              },
+            },
+          }}
           onCreate={({ editor: createdEditor }) => {
             setEditor(createdEditor);
           }}
@@ -976,7 +1006,7 @@ const SimpleRichEditor: React.FC<SimpleRichEditorProps> = ({
           editorProps={{
             attributes: {
               style:
-                "min-height: 400px; height: auto; overflow-y: visible; padding: 16px; outline: none; line-height: 1.6; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;",
+                "min-height: 400px; height: 100%; max-height: 100%; overflow-y: auto; padding: 16px; outline: none; line-height: 1.6; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;",
               placeholder,
             },
           }}

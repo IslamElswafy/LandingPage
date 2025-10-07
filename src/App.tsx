@@ -23,6 +23,7 @@ import type { ToastNotificationData } from "./types/notifications";
 import type {
   StyleSettings,
   BorderSide,
+  CornerSide,
   ContentItem,
   BlockData,
   CarouselImage,
@@ -136,6 +137,7 @@ function App() {
         opacity: 100,
         animation: "",
         corners: "rounded",
+        cornerSides: ["top-left", "top-right", "bottom-right", "bottom-left"],
         elevation: "shadow",
         border: "no-border",
         background: "bg-gradient",
@@ -151,6 +153,7 @@ function App() {
     opacity: 100,
     animation: "",
     corners: "rounded",
+    cornerSides: ["top-left", "top-right", "bottom-right", "bottom-left"],
     elevation: "shadow",
     border: "no-border",
     background: "bg-image",
@@ -571,7 +574,7 @@ function App() {
 
   const normalizeStyleValue = (
     key: keyof StyleSettings,
-    value: string | number | BorderSide[],
+    value: string | number | BorderSide[] | CornerSide[],
     current?: StyleSettings[keyof StyleSettings]
   ): StyleSettings[keyof StyleSettings] => {
     if (key === "opacity" || key === "borderWidth") {
@@ -594,12 +597,22 @@ function App() {
       return [value as BorderSide] as StyleSettings[keyof StyleSettings];
     }
 
+    if (key === "cornerSides") {
+      if (Array.isArray(value)) {
+        return value as StyleSettings[keyof StyleSettings];
+      }
+      if (Array.isArray(current)) {
+        return current;
+      }
+      return [value as CornerSide] as StyleSettings[keyof StyleSettings];
+    }
+
     return String(value) as StyleSettings[keyof StyleSettings];
   };
 
   const handleStyleChange = (
     key: keyof StyleSettings,
-    value: string | number | BorderSide[]
+    value: string | number | BorderSide[] | CornerSide[]
   ) => {
     setStyleSettings((prev) => ({
       ...prev,
@@ -609,7 +622,7 @@ function App() {
 
   const handleSelectedBlockStyleChange = (
     key: keyof StyleSettings,
-    value: string | number | BorderSide[]
+    value: string | number | BorderSide[] | CornerSide[]
   ) => {
     if (!selectedBlockId) return;
 
@@ -904,32 +917,32 @@ function App() {
       // Calculate new dimensions based on resize direction
       switch (resizeState.direction) {
         case "e":
-          newWidth = Math.max(150, resizeState.startWidth + deltaX);
+          newWidth = resizeState.startWidth + deltaX;
           break;
         case "w":
-          newWidth = Math.max(150, resizeState.startWidth - deltaX);
+          newWidth = resizeState.startWidth - deltaX;
           break;
         case "s":
-          newHeight = Math.max(100, resizeState.startHeight + deltaY);
+          newHeight = resizeState.startHeight + deltaY;
           break;
         case "n":
-          newHeight = Math.max(100, resizeState.startHeight - deltaY);
+          newHeight = resizeState.startHeight - deltaY;
           break;
         case "se":
-          newWidth = Math.max(150, resizeState.startWidth + deltaX);
-          newHeight = Math.max(100, resizeState.startHeight + deltaY);
+          newWidth = resizeState.startWidth + deltaX;
+          newHeight = resizeState.startHeight + deltaY;
           break;
         case "sw":
-          newWidth = Math.max(150, resizeState.startWidth - deltaX);
-          newHeight = Math.max(100, resizeState.startHeight + deltaY);
+          newWidth = resizeState.startWidth - deltaX;
+          newHeight = resizeState.startHeight + deltaY;
           break;
         case "ne":
-          newWidth = Math.max(150, resizeState.startWidth + deltaX);
-          newHeight = Math.max(100, resizeState.startHeight - deltaY);
+          newWidth = resizeState.startWidth + deltaX;
+          newHeight = resizeState.startHeight - deltaY;
           break;
         case "nw":
-          newWidth = Math.max(150, resizeState.startWidth - deltaX);
-          newHeight = Math.max(100, resizeState.startHeight - deltaY);
+          newWidth = resizeState.startWidth - deltaX;
+          newHeight = resizeState.startHeight - deltaY;
           break;
       }
 
