@@ -1,5 +1,9 @@
 import { useTranslation } from "react-i18next";
-import type { NavigationItem, NavbarSettings } from "../../types/app";
+import type {
+  NavigationItem,
+  NavbarSettings,
+  LanguageOption,
+} from "../../types/app";
 import { useCallback, type ChangeEvent } from "react";
 import defaultLogo from "/wjl_Icon.png";
 
@@ -41,6 +45,48 @@ const NavbarControlsPopup = ({
   const handleLogoReset = useCallback(() => {
     onNavbarSettingsChange("logoUrl", defaultLogo);
   }, [onNavbarSettingsChange]);
+
+  const updateLanguageOption = useCallback(
+    (code: string, partial: Partial<LanguageOption>) => {
+      const updatedOptions = navbarSettings.languageOptions.map((option) =>
+        option.code === code ? { ...option, ...partial } : option
+      );
+      onNavbarSettingsChange("languageOptions", updatedOptions);
+    },
+    [navbarSettings.languageOptions, onNavbarSettingsChange]
+  );
+
+  const handleLanguageLabelChange = useCallback(
+    (code: string, label: string) => {
+      updateLanguageOption(code, { label });
+    },
+    [updateLanguageOption]
+  );
+
+  const handleLanguageIconUpload = useCallback(
+    (code: string) => (event: ChangeEvent<HTMLInputElement>) => {
+      const input = event.target;
+      const file = input.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          updateLanguageOption(code, { iconUrl: reader.result });
+        }
+        input.value = "";
+      };
+      reader.readAsDataURL(file);
+    },
+    [updateLanguageOption]
+  );
+
+  const handleLanguageIconReset = useCallback(
+    (code: string) => {
+      updateLanguageOption(code, { iconUrl: "" });
+    },
+    [updateLanguageOption]
+  );
 
   if (!isOpen) return null;
 
@@ -327,27 +373,122 @@ const NavbarControlsPopup = ({
             <h4>{t("ui.language")}</h4>
 
             <div className="language-switcher">
-              <label>
-                <input
-                  type="radio"
-                  name="locale"
-                  value="en"
-                  checked={i18n.language === "en"}
-                  onChange={() => i18n.changeLanguage("en")}
-                />
-                English
-              </label>
+              {navbarSettings.languageOptions.map((option) => (
+                <label
+                  key={option.code}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="locale"
+                    value={option.code}
+                    checked={i18n.language === option.code}
+                    onChange={() => i18n.changeLanguage(option.code)}
+                  />
+                  {option.iconUrl && (
+                    <img
+                      src={option.iconUrl}
+                      alt={`${option.label || option.code.toUpperCase()} icon`}
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        objectFit: "contain",
+                      }}
+                    />
+                  )}
+                  {option.label || option.code.toUpperCase()}
+                </label>
+              ))}
+            </div>
 
-              <label>
-                <input
-                  type="radio"
-                  name="locale"
-                  value="ar"
-                  checked={i18n.language === "ar"}
-                  onChange={() => i18n.changeLanguage("ar")}
-                />
-                العربية
-              </label>
+            <div className="language-options-editor">
+              {navbarSettings.languageOptions.map((option) => {
+                const inputId = `language-icon-${option.code}`;
+                return (
+                  <div
+                    key={`${option.code}-editor`}
+                    className="language-option-card"
+                    style={{
+                      border: "1px solid #e0e0e0",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      marginTop: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                      background: "#fafafa",
+                    }}
+                  >
+                    <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      Display Name
+                      <input
+                        type="text"
+                        value={option.label}
+                        onChange={(e) =>
+                          handleLanguageLabelChange(option.code, e.target.value)
+                        }
+                      />
+                    </label>
+
+                    <div className="file-input-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <label htmlFor={inputId}>Icon Image</label>
+                      <input
+                        id={inputId}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLanguageIconUpload(option.code)}
+                      />
+                    </div>
+
+                    <div
+                      className="language-icon-preview"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                      }}
+                    >
+                      {option.iconUrl ? (
+                        <img
+                          src={option.iconUrl}
+                          alt={`${option.label || option.code.toUpperCase()} icon preview`}
+                          style={{
+                            width: "48px",
+                            height: "48px",
+                            objectFit: "contain",
+                            border: "1px solid #ddd",
+                            borderRadius: "6px",
+                            padding: "4px",
+                            background: "white",
+                          }}
+                        />
+                      ) : (
+                        <span style={{ color: "#666", fontSize: "12px" }}>
+                          No icon selected
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="reset-button"
+                        onClick={() => handleLanguageIconReset(option.code)}
+                        style={{
+                          background: "transparent",
+                          border: "1px solid #ccc",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Reset Icon
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

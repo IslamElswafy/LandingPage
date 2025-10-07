@@ -91,6 +91,12 @@ export interface VisitorStats {
   visitorsData: VisitorData[];
 }
 
+export interface LanguageOption {
+  code: string;
+  label: string;
+  iconUrl: string;
+}
+
 export interface NavbarSettings {
   backgroundColor: string;
   textColor: string;
@@ -105,6 +111,7 @@ export interface NavbarSettings {
   height: number;
   borderRadius: number;
   shadow: boolean;
+  languageOptions: LanguageOption[];
 }
 
 export interface FooterSettings {

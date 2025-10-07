@@ -34,6 +34,7 @@ import type {
   FooterSettings,
   PageBackgroundSettings,
   NavigationItem,
+  LanguageOption,
   ResizeState,
 } from "./types/app";
 
@@ -272,6 +273,10 @@ function App() {
     height: 48,
     borderRadius: 0,
     shadow: true,
+    languageOptions: [
+      { code: "en", label: "English", iconUrl: "" },
+      { code: "ar", label: "العربية", iconUrl: "" },
+    ],
   });
 
   const [footerSettings, setFooterSettings] = useState<FooterSettings>({
@@ -505,8 +510,65 @@ function App() {
 
       if (draggedIndex !== -1 && targetIndex !== -1) {
         const newBlocks = [...blocks];
-        const [draggedBlock] = newBlocks.splice(draggedIndex, 1);
-        newBlocks.splice(targetIndex, 0, draggedBlock);
+        const draggedBlock = newBlocks[draggedIndex];
+        const targetBlock = newBlocks[targetIndex];
+
+        // Swap all content properties except id and lock state
+        const draggedContent = {
+          title: draggedBlock.title,
+          tag: draggedBlock.tag,
+          backgroundImage: draggedBlock.backgroundImage,
+          backgroundColor: draggedBlock.backgroundColor,
+          isGradient: draggedBlock.isGradient,
+          gradientColors: draggedBlock.gradientColors,
+          gradientDirection: draggedBlock.gradientDirection,
+          content: draggedBlock.content,
+          contentType: draggedBlock.contentType,
+          contentImage: draggedBlock.contentImage,
+          contentItems: draggedBlock.contentItems,
+          styleSettings: draggedBlock.styleSettings,
+          isManuallyResized: draggedBlock.isManuallyResized,
+          width: draggedBlock.width,
+          height: draggedBlock.height,
+          isFullWidth: draggedBlock.isFullWidth,
+          showReadMoreButton: draggedBlock.showReadMoreButton,
+          readMoreButtonText: draggedBlock.readMoreButtonText,
+          readMoreButtonPosition: draggedBlock.readMoreButtonPosition,
+        };
+
+        const targetContent = {
+          title: targetBlock.title,
+          tag: targetBlock.tag,
+          backgroundImage: targetBlock.backgroundImage,
+          backgroundColor: targetBlock.backgroundColor,
+          isGradient: targetBlock.isGradient,
+          gradientColors: targetBlock.gradientColors,
+          gradientDirection: targetBlock.gradientDirection,
+          content: targetBlock.content,
+          contentType: targetBlock.contentType,
+          contentImage: targetBlock.contentImage,
+          contentItems: targetBlock.contentItems,
+          styleSettings: targetBlock.styleSettings,
+          isManuallyResized: targetBlock.isManuallyResized,
+          width: targetBlock.width,
+          height: targetBlock.height,
+          isFullWidth: targetBlock.isFullWidth,
+          showReadMoreButton: targetBlock.showReadMoreButton,
+          readMoreButtonText: targetBlock.readMoreButtonText,
+          readMoreButtonPosition: targetBlock.readMoreButtonPosition,
+        };
+
+        // Swap content while preserving id and isResizeLocked
+        newBlocks[draggedIndex] = {
+          ...draggedBlock,
+          ...targetContent,
+        };
+
+        newBlocks[targetIndex] = {
+          ...targetBlock,
+          ...draggedContent,
+        };
+
         setBlocks(newBlocks);
       }
     }
@@ -1083,6 +1145,50 @@ function App() {
     }
   };
 
+  const fallbackLanguageOptions: LanguageOption[] = [
+    { code: "en", label: "English", iconUrl: "" },
+    { code: "ar", label: "العربية", iconUrl: "" },
+  ];
+
+  const effectiveLanguageOptions =
+    navbarSettings.languageOptions && navbarSettings.languageOptions.length > 0
+      ? navbarSettings.languageOptions
+      : fallbackLanguageOptions;
+
+  const currentLanguageIndex = effectiveLanguageOptions.findIndex(
+    (option) => option.code === i18n.language
+  );
+  const resolvedLanguageIndex =
+    currentLanguageIndex >= 0 ? currentLanguageIndex : 0;
+  const currentLanguageOption =
+    effectiveLanguageOptions[resolvedLanguageIndex] ||
+    fallbackLanguageOptions[0];
+  const nextLanguageOption =
+    effectiveLanguageOptions[
+      (resolvedLanguageIndex + 1) % effectiveLanguageOptions.length
+    ] || fallbackLanguageOptions[1];
+
+  const currentLanguageLabel =
+    currentLanguageOption.label ||
+    currentLanguageOption.code.toUpperCase() ||
+    i18n.language.toUpperCase();
+
+  const nextLanguageLabel =
+    nextLanguageOption.label ||
+    nextLanguageOption.code.toUpperCase() ||
+    currentLanguageLabel;
+
+  const handleLanguageToggle = () => {
+    if (effectiveLanguageOptions.length <= 1) {
+      return;
+    }
+
+    const nextCode = nextLanguageOption.code;
+    if (nextCode && nextCode !== i18n.language) {
+      i18n.changeLanguage(nextCode);
+    }
+  };
+
   // Create dynamic page background styles
   const getPageBackgroundStyle = (): React.CSSProperties => {
     switch (pageBackgroundSettings.type) {
@@ -1364,15 +1470,17 @@ function App() {
               {/* Language Switcher Icon */}
               <button
                 className="language-switcher-btn"
-                aria-label={`Switch to ${
-                  i18n.language === "en" ? "Arabic" : "English"
-                }`}
-                title={`Switch to ${
-                  i18n.language === "en" ? "العربية" : "English"
-                }`}
-                onClick={() =>
-                  i18n.changeLanguage(i18n.language === "en" ? "ar" : "en")
+                aria-label={
+                  effectiveLanguageOptions.length > 1
+                    ? `Switch to ${nextLanguageLabel}`
+                    : currentLanguageLabel
                 }
+                title={
+                  effectiveLanguageOptions.length > 1
+                    ? `Switch to ${nextLanguageLabel}`
+                    : currentLanguageLabel
+                }
+                onClick={handleLanguageToggle}
                 style={{
                   color: navbarSettings.textColor,
                   display: "flex",
@@ -1394,20 +1502,32 @@ function App() {
                   e.currentTarget.style.background = "none";
                 }}
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M2 12h20" />
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                </svg>
+                {currentLanguageOption.iconUrl ? (
+                  <img
+                    src={currentLanguageOption.iconUrl}
+                    alt={`${currentLanguageLabel} icon`}
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      objectFit: "contain",
+                    }}
+                  />
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M2 12h20" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  </svg>
+                )}
                 <span style={{ minWidth: "20px" }}>
-                  {i18n.language.toUpperCase()}
+                  {currentLanguageLabel}
                 </span>
               </button>
             </div>
