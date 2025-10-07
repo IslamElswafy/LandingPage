@@ -295,18 +295,6 @@ const DynamicBlock = ({
         >
           {lockIcon}
         </button>
-        {onShareBlock && (
-          <button
-            className="share-block-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleShareBlock();
-            }}
-            title={t("blocks.shareBlock", { defaultValue: "Share this card" })}
-          >
-            {"\u{1F517}"}
-          </button>
-        )}
         <button
           className="delete-block-btn"
           onClick={(e) => {

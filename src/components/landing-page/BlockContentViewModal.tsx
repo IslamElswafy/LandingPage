@@ -7,11 +7,13 @@ const BlockContentViewModal = ({
   isOpen,
   onClose,
   onEdit,
+  onShare,
 }: {
   block: BlockData | null;
   isOpen: boolean;
   onClose: () => void;
   onEdit: () => void;
+  onShare?: (blockId: string) => void;
 }) => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
@@ -96,6 +98,23 @@ const BlockContentViewModal = ({
               : `${t("Viewing")}: ${block.title}`}
           </h3>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {!isEditing && onShare && (
+              <button
+                onClick={() => onShare(block.id)}
+                style={{
+                  background: "#34C759",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                🔗 {t("Share")}
+              </button>
+            )}
             {!isEditing && (
               <button
                 onClick={handleEdit}

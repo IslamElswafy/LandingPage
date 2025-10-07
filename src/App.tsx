@@ -903,6 +903,45 @@ function App() {
     setSelectedBlockForModal(null);
   };
 
+  // Share block handler
+  const handleShareBlock = (blockId: string) => {
+    const shareUrl = window.location.origin + window.location.pathname + "?cardId=" + blockId;
+    navigator.clipboard.writeText(shareUrl).then(
+      () => {
+        showSuccess(
+          "Link Copied!",
+          "The shareable link has been copied to your clipboard."
+        );
+      },
+      () => {
+        showError(
+          "Copy Failed",
+          "Failed to copy the link. Please try again."
+        );
+      }
+    );
+  };
+
+  // Detect shared card from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sharedCardId = params.get("cardId");
+
+    if (sharedCardId) {
+      const sharedBlock = blocks.find((b) => b.id === sharedCardId);
+      if (sharedBlock) {
+        setSelectedBlockForModal(sharedBlock);
+        setBlockViewModalOpen(true);
+        const cardTitle = sharedBlock.title || sharedBlock.tag;
+        showInfo("Shared Card", "Opening shared card: " + cardTitle);
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        showWarning("Card Not Found", "The shared card with ID " + sharedCardId + " was not found.");
+      }
+    }
+  }, []);
+
   // Mouse event handlers for resize
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -1387,6 +1426,7 @@ function App() {
                   isSelected={selectedBlockId === block.id}
                   onReadMore={handleReadMore}
                   onDeleteBlock={handleDeleteBlock}
+                  onShareBlock={handleShareBlock}
                 />
               ))}
             </section>
@@ -1443,6 +1483,7 @@ function App() {
         isOpen={blockViewModalOpen}
         onClose={handleCloseViewModal}
         onEdit={handleEditContent}
+        onShare={handleShareBlock}
       />
 
       <NavbarControlsPopup
