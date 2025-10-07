@@ -92,6 +92,7 @@ export interface NavbarSettings {
   backgroundColor: string;
   textColor: string;
   logoColor: string;
+  logoUrl: string;
   transparency: number;
   isVisible: boolean;
   isSticky: boolean;

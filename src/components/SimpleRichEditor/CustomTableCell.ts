@@ -59,7 +59,7 @@ const CustomTableCell = TableCell.extend({
       styleSegments.push(`--cell-border-style: ${node.attrs.borderStyle}`);
     }
     if (node.attrs.backgroundColor) {
-      styleSegments.push(`background-color: ${node.attrs.backgroundColor}`);
+      styleSegments.push(`background-color: ${node.attrs.backgroundColor} !important`);
     }
 
     if (styleSegments.length > 0) {
