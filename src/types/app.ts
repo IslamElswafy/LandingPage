@@ -51,6 +51,11 @@ export interface BlockData {
   readMoreButtonText?: string;
   readMoreButtonPosition?: "bottom-left" | "bottom-center" | "bottom-right";
   showReadMoreButton?: boolean;
+  readMoreButtonVariant?: "flat" | "round";
+  readMoreButtonFontSize?: number;
+  readMoreButtonFontFamily?: string;
+  readMoreButtonBackgroundColor?: string;
+  readMoreButtonTextColor?: string;
 }
 
 export interface CarouselImage {
@@ -145,6 +150,7 @@ export interface NavigationItem {
   isVisible: boolean;
   order: number;
   icon?: string; // SVG path data for the icon
+  iconUrl?: string; // Optional custom image for the navigation icon
 }
 
 export interface ResizeState {
@@ -157,4 +163,6 @@ export interface ResizeState {
   startHeight: number;
   startLeft: number;
   startTop: number;
+  preserveAspectRatio: boolean;
+  initialAspectRatio: number;
 }

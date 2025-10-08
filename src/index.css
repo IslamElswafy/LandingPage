@@ -1168,7 +1168,29 @@ header:not(.apple-header) nav a:hover {
 
 .resize-handle {
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.2s ease;
+}
+
+/* Enhanced edge hover feedback */
+.card.resizable:hover {
+  outline: 1px dashed rgba(59, 130, 246, 0.3);
+  outline-offset: 4px;
+}
+
+/* Individual handle hover effects with size increase */
+.resize-handle:hover {
+  transform: scale(1.3) !important;
+  z-index: 30;
+}
+
+.resize-handle.e:hover,
+.resize-handle.w:hover {
+  transform: translateY(-50%) scale(1.3) !important;
+}
+
+.resize-handle.n:hover,
+.resize-handle.s:hover {
+  transform: translateX(-50%) scale(1.3) !important;
 }
 
 /* Drag indicator */

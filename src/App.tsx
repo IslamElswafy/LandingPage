@@ -311,6 +311,7 @@ function App() {
       isVisible: true,
       order: 1,
       icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10",
+      iconUrl: "",
     },
     {
       id: "nav_2",
@@ -319,6 +320,7 @@ function App() {
       isVisible: true,
       order: 2,
       icon: "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M12 16v-4 M12 8h.01",
+      iconUrl: "",
     },
     {
       id: "nav_3",
@@ -327,6 +329,7 @@ function App() {
       isVisible: true,
       order: 3,
       icon: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6",
+      iconUrl: "",
     },
   ]);
 
@@ -408,6 +411,8 @@ function App() {
     startHeight: 0,
     startLeft: 0,
     startTop: 0,
+    preserveAspectRatio: false,
+    initialAspectRatio: 1,
   });
 
   // Initialize masonry grid hook (10px row height, 16px gap)
@@ -479,6 +484,14 @@ function App() {
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, blockId: string) => {
+    const block = blocks.find((b) => b.id === blockId);
+
+    // Prevent dragging if block is locked
+    if (block?.isResizeLocked) {
+      e.preventDefault();
+      return;
+    }
+
     setDraggedElement(blockId);
     e.currentTarget.classList.add("dragging");
     e.dataTransfer.effectAllowed = "move";
@@ -512,6 +525,11 @@ function App() {
         const newBlocks = [...blocks];
         const draggedBlock = newBlocks[draggedIndex];
         const targetBlock = newBlocks[targetIndex];
+
+        // Prevent dropping onto locked blocks
+        if (targetBlock.isResizeLocked) {
+          return;
+        }
 
         // Swap all content properties except id and lock state
         const draggedContent = {
@@ -630,6 +648,12 @@ function App() {
 
     const rect = element.getBoundingClientRect();
 
+    // Determine if aspect ratio should be preserved
+    // For corner handles (se, sw, ne, nw), preserve aspect ratio by default or with Shift key
+    const isCornerHandle = ["se", "sw", "ne", "nw"].includes(direction);
+    const preserveAspectRatio = isCornerHandle && e.shiftKey;
+    const aspectRatio = rect.height / rect.width;
+
     setResizeState({
       isResizing: true,
       currentBlockId: blockId,
@@ -640,6 +664,8 @@ function App() {
       startHeight: rect.height,
       startLeft: rect.left,
       startTop: rect.top,
+      preserveAspectRatio,
+      initialAspectRatio: aspectRatio,
     });
 
     // Mark block as manually resized
@@ -1027,16 +1053,37 @@ function App() {
 
   // Mouse event handlers for resize
   useEffect(() => {
+    let rafId: number | null = null;
+    let lastTime = 0;
+    const throttleMs = 16; // ~60fps
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!resizeState.isResizing || !resizeState.currentBlockId) return;
 
-      const deltaX = e.clientX - resizeState.startX;
-      const deltaY = e.clientY - resizeState.startY;
+      const now = Date.now();
+      if (now - lastTime < throttleMs) {
+        return;
+      }
+      lastTime = now;
+
+      // Cancel any pending animation frame
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+
+      // Use requestAnimationFrame for smooth updates
+      rafId = requestAnimationFrame(() => {
+        const deltaX = e.clientX - resizeState.startX;
+        const deltaY = e.clientY - resizeState.startY;
 
       let newWidth = resizeState.startWidth;
       let newHeight = resizeState.startHeight;
 
       // Calculate new dimensions based on resize direction
+      const isCornerHandle = ["se", "sw", "ne", "nw"].includes(
+        resizeState.direction
+      );
+
       switch (resizeState.direction) {
         case "e":
           newWidth = resizeState.startWidth + deltaX;
@@ -1051,20 +1098,45 @@ function App() {
           newHeight = resizeState.startHeight - deltaY;
           break;
         case "se":
-          newWidth = resizeState.startWidth + deltaX;
-          newHeight = resizeState.startHeight + deltaY;
+          if (resizeState.preserveAspectRatio) {
+            // Use the larger delta to determine new size
+            const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+            newWidth = resizeState.startWidth + delta * Math.sign(deltaX);
+            newHeight = newWidth * resizeState.initialAspectRatio;
+          } else {
+            newWidth = resizeState.startWidth + deltaX;
+            newHeight = resizeState.startHeight + deltaY;
+          }
           break;
         case "sw":
-          newWidth = resizeState.startWidth - deltaX;
-          newHeight = resizeState.startHeight + deltaY;
+          if (resizeState.preserveAspectRatio) {
+            const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+            newWidth = resizeState.startWidth - delta * Math.sign(deltaX);
+            newHeight = newWidth * resizeState.initialAspectRatio;
+          } else {
+            newWidth = resizeState.startWidth - deltaX;
+            newHeight = resizeState.startHeight + deltaY;
+          }
           break;
         case "ne":
-          newWidth = resizeState.startWidth + deltaX;
-          newHeight = resizeState.startHeight - deltaY;
+          if (resizeState.preserveAspectRatio) {
+            const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+            newWidth = resizeState.startWidth + delta * Math.sign(deltaX);
+            newHeight = newWidth * resizeState.initialAspectRatio;
+          } else {
+            newWidth = resizeState.startWidth + deltaX;
+            newHeight = resizeState.startHeight - deltaY;
+          }
           break;
         case "nw":
-          newWidth = resizeState.startWidth - deltaX;
-          newHeight = resizeState.startHeight - deltaY;
+          if (resizeState.preserveAspectRatio) {
+            const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+            newWidth = resizeState.startWidth - delta * Math.sign(deltaX);
+            newHeight = newWidth * resizeState.initialAspectRatio;
+          } else {
+            newWidth = resizeState.startWidth - deltaX;
+            newHeight = resizeState.startHeight - deltaY;
+          }
           break;
       }
 
@@ -1089,6 +1161,7 @@ function App() {
             : block
         )
       );
+      });
     };
 
     const handleMouseUp = () => {
@@ -1108,6 +1181,9 @@ function App() {
       return () => {
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+        }
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
       };
@@ -1249,19 +1325,31 @@ function App() {
                       gap: "6px",
                     }}
                   >
-                    {item.icon && (
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d={item.icon} />
-                      </svg>
+                    {item.iconUrl ? (
+                      <img
+                        src={item.iconUrl}
+                        alt={`${item.label} icon`}
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          objectFit: "contain",
+                        }}
+                      />
+                    ) : (
+                      item.icon && (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d={item.icon} />
+                        </svg>
+                      )
                     )}
                     {item.view === "home"
                       ? t("navigation.home")

@@ -48,6 +48,41 @@ const EditorStyles: React.FC = () => (
           white-space: normal;
           word-break: break-word;
           overflow-wrap: anywhere;
+          overflow: hidden;
+        }
+
+        /* Constrain images inside table cells */
+        .advanced-rich-editor .editor-table td .inline-image-wrapper,
+        .advanced-rich-editor .editor-table th .inline-image-wrapper {
+          max-width: 100% !important;
+          width: auto !important;
+          height: auto !important;
+          display: block !important;
+          float: none !important;
+          margin: 4px auto !important;
+        }
+
+        .advanced-rich-editor .editor-table td .inline-image-wrapper img,
+        .advanced-rich-editor .editor-table th .inline-image-wrapper img {
+          max-width: 100% !important;
+          max-height: 300px !important;
+          width: auto !important;
+          height: auto !important;
+          object-fit: contain !important;
+        }
+
+        .advanced-rich-editor .editor-table td figure,
+        .advanced-rich-editor .editor-table th figure {
+          max-width: 100% !important;
+          margin: 4px auto !important;
+        }
+
+        .advanced-rich-editor .editor-table td figure img,
+        .advanced-rich-editor .editor-table th figure img {
+          max-width: 100% !important;
+          max-height: 300px !important;
+          width: auto !important;
+          height: auto !important;
         }
 
         .advanced-rich-editor .editor-table.bordered td,
@@ -67,6 +102,49 @@ const EditorStyles: React.FC = () => (
           font-weight: bold;
           text-align: left;
           background-color: #f5f5f5;
+        }
+
+        /* Table row resize handles */
+        .advanced-rich-editor .table-row-resize-handle {
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 8px;
+          cursor: row-resize;
+          z-index: 10;
+          user-select: none;
+          background: transparent;
+          transition: background-color 0.2s ease;
+        }
+
+        .advanced-rich-editor .table-row-resize-handle:hover {
+          background-color: rgba(25, 118, 210, 0.2);
+        }
+
+        .advanced-rich-editor .table-row-resize-handle:active {
+          background-color: rgba(25, 118, 210, 0.4);
+        }
+
+        /* Visual indicator line for row resize */
+        .advanced-rich-editor .table-row-resize-handle::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          height: 2px;
+          background-color: #1976d2;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+
+        .advanced-rich-editor .table-row-resize-handle:hover::after {
+          opacity: 0.5;
+        }
+
+        .advanced-rich-editor .table-row-resize-handle:active::after {
+          opacity: 1;
         }
 
         /* Merged cells styling */

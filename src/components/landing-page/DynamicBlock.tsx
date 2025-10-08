@@ -230,12 +230,41 @@ const DynamicBlock = ({
     return {};
   };
 
+  const getReadMoreButtonStyle = (): CSSProperties => {
+    const variant = block.readMoreButtonVariant;
+    const styles: CSSProperties = {};
+
+    if (block.readMoreButtonFontSize !== undefined) {
+      styles.fontSize = `${block.readMoreButtonFontSize}px`;
+    }
+
+    if (block.readMoreButtonFontFamily) {
+      styles.fontFamily = block.readMoreButtonFontFamily;
+    }
+
+    if (block.readMoreButtonBackgroundColor) {
+      styles.backgroundColor = block.readMoreButtonBackgroundColor;
+    }
+
+    if (block.readMoreButtonTextColor) {
+      styles.color = block.readMoreButtonTextColor;
+    }
+
+    if (variant === "round") {
+      styles.borderRadius = "999px";
+    } else if (variant === "flat") {
+      styles.borderRadius = "4px";
+    }
+
+    return styles;
+  };
+
   return (
     <article
       ref={blockRef}
       className={getStyleClasses()}
       style={getBlockStyle()}
-      draggable={enableDrag}
+      draggable={enableDrag && !isResizeLocked}
       onDragStart={(e) => onDragStart(e, block.id)}
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
@@ -261,6 +290,7 @@ const DynamicBlock = ({
         >
           <button
             className="cta"
+            style={getReadMoreButtonStyle()}
             onClick={(e) => {
               e.stopPropagation();
               onReadMore(block.id);

@@ -7,6 +7,7 @@ import type {
   BorderSide,
   CornerSide,
 } from "../../types/app";
+import { useFontFamilyOptions } from "../SimpleRichEditor/hooks";
 
 type StyleSettingValue = string | number | BorderSide[] | CornerSide[];
 const BORDER_SIDES: BorderSide[] = ["top", "right", "bottom", "left"];
@@ -48,6 +49,8 @@ const ELEVATION_SHADOWS: Record<string, string> = {
   "shadow-soft": "0 10px 25px rgba(15, 23, 42, 0.18)",
   "shadow-strong": "0 28px 65px rgba(15, 23, 42, 0.35)",
 };
+
+const DEFAULT_FONT_FAMILY_OPTION = "__default_font_family__";
 
 // No dimension constraints - full control over width and height
 const clampDimension = (
@@ -101,11 +104,21 @@ const AdminControlsPopup = ({
   setBlocks: Dispatch<SetStateAction<BlockData[]>>;
 }) => {
   const { t } = useTranslation();
+  const fontFamilyOptions = useFontFamilyOptions();
   const currentSettings: StyleSettings = {
     ...styleSettings,
     ...(selectedBlock?.styleSettings || {}),
   };
   const isBlockSelected = Boolean(selectedBlockId && selectedBlock);
+  const readMoreFontFamilyValue =
+    selectedBlock?.readMoreButtonFontFamily ?? undefined;
+  const isCustomReadMoreFontFamily =
+    readMoreFontFamilyValue !== undefined &&
+    !fontFamilyOptions.some(
+      (option) => option.value === readMoreFontFamilyValue
+    );
+  const readMoreFontFamilySelectValue =
+    readMoreFontFamilyValue ?? DEFAULT_FONT_FAMILY_OPTION;
   const [isDimensionLockEnabled, setIsDimensionLockEnabled] = useState(true);
   const [dimensionRatio, setDimensionRatio] = useState<number | null>(null);
 
@@ -853,7 +866,9 @@ const AdminControlsPopup = ({
 
                   <label>Button Position:</label>
                   <select
-                    value={selectedBlock?.readMoreButtonPosition || "bottom-left"}
+                    value={
+                      selectedBlock?.readMoreButtonPosition || "bottom-left"
+                    }
                     onChange={(e) => {
                       if (selectedBlock) {
                         setBlocks((prev) =>
@@ -876,6 +891,146 @@ const AdminControlsPopup = ({
                     <option value="bottom-center">Bottom Center</option>
                     <option value="bottom-right">Bottom Right</option>
                   </select>
+
+                  <label>Button Style:</label>
+                  <select
+                    value={selectedBlock?.readMoreButtonVariant || "default"}
+                    onChange={(e) => {
+                      if (selectedBlock) {
+                        setBlocks((prev) =>
+                          prev.map((block) =>
+                            block.id === selectedBlock.id
+                              ? {
+                                  ...block,
+                                  readMoreButtonVariant:
+                                    e.target.value === "default"
+                                      ? undefined
+                                      : (e.target.value as "flat" | "round"),
+                                }
+                              : block
+                          )
+                        );
+                      }
+                    }}
+                  >
+                    <option value="default">Default</option>
+                    <option value="flat">Flat</option>
+                    <option value="round">Round</option>
+                  </select>
+
+                  <label>Button Font Size (px):</label>
+                  <input
+                    type="number"
+                    min={8}
+                    max={72}
+                    value={
+                      selectedBlock?.readMoreButtonFontSize !== undefined
+                        ? selectedBlock.readMoreButtonFontSize
+                        : ""
+                    }
+                    onChange={(e) => {
+                      if (selectedBlock) {
+                        const fontSize = Number.parseInt(
+                          e.target.value,
+                          10
+                        );
+                        setBlocks((prev) =>
+                          prev.map((block) =>
+                            block.id === selectedBlock.id
+                              ? {
+                                  ...block,
+                                  readMoreButtonFontSize: Number.isNaN(
+                                    fontSize
+                                  )
+                                    ? undefined
+                                    : fontSize,
+                                }
+                              : block
+                          )
+                        );
+                      }
+                    }}
+                  />
+
+                  <label>Button Font Family:</label>
+                  <select
+                    value={
+                      isCustomReadMoreFontFamily
+                        ? readMoreFontFamilyValue ??
+                          DEFAULT_FONT_FAMILY_OPTION
+                        : readMoreFontFamilySelectValue
+                    }
+                    onChange={(e) => {
+                      if (!selectedBlock) return;
+
+                      const value = e.target.value;
+                      setBlocks((prev) =>
+                        prev.map((block) =>
+                          block.id === selectedBlock.id
+                            ? {
+                                ...block,
+                                readMoreButtonFontFamily:
+                                  value === DEFAULT_FONT_FAMILY_OPTION
+                                    ? undefined
+                                    : value,
+                              }
+                            : block
+                        )
+                      );
+                    }}
+                  >
+                    <option value={DEFAULT_FONT_FAMILY_OPTION}>Default</option>
+                    {fontFamilyOptions.map(({ value, label }) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                    {isCustomReadMoreFontFamily && readMoreFontFamilyValue ? (
+                      <option value={readMoreFontFamilyValue}>
+                        Custom ({readMoreFontFamilyValue})
+                      </option>
+                    ) : null}
+                  </select>
+
+                  <label>Button Background Color:</label>
+                  <input
+                    type="color"
+                    value={selectedBlock?.readMoreButtonBackgroundColor || "#000000"}
+                    onChange={(e) => {
+                      if (selectedBlock) {
+                        setBlocks((prev) =>
+                          prev.map((block) =>
+                            block.id === selectedBlock.id
+                              ? {
+                                  ...block,
+                                  readMoreButtonBackgroundColor: e.target.value,
+                                }
+                              : block
+                          )
+                        );
+                      }
+                    }}
+                  />
+
+                  <label>Button Text Color:</label>
+                  <input
+                    type="color"
+                    value={selectedBlock?.readMoreButtonTextColor || "#ffffff"}
+                    onChange={(e) => {
+                      if (selectedBlock) {
+                        setBlocks((prev) =>
+                          prev.map((block) =>
+                            block.id === selectedBlock.id
+                              ? {
+                                  ...block,
+                                  readMoreButtonTextColor: e.target.value,
+                                }
+                              : block
+                          )
+                        );
+                      }
+                    }}
+                  />
                 </>
               )}
             </div>
@@ -898,7 +1053,7 @@ const AdminControlsPopup = ({
                 checked={showHandles}
                 onChange={(e) => onShowHandlesChange(e.target.checked)}
               />
-              Show resize handles
+              Show
             </label>
 
             <label>

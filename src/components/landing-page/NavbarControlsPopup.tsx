@@ -90,7 +90,6 @@ const NavbarControlsPopup = ({
 
   if (!isOpen) return null;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAddNavigationItem = () => {
     const newItem: NavigationItem = {
       id: `nav_${Date.now()}`,
@@ -99,11 +98,12 @@ const NavbarControlsPopup = ({
       customUrl: "",
       isVisible: true,
       order: navigationItems.length + 1,
+      icon: "",
+      iconUrl: "",
     };
     onNavigationItemsChange([...navigationItems, newItem]);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleUpdateNavigationItem = (
     id: string,
     field: keyof NavigationItem,
@@ -115,13 +115,13 @@ const NavbarControlsPopup = ({
     onNavigationItemsChange(updatedItems);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDeleteNavigationItem = (id: string) => {
-    const updatedItems = navigationItems.filter((item) => item.id !== id);
+    const updatedItems = navigationItems
+      .filter((item) => item.id !== id)
+      .map((item, index) => ({ ...item, order: index + 1 }));
     onNavigationItemsChange(updatedItems);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleMoveItem = (id: string, direction: "up" | "down") => {
     const currentIndex = navigationItems.findIndex((item) => item.id === id);
     if (
@@ -140,6 +140,52 @@ const NavbarControlsPopup = ({
         item.order = index + 1;
       });
       onNavigationItemsChange(newItems);
+    }
+  };
+
+  const handleNavigationLabelChange = (id: string, label: string) => {
+    handleUpdateNavigationItem(id, "label", label);
+  };
+
+  const handleNavigationVisibilityChange = (id: string, isVisible: boolean) => {
+    handleUpdateNavigationItem(id, "isVisible", isVisible);
+  };
+
+  const handleNavigationIconPathChange = (id: string, path: string) => {
+    handleUpdateNavigationItem(id, "icon", path);
+  };
+
+  const handleNavigationIconUpload =
+    (id: string) => (event: ChangeEvent<HTMLInputElement>) => {
+      const input = event.target;
+      const file = input.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          handleUpdateNavigationItem(id, "iconUrl", reader.result);
+        }
+        input.value = "";
+      };
+      reader.readAsDataURL(file);
+    };
+
+  const handleNavigationIconReset = (id: string) => {
+    handleUpdateNavigationItem(id, "iconUrl", "");
+  };
+
+  const handleNavigationCustomUrlChange = (id: string, url: string) => {
+    handleUpdateNavigationItem(id, "customUrl", url);
+  };
+
+  const handleNavigationViewChange = (
+    id: string,
+    view: NavigationItem["view"]
+  ) => {
+    handleUpdateNavigationItem(id, "view", view);
+    if (view !== "custom") {
+      handleUpdateNavigationItem(id, "customUrl", "");
     }
   };
 
@@ -366,6 +412,240 @@ const NavbarControlsPopup = ({
               />
               {t("settings.showSaveButton")}
             </label>
+          </div>
+
+          <div className="control-group">
+            <h4>Navigation Items</h4>
+            <button
+              type="button"
+              onClick={handleAddNavigationItem}
+              style={{
+                alignSelf: "flex-start",
+                marginBottom: "12px",
+                padding: "6px 10px",
+                borderRadius: "4px",
+                border: "1px solid #ccc",
+                background: "#f5f5f5",
+                cursor: "pointer",
+              }}
+            >
+              + Add Navigation Item
+            </button>
+
+            <div className="navigation-items-editor" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {[...navigationItems]
+                .sort((a, b) => a.order - b.order)
+                .map((item, index, array) => (
+                  <div
+                    key={item.id}
+                    className="navigation-item-card"
+                    style={{
+                      border: "1px solid #e0e0e0",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      background: "#fafafa",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                    }}
+                  >
+                    <div
+                      className="navigation-item-header"
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <strong>{item.label || `Item ${index + 1}`}</strong>
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveItem(item.id, "up")}
+                          disabled={index === 0}
+                          style={{
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            border: "1px solid #ccc",
+                            background: index === 0 ? "#f0f0f0" : "#fff",
+                            cursor: index === 0 ? "not-allowed" : "pointer",
+                          }}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveItem(item.id, "down")}
+                          disabled={index === array.length - 1}
+                          style={{
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            border: "1px solid #ccc",
+                            background:
+                              index === array.length - 1 ? "#f0f0f0" : "#fff",
+                            cursor:
+                              index === array.length - 1
+                                ? "not-allowed"
+                                : "pointer",
+                          }}
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteNavigationItem(item.id)}
+                          style={{
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            border: "1px solid #e57373",
+                            background: "#ffebee",
+                            color: "#c62828",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+
+                    <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      Label
+                      <input
+                        type="text"
+                        value={item.label}
+                        onChange={(e) =>
+                          handleNavigationLabelChange(item.id, e.target.value)
+                        }
+                      />
+                    </label>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <input
+                        type="checkbox"
+                        checked={item.isVisible}
+                        onChange={(e) =>
+                          handleNavigationVisibilityChange(
+                            item.id,
+                            e.target.checked
+                          )
+                        }
+                      />
+                      Visible
+                    </label>
+
+                    <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      Destination
+                      <select
+                        value={item.view}
+                        onChange={(e) =>
+                          handleNavigationViewChange(
+                            item.id,
+                            e.target.value as NavigationItem["view"]
+                          )
+                        }
+                      >
+                        <option value="home">Home</option>
+                        <option value="about">About</option>
+                        <option value="contact">Contact</option>
+                        <option value="custom">Custom URL</option>
+                      </select>
+                    </label>
+
+                    {item.view === "custom" && (
+                      <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        Custom URL
+                        <input
+                          type="url"
+                          value={item.customUrl || ""}
+                          onChange={(e) =>
+                            handleNavigationCustomUrlChange(
+                              item.id,
+                              e.target.value
+                            )
+                          }
+                          placeholder="https://example.com/your-page"
+                        />
+                      </label>
+                    )}
+
+                    <div
+                      className="icon-editor"
+                      style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+                    >
+                      <label style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        SVG Path (advanced)
+                        <textarea
+                          rows={2}
+                          value={item.icon || ""}
+                          onChange={(e) =>
+                            handleNavigationIconPathChange(
+                              item.id,
+                              e.target.value
+                            )
+                          }
+                          placeholder="Paste SVG path data (d attribute)"
+                        />
+                      </label>
+
+                      <div className="file-input-group" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <label htmlFor={`nav-icon-upload-${item.id}`}>
+                          Icon Image
+                        </label>
+                        <input
+                          id={`nav-icon-upload-${item.id}`}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleNavigationIconUpload(item.id)}
+                        />
+                      </div>
+
+                      <div
+                        className="icon-preview"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        {item.iconUrl ? (
+                          <img
+                            src={item.iconUrl}
+                            alt={`${item.label || "Navigation"} icon preview`}
+                            style={{
+                              width: "48px",
+                              height: "48px",
+                              objectFit: "contain",
+                              border: "1px solid #ddd",
+                              borderRadius: "6px",
+                              padding: "4px",
+                              background: "white",
+                            }}
+                          />
+                        ) : (
+                          <span style={{ color: "#666", fontSize: "12px" }}>
+                            No icon image selected. SVG path will be used.
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          className="reset-button"
+                          onClick={() => handleNavigationIconReset(item.id)}
+                          style={{
+                            background: "transparent",
+                            border: "1px solid #ccc",
+                            padding: "4px 8px",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Reset Icon Image
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
 
           {/* Language Settings */}
