@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import type { Dispatch, SetStateAction, CSSProperties } from "react";
+import { HexColorInput, HexColorPicker } from "react-colorful";
 import type {
   BlockData,
   StyleSettings,
@@ -51,6 +52,52 @@ const ELEVATION_SHADOWS: Record<string, string> = {
 };
 
 const DEFAULT_FONT_FAMILY_OPTION = "__default_font_family__";
+const DEFAULT_SOLID_COLOR = "#111111";
+const DEFAULT_GRADIENT_COLORS: [string, string] = ["#667eea", "#764ba2"];
+const DEFAULT_BUTTON_BACKGROUND = "#000000";
+const DEFAULT_BUTTON_TEXT = "#ffffff";
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+const COLOR_PICKER_CONTAINER_STYLE: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+  width: "100%",
+};
+
+const HEX_COLOR_INPUT_STYLE: CSSProperties = {
+  width: "100%",
+  padding: "8px 12px",
+  borderRadius: "8px",
+  border: "1px solid #d0d5dd",
+  backgroundColor: "#fff",
+  fontFamily: "inherit",
+  fontSize: "0.875rem",
+  lineHeight: 1.4,
+  boxSizing: "border-box",
+};
+
+const HEX_COLOR_PICKER_STYLE: CSSProperties = {
+  width: "100%",
+  minHeight: 160,
+  borderRadius: "12px",
+};
+
+const normalizeHexValue = (value: string): string => {
+  const prefixed = value.startsWith("#") ? value : `#${value}`;
+  return prefixed.slice(0, 7).toLowerCase();
+};
+
+const sanitizeHexColor = (
+  value: string | undefined,
+  fallback: string
+): string => {
+  if (!value) {
+    return fallback;
+  }
+  const normalized = normalizeHexValue(value);
+  return HEX_COLOR_PATTERN.test(normalized) ? normalized : fallback;
+};
 
 // No dimension constraints - full control over width and height
 const clampDimension = (
@@ -121,6 +168,32 @@ const AdminControlsPopup = ({
     readMoreFontFamilyValue ?? DEFAULT_FONT_FAMILY_OPTION;
   const [isDimensionLockEnabled, setIsDimensionLockEnabled] = useState(true);
   const [dimensionRatio, setDimensionRatio] = useState<number | null>(null);
+  const solidColorSafe = sanitizeHexColor(
+    selectedBlock?.backgroundColor,
+    DEFAULT_SOLID_COLOR
+  );
+  const gradientColorSafe1 = sanitizeHexColor(
+    selectedBlock?.gradientColors?.[0],
+    DEFAULT_GRADIENT_COLORS[0]
+  );
+  const gradientColorSafe2 = sanitizeHexColor(
+    selectedBlock?.gradientColors?.[1],
+    DEFAULT_GRADIENT_COLORS[1]
+  );
+  const buttonBackgroundColorSafe = sanitizeHexColor(
+    selectedBlock?.readMoreButtonBackgroundColor,
+    DEFAULT_BUTTON_BACKGROUND
+  );
+  const buttonTextColorSafe = sanitizeHexColor(
+    selectedBlock?.readMoreButtonTextColor,
+    DEFAULT_BUTTON_TEXT
+  );
+  const [solidColorInput, setSolidColorInput] = useState(solidColorSafe);
+  const [gradientColorInputs, setGradientColorInputs] = useState<
+    [string, string]
+  >([gradientColorSafe1, gradientColorSafe2]);
+  const [buttonBgInput, setButtonBgInput] = useState(buttonBackgroundColorSafe);
+  const [buttonTextInput, setButtonTextInput] = useState(buttonTextColorSafe);
 
   useEffect(() => {
     if (selectedBlock?.width && selectedBlock?.height) {
@@ -129,6 +202,26 @@ const AdminControlsPopup = ({
       setDimensionRatio(null);
     }
   }, [selectedBlock?.id, selectedBlock?.width, selectedBlock?.height]);
+
+  useEffect(() => {
+    setSolidColorInput(solidColorSafe);
+  }, [solidColorSafe]);
+
+  useEffect(() => {
+    setGradientColorInputs([gradientColorSafe1, gradientColorSafe2]);
+  }, [gradientColorSafe1, gradientColorSafe2]);
+
+  useEffect(() => {
+    setButtonBgInput(buttonBackgroundColorSafe);
+  }, [buttonBackgroundColorSafe]);
+
+  useEffect(() => {
+    setButtonTextInput(buttonTextColorSafe);
+  }, [buttonTextColorSafe]);
+
+  useEffect(() => {
+    setBlockBorderColorInput(blockBorderColorSafe);
+  }, [blockBorderColorSafe]);
 
   const applyDimensions = (width?: number, height?: number) => {
     if (!selectedBlock) return;
@@ -156,6 +249,17 @@ const AdminControlsPopup = ({
 
         return next;
       })
+    );
+  };
+
+  const updateSelectedBlock = (updater: (block: BlockData) => BlockData) => {
+    if (!selectedBlock) {
+      return;
+    }
+    setBlocks((prev) =>
+      prev.map((block) =>
+        block.id === selectedBlock.id ? updater(block) : block
+      )
     );
   };
 
@@ -245,8 +349,72 @@ const AdminControlsPopup = ({
     currentSettings.borderSides !== undefined
       ? currentSettings.borderSides
       : BORDER_SIDES;
-  const borderColorValue = currentSettings.borderColor || "#111111";
+  const blockBorderColorSafe = sanitizeHexColor(
+    currentSettings.borderColor,
+    DEFAULT_BORDER_COLOR
+  );
+  const [blockBorderColorInput, setBlockBorderColorInput] = useState(
+    blockBorderColorSafe
+  );
+  const borderColorValue = blockBorderColorSafe;
   const borderWidthValue = currentSettings.borderWidth ?? 1;
+
+  const commitSolidColor = (color: string) => {
+    if (!isBlockSelected || !selectedBlock) {
+      return;
+    }
+    const normalized = color.toLowerCase();
+    updateSelectedBlock((block) => ({
+      ...block,
+      backgroundColor: normalized,
+    }));
+  };
+
+  const commitGradientColor = (index: 0 | 1, color: string) => {
+    if (!isBlockSelected || !selectedBlock) {
+      return;
+    }
+    const normalized = color.toLowerCase();
+    updateSelectedBlock((block) => {
+      const current =
+        block.gradientColors && block.gradientColors.length >= 2
+          ? [...block.gradientColors]
+          : [...DEFAULT_GRADIENT_COLORS];
+      current[index] = normalized;
+      return {
+        ...block,
+        gradientColors: current as [string, string],
+      };
+    });
+  };
+
+  const commitButtonBackgroundColor = (color: string) => {
+    if (!isBlockSelected || !selectedBlock) {
+      return;
+    }
+    const normalized = color.toLowerCase();
+    updateSelectedBlock((block) => ({
+      ...block,
+      readMoreButtonBackgroundColor: normalized,
+    }));
+  };
+
+  const commitButtonTextColor = (color: string) => {
+    if (!isBlockSelected || !selectedBlock) {
+      return;
+    }
+    const normalized = color.toLowerCase();
+    updateSelectedBlock((block) => ({
+      ...block,
+      readMoreButtonTextColor: normalized,
+    }));
+  };
+
+  const commitBlockBorderColor = (color: string) => {
+    const normalized = color.toLowerCase();
+    setBlockBorderColorInput(normalized);
+    handleSettingChange("borderColor", normalized);
+  };
 
   const handleSettingChange = (
     key: keyof StyleSettings,
@@ -470,39 +638,31 @@ const AdminControlsPopup = ({
             {currentSettings.background === "bg-solid" && (
               <div className="color-control-group">
                 <label>Solid Color:</label>
-                <div className="color-input-container">
-                  <input
-                    type="color"
-                    value={selectedBlock?.backgroundColor || "#111111"}
-                    onChange={(e) => {
-                      if (isBlockSelected && selectedBlock) {
-                        setBlocks((prev) =>
-                          prev.map((block) =>
-                            block.id === selectedBlock.id
-                              ? { ...block, backgroundColor: e.target.value }
-                              : block
-                          )
-                        );
-                      }
+                <div
+                  className="color-input-container"
+                  style={COLOR_PICKER_CONTAINER_STYLE}
+                >
+                  <HexColorPicker
+                    color={solidColorSafe}
+                    onChange={(color) => {
+                      const normalized = color.toLowerCase();
+                      setSolidColorInput(normalized);
+                      commitSolidColor(normalized);
                     }}
-                    className="color-input"
+                    style={HEX_COLOR_PICKER_STYLE}
                   />
-                  <input
-                    type="text"
-                    value={selectedBlock?.backgroundColor || "#111111"}
-                    onChange={(e) => {
-                      if (isBlockSelected && selectedBlock) {
-                        setBlocks((prev) =>
-                          prev.map((block) =>
-                            block.id === selectedBlock.id
-                              ? { ...block, backgroundColor: e.target.value }
-                              : block
-                          )
-                        );
+                  <HexColorInput
+                    prefixed
+                    color={solidColorInput}
+                    onChange={(value) => {
+                      const normalized = normalizeHexValue(value);
+                      setSolidColorInput(normalized);
+                      if (HEX_COLOR_PATTERN.test(normalized)) {
+                        commitSolidColor(normalized);
                       }
                     }}
                     className="color-text-input"
-                    placeholder="#111111"
+                    style={HEX_COLOR_INPUT_STYLE}
                   />
                 </div>
               </div>
@@ -513,118 +673,54 @@ const AdminControlsPopup = ({
               <div className="gradient-control-group">
                 <label>Gradient Colors:</label>
                 <div className="gradient-inputs">
-                  <div className="gradient-color-input">
-                    <label>Color 1:</label>
-                    <div className="color-input-container">
-                      <input
-                        type="color"
-                        value={selectedBlock?.gradientColors?.[0] || "#667eea"}
-                        onChange={(e) => {
-                          if (isBlockSelected && selectedBlock) {
-                            const currentColors =
-                              selectedBlock.gradientColors || [
-                                "#667eea",
-                                "#764ba2",
-                              ];
-                            const newColors = [
-                              e.target.value,
-                              currentColors[1] || "#764ba2",
-                            ];
-                            setBlocks((prev) =>
-                              prev.map((block) =>
-                                block.id === selectedBlock.id
-                                  ? { ...block, gradientColors: newColors }
-                                  : block
-                              )
-                            );
-                          }
-                        }}
-                        className="color-input"
-                      />
-                      <input
-                        type="text"
-                        value={selectedBlock?.gradientColors?.[0] || "#667eea"}
-                        onChange={(e) => {
-                          if (isBlockSelected && selectedBlock) {
-                            const currentColors =
-                              selectedBlock.gradientColors || [
-                                "#667eea",
-                                "#764ba2",
-                              ];
-                            const newColors = [
-                              e.target.value,
-                              currentColors[1] || "#764ba2",
-                            ];
-                            setBlocks((prev) =>
-                              prev.map((block) =>
-                                block.id === selectedBlock.id
-                                  ? { ...block, gradientColors: newColors }
-                                  : block
-                              )
-                            );
-                          }
-                        }}
-                        className="color-text-input"
-                        placeholder="#667eea"
-                      />
-                    </div>
-                  </div>
-                  <div className="gradient-color-input">
-                    <label>Color 2:</label>
-                    <div className="color-input-container">
-                      <input
-                        type="color"
-                        value={selectedBlock?.gradientColors?.[1] || "#764ba2"}
-                        onChange={(e) => {
-                          if (isBlockSelected && selectedBlock) {
-                            const currentColors =
-                              selectedBlock.gradientColors || [
-                                "#667eea",
-                                "#764ba2",
-                              ];
-                            const newColors = [
-                              currentColors[0] || "#667eea",
-                              e.target.value,
-                            ];
-                            setBlocks((prev) =>
-                              prev.map((block) =>
-                                block.id === selectedBlock.id
-                                  ? { ...block, gradientColors: newColors }
-                                  : block
-                              )
-                            );
-                          }
-                        }}
-                        className="color-input"
-                      />
-                      <input
-                        type="text"
-                        value={selectedBlock?.gradientColors?.[1] || "#764ba2"}
-                        onChange={(e) => {
-                          if (isBlockSelected && selectedBlock) {
-                            const currentColors =
-                              selectedBlock.gradientColors || [
-                                "#667eea",
-                                "#764ba2",
-                              ];
-                            const newColors = [
-                              currentColors[0] || "#667eea",
-                              e.target.value,
-                            ];
-                            setBlocks((prev) =>
-                              prev.map((block) =>
-                                block.id === selectedBlock.id
-                                  ? { ...block, gradientColors: newColors }
-                                  : block
-                              )
-                            );
-                          }
-                        }}
-                        className="color-text-input"
-                        placeholder="#764ba2"
-                      />
-                    </div>
-                  </div>
+                  {([0, 1] as const).map((gradientIndex) => {
+                    const label = gradientIndex === 0 ? "Color 1:" : "Color 2:";
+                    const safeColor =
+                      gradientIndex === 0
+                        ? gradientColorSafe1
+                        : gradientColorSafe2;
+                    const inputValue = gradientColorInputs[gradientIndex];
+                    return (
+                      <div className="gradient-color-input" key={gradientIndex}>
+                        <label>{label}</label>
+                        <div
+                          className="color-input-container"
+                          style={COLOR_PICKER_CONTAINER_STYLE}
+                        >
+                          <HexColorPicker
+                            color={safeColor}
+                            onChange={(color) => {
+                              const normalized = color.toLowerCase();
+                              setGradientColorInputs((prev) => {
+                                const next = [...prev] as [string, string];
+                                next[gradientIndex] = normalized;
+                                return next;
+                              });
+                              commitGradientColor(gradientIndex, normalized);
+                            }}
+                            style={HEX_COLOR_PICKER_STYLE}
+                          />
+                          <HexColorInput
+                            prefixed
+                            color={inputValue}
+                            onChange={(value) => {
+                              const normalized = normalizeHexValue(value);
+                              setGradientColorInputs((prev) => {
+                                const next = [...prev] as [string, string];
+                                next[gradientIndex] = normalized;
+                                return next;
+                              });
+                              if (HEX_COLOR_PATTERN.test(normalized)) {
+                                commitGradientColor(gradientIndex, normalized);
+                              }
+                            }}
+                            className="color-text-input"
+                            style={HEX_COLOR_INPUT_STYLE}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="gradient-direction">
                   <label>Direction:</label>
@@ -683,22 +779,27 @@ const AdminControlsPopup = ({
                 </div>
 
                 <label>Border Color:</label>
-                <div className="color-input-container">
-                  <input
-                    type="color"
-                    value={borderColorValue}
-                    onChange={(e) =>
-                      handleSettingChange("borderColor", e.target.value)
-                    }
-                    className="color-input"
+                <div
+                  className="color-input-container"
+                  style={COLOR_PICKER_CONTAINER_STYLE}
+                >
+                  <HexColorPicker
+                    color={borderColorValue}
+                    onChange={commitBlockBorderColor}
+                    style={HEX_COLOR_PICKER_STYLE}
                   />
-                  <input
-                    type="text"
-                    value={borderColorValue}
-                    onChange={(e) =>
-                      handleSettingChange("borderColor", e.target.value)
-                    }
+                  <HexColorInput
+                    prefixed
+                    color={blockBorderColorInput}
+                    onChange={(value) => {
+                      const normalized = normalizeHexValue(value);
+                      setBlockBorderColorInput(normalized);
+                      if (HEX_COLOR_PATTERN.test(normalized)) {
+                        commitBlockBorderColor(normalized);
+                      }
+                    }}
                     className="color-text-input"
+                    style={HEX_COLOR_INPUT_STYLE}
                     placeholder="#111111"
                   />
                 </div>
@@ -930,18 +1031,13 @@ const AdminControlsPopup = ({
                     }
                     onChange={(e) => {
                       if (selectedBlock) {
-                        const fontSize = Number.parseInt(
-                          e.target.value,
-                          10
-                        );
+                        const fontSize = Number.parseInt(e.target.value, 10);
                         setBlocks((prev) =>
                           prev.map((block) =>
                             block.id === selectedBlock.id
                               ? {
                                   ...block,
-                                  readMoreButtonFontSize: Number.isNaN(
-                                    fontSize
-                                  )
+                                  readMoreButtonFontSize: Number.isNaN(fontSize)
                                     ? undefined
                                     : fontSize,
                                 }
@@ -956,8 +1052,7 @@ const AdminControlsPopup = ({
                   <select
                     value={
                       isCustomReadMoreFontFamily
-                        ? readMoreFontFamilyValue ??
-                          DEFAULT_FONT_FAMILY_OPTION
+                        ? readMoreFontFamilyValue ?? DEFAULT_FONT_FAMILY_OPTION
                         : readMoreFontFamilySelectValue
                     }
                     onChange={(e) => {
@@ -993,44 +1088,62 @@ const AdminControlsPopup = ({
                   </select>
 
                   <label>Button Background Color:</label>
-                  <input
-                    type="color"
-                    value={selectedBlock?.readMoreButtonBackgroundColor || "#000000"}
-                    onChange={(e) => {
-                      if (selectedBlock) {
-                        setBlocks((prev) =>
-                          prev.map((block) =>
-                            block.id === selectedBlock.id
-                              ? {
-                                  ...block,
-                                  readMoreButtonBackgroundColor: e.target.value,
-                                }
-                              : block
-                          )
-                        );
-                      }
-                    }}
-                  />
+                  <div
+                    className="color-input-container"
+                    style={COLOR_PICKER_CONTAINER_STYLE}
+                  >
+                    <HexColorPicker
+                      color={buttonBackgroundColorSafe}
+                      onChange={(color) => {
+                        const normalized = color.toLowerCase();
+                        setButtonBgInput(normalized);
+                        commitButtonBackgroundColor(normalized);
+                      }}
+                      style={HEX_COLOR_PICKER_STYLE}
+                    />
+                    <HexColorInput
+                      prefixed
+                      color={buttonBgInput}
+                      onChange={(value) => {
+                        const normalized = normalizeHexValue(value);
+                        setButtonBgInput(normalized);
+                        if (HEX_COLOR_PATTERN.test(normalized)) {
+                          commitButtonBackgroundColor(normalized);
+                        }
+                      }}
+                      className="color-text-input"
+                      style={HEX_COLOR_INPUT_STYLE}
+                    />
+                  </div>
 
                   <label>Button Text Color:</label>
-                  <input
-                    type="color"
-                    value={selectedBlock?.readMoreButtonTextColor || "#ffffff"}
-                    onChange={(e) => {
-                      if (selectedBlock) {
-                        setBlocks((prev) =>
-                          prev.map((block) =>
-                            block.id === selectedBlock.id
-                              ? {
-                                  ...block,
-                                  readMoreButtonTextColor: e.target.value,
-                                }
-                              : block
-                          )
-                        );
-                      }
-                    }}
-                  />
+                  <div
+                    className="color-input-container"
+                    style={COLOR_PICKER_CONTAINER_STYLE}
+                  >
+                    <HexColorPicker
+                      color={buttonTextColorSafe}
+                      onChange={(color) => {
+                        const normalized = color.toLowerCase();
+                        setButtonTextInput(normalized);
+                        commitButtonTextColor(normalized);
+                      }}
+                      style={HEX_COLOR_PICKER_STYLE}
+                    />
+                    <HexColorInput
+                      prefixed
+                      color={buttonTextInput}
+                      onChange={(value) => {
+                        const normalized = normalizeHexValue(value);
+                        setButtonTextInput(normalized);
+                        if (HEX_COLOR_PATTERN.test(normalized)) {
+                          commitButtonTextColor(normalized);
+                        }
+                      }}
+                      className="color-text-input"
+                      style={HEX_COLOR_INPUT_STYLE}
+                    />
+                  </div>
                 </>
               )}
             </div>
@@ -1053,7 +1166,7 @@ const AdminControlsPopup = ({
                 checked={showHandles}
                 onChange={(e) => onShowHandlesChange(e.target.checked)}
               />
-              Show
+              Show resize handles
             </label>
 
             <label>

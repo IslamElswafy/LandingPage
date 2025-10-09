@@ -28,7 +28,6 @@ import {
   MenuItem,
   Select,
   Slider,
-  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Tooltip,
@@ -55,6 +54,7 @@ import {
   TableRows,
   ViewColumn,
 } from "@mui/icons-material";
+import { HexColorInput, HexColorPicker } from "react-colorful";
 import type { EditorToolbarProps } from "./types";
 
 const BORDER_COLOR_SWATCHES = [
@@ -83,6 +83,48 @@ const HIGHLIGHT_SWATCHES = [
   "#eceff1",
   "#fffde7",
 ];
+
+const DEFAULT_BORDER_COLOR = "#1e88e5";
+const DEFAULT_ROW_HIGHLIGHT_COLOR = "#e3f2fd";
+const DEFAULT_COLUMN_HIGHLIGHT_COLOR = "#fff3e0";
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+const COLOR_PICKER_SX = {
+  mt: 1,
+  display: "flex",
+  flexDirection: "column",
+  gap: 1.5,
+  "& .react-colorful": {
+    width: "100%",
+    height: 160,
+    borderRadius: 1,
+  },
+  "& .react-colorful__saturation": {
+    borderRadius: 1,
+    marginBottom: 1,
+  },
+  "& .react-colorful__hue": {
+    borderRadius: 1,
+  },
+  "& .modern-color-input": {
+    width: "100%",
+    padding: "8px 12px",
+    borderRadius: 1,
+    border: "1px solid",
+    borderColor: "divider",
+    backgroundColor: "background.paper",
+    fontFamily: "inherit",
+    fontSize: "0.875rem",
+    lineHeight: 1.5,
+    boxSizing: "border-box",
+    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+  },
+  "& .modern-color-input:focus": {
+    borderColor: "primary.main",
+    outline: "none",
+    boxShadow: "0 0 0 2px rgba(25, 118, 210, 0.2)",
+  },
+} as const;
 
 const BORDER_STYLE_OPTIONS = [
   { label: "Solid", value: "solid" },
@@ -134,6 +176,9 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
     useState<null | HTMLElement>(null);
   const [borderStyleAnchorEl, setBorderStyleAnchorEl] =
     useState<null | HTMLElement>(null);
+  const [borderInputValue, setBorderInputValue] = useState(
+    tableBorderColor || DEFAULT_BORDER_COLOR
+  );
   const [pendingBorderWidth, setPendingBorderWidth] = useState<number>(
     Number.parseFloat(tableBorderWidth || "0") || 0
   );
@@ -142,12 +187,23 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
   );
   const [columnColorAnchorEl, setColumnColorAnchorEl] =
     useState<null | HTMLElement>(null);
+  const [rowInputValue, setRowInputValue] = useState(
+    rowHighlightColor || DEFAULT_ROW_HIGHLIGHT_COLOR
+  );
+  const [columnInputValue, setColumnInputValue] = useState(
+    columnHighlightColor || DEFAULT_COLUMN_HIGHLIGHT_COLOR
+  );
+  const borderColorSafe = tableBorderColor || DEFAULT_BORDER_COLOR;
 
   useEffect(() => {
     if (borderWidthAnchorEl) {
       setPendingBorderWidth(Number.parseFloat(tableBorderWidth || "0") || 0);
     }
   }, [borderWidthAnchorEl, tableBorderWidth]);
+
+  useEffect(() => {
+    setBorderInputValue(borderColorSafe);
+  }, [borderColorSafe]);
 
   const openColorMenu = Boolean(borderColorAnchorEl);
   const openWidthMenu = Boolean(borderWidthAnchorEl);
@@ -173,10 +229,11 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
     setBorderWidthAnchorEl(null);
   };
 
-  const safeBorderColor = tableBorderColor || "#1e88e5";
   const handleColorMenuClose = () => setBorderColorAnchorEl(null);
   const handleBorderColorSelect = (color: string) => {
-    onSetTableBorderColor(color);
+    const normalized = color.toLowerCase();
+    setBorderInputValue(normalized);
+    onSetTableBorderColor(normalized);
     handleColorMenuClose();
   };
 
@@ -191,20 +248,89 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
     setBorderStyleAnchorEl(null);
   };
 
-  const rowHighlightColorSafe = rowHighlightColor || "#e3f2fd";
-  const columnHighlightColorSafe = columnHighlightColor || "#fff3e0";
+  const rowHighlightColorSafe =
+    rowHighlightColor || DEFAULT_ROW_HIGHLIGHT_COLOR;
+  const columnHighlightColorSafe =
+    columnHighlightColor || DEFAULT_COLUMN_HIGHLIGHT_COLOR;
+
+  useEffect(() => {
+    setRowInputValue(rowHighlightColorSafe);
+  }, [rowHighlightColorSafe]);
+
+  useEffect(() => {
+    setColumnInputValue(columnHighlightColorSafe);
+  }, [columnHighlightColorSafe]);
 
   const handleRowMenuClose = () => setRowColorAnchorEl(null);
   const handleColumnMenuClose = () => setColumnColorAnchorEl(null);
 
   const handleRowColorSelect = (color: string | null) => {
-    onSetRowBackground(color);
+    if (color) {
+      const normalized = color.toLowerCase();
+      setRowInputValue(normalized);
+      onSetRowBackground(normalized);
+    } else {
+      setRowInputValue(DEFAULT_ROW_HIGHLIGHT_COLOR);
+      onSetRowBackground(null);
+    }
     handleRowMenuClose();
   };
 
   const handleColumnColorSelect = (color: string | null) => {
-    onSetColumnBackground(color);
+    if (color) {
+      const normalized = color.toLowerCase();
+      setColumnInputValue(normalized);
+      onSetColumnBackground(normalized);
+    } else {
+      setColumnInputValue(DEFAULT_COLUMN_HIGHLIGHT_COLOR);
+      onSetColumnBackground(null);
+    }
     handleColumnMenuClose();
+  };
+
+  const handleBorderHexInputChange = (value: string) => {
+    const prefixed = value.startsWith("#") ? value : `#${value}`;
+    const sanitized = prefixed.slice(0, 7).toLowerCase();
+    setBorderInputValue(sanitized);
+    if (HEX_COLOR_PATTERN.test(sanitized)) {
+      onSetTableBorderColor(sanitized);
+    }
+  };
+
+  const handleBorderPickerChange = (color: string) => {
+    const normalized = color.toLowerCase();
+    setBorderInputValue(normalized);
+    onSetTableBorderColor(normalized);
+  };
+
+  const handleRowHexInputChange = (value: string) => {
+    const prefixed = value.startsWith("#") ? value : `#${value}`;
+    const sanitized = prefixed.slice(0, 7).toLowerCase();
+    setRowInputValue(sanitized);
+    if (HEX_COLOR_PATTERN.test(sanitized)) {
+      onSetRowBackground(sanitized);
+    }
+  };
+
+  const handleColumnHexInputChange = (value: string) => {
+    const prefixed = value.startsWith("#") ? value : `#${value}`;
+    const sanitized = prefixed.slice(0, 7).toLowerCase();
+    setColumnInputValue(sanitized);
+    if (HEX_COLOR_PATTERN.test(sanitized)) {
+      onSetColumnBackground(sanitized);
+    }
+  };
+
+  const handleRowPickerChange = (color: string) => {
+    const normalized = color.toLowerCase();
+    setRowInputValue(normalized);
+    onSetRowBackground(normalized);
+  };
+
+  const handleColumnPickerChange = (color: string) => {
+    const normalized = color.toLowerCase();
+    setColumnInputValue(normalized);
+    onSetColumnBackground(normalized);
   };
 
   const renderColorSwatches = useMemo(
@@ -411,7 +537,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
               size="small"
               onClick={(event) => setBorderColorAnchorEl(event.currentTarget)}
               sx={{
-                color: safeBorderColor,
+                color: borderColorSafe,
                 border: "1px solid",
                 borderColor: "divider",
               }}
@@ -445,45 +571,32 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
             anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
             transformOrigin={{ vertical: "top", horizontal: "left" }}
           >
-            <Box sx={{ p: 2, width: 220 }}>
+            <Box sx={{ p: 2, width: 280 }}>
               <Typography variant="subtitle2" gutterBottom>
                 Border Color
               </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {BORDER_COLOR_SWATCHES.map((color) => {
-                  const isSelected =
-                    color.toLowerCase() === safeBorderColor.toLowerCase();
-                  return (
-                    <ButtonBase
-                      key={color}
-                      onClick={() => handleBorderColorSelect(color)}
-                      sx={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        backgroundColor: color,
-                        border: isSelected
-                          ? "2px solid #1976d2"
-                          : "2px solid transparent",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
-                        transition: "transform 0.2s ease",
-                        "&:hover": {
-                          transform: "scale(1.1)",
-                        },
-                      }}
-                    />
-                  );
-                })}
+              {renderColorSwatches(
+                BORDER_COLOR_SWATCHES,
+                borderColorSafe,
+                (color) => handleBorderColorSelect(color)
+              )}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Custom color
+                </Typography>
+                <Box sx={COLOR_PICKER_SX}>
+                  <HexColorPicker
+                    color={borderColorSafe}
+                    onChange={handleBorderPickerChange}
+                  />
+                  <HexColorInput
+                    className="modern-color-input"
+                    color={borderInputValue}
+                    onChange={handleBorderHexInputChange}
+                    prefixed
+                  />
+                </Box>
               </Box>
-              <TextField
-                label="Custom Color"
-                type="color"
-                value={safeBorderColor}
-                onChange={(event) => onSetTableBorderColor(event.target.value)}
-                size="small"
-                sx={{ mt: 2, width: "100%" }}
-                InputLabelProps={{ shrink: true }}
-              />
             </Box>
           </Menu>
 
@@ -549,7 +662,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
             anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
             transformOrigin={{ vertical: "top", horizontal: "left" }}
           >
-            <Box sx={{ p: 2, width: 240 }}>
+            <Box sx={{ p: 2, width: 280 }}>
               <Typography variant="subtitle2" gutterBottom>
                 Row Background
               </Typography>
@@ -558,15 +671,23 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 rowHighlightColorSafe,
                 (color) => handleRowColorSelect(color)
               )}
-              <TextField
-                label="Custom"
-                type="color"
-                value={rowHighlightColorSafe}
-                onChange={(event) => onSetRowBackground(event.target.value)}
-                size="small"
-                sx={{ mt: 2, width: "100%" }}
-                InputLabelProps={{ shrink: true }}
-              />
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Custom color
+                </Typography>
+                <Box sx={COLOR_PICKER_SX}>
+                  <HexColorPicker
+                    color={rowHighlightColorSafe}
+                    onChange={handleRowPickerChange}
+                  />
+                  <HexColorInput
+                    className="modern-color-input"
+                    color={rowInputValue}
+                    onChange={handleRowHexInputChange}
+                    prefixed
+                  />
+                </Box>
+              </Box>
               <ButtonBase
                 onClick={() => handleRowColorSelect(null)}
                 sx={{
@@ -595,7 +716,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
             anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
             transformOrigin={{ vertical: "top", horizontal: "left" }}
           >
-            <Box sx={{ p: 2, width: 240 }}>
+            <Box sx={{ p: 2, width: 280 }}>
               <Typography variant="subtitle2" gutterBottom>
                 Column Background
               </Typography>
@@ -604,15 +725,23 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 columnHighlightColorSafe,
                 (color) => handleColumnColorSelect(color)
               )}
-              <TextField
-                label="Custom"
-                type="color"
-                value={columnHighlightColorSafe}
-                onChange={(event) => onSetColumnBackground(event.target.value)}
-                size="small"
-                sx={{ mt: 2, width: "100%" }}
-                InputLabelProps={{ shrink: true }}
-              />
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Custom color
+                </Typography>
+                <Box sx={COLOR_PICKER_SX}>
+                  <HexColorPicker
+                    color={columnHighlightColorSafe}
+                    onChange={handleColumnPickerChange}
+                  />
+                  <HexColorInput
+                    className="modern-color-input"
+                    color={columnInputValue}
+                    onChange={handleColumnHexInputChange}
+                    prefixed
+                  />
+                </Box>
+              </Box>
               <ButtonBase
                 onClick={() => handleColumnColorSelect(null)}
                 sx={{

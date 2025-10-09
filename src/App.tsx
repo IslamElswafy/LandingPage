@@ -292,6 +292,9 @@ function App() {
       github: "",
     },
     customText: "",
+    leftLogoUrl: "", // Logo URL/base64 for all devices
+    middleContent: "", // Rich HTML content for middle section (English)
+    middleContentAr: "", // Rich HTML content for middle section (Arabic)
   });
 
   const [pageBackgroundSettings, setPageBackgroundSettings] =

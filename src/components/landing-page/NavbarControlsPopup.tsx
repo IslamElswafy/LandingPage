@@ -4,8 +4,48 @@ import type {
   NavbarSettings,
   LanguageOption,
 } from "../../types/app";
-import { useCallback, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ChangeEvent,
+} from "react";
+import type { CSSProperties } from "react";
+import { HexColorInput, HexColorPicker } from "react-colorful";
 import defaultLogo from "/wjl_Icon.png";
+
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const COLOR_PICKER_CONTAINER_STYLE: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  width: "100%",
+};
+const HEX_COLOR_PICKER_STYLE: CSSProperties = {
+  width: "100%",
+  minHeight: 140,
+  borderRadius: "12px",
+};
+const HEX_COLOR_INPUT_STYLE: CSSProperties = {
+  width: "100%",
+  padding: "8px 12px",
+  borderRadius: "8px",
+  border: "1px solid #d0d5dd",
+  fontFamily: "inherit",
+  fontSize: "0.875rem",
+  boxSizing: "border-box",
+};
+const normalizeHexValue = (value: string): string => {
+  const prefixed = value.startsWith("#") ? value : `#${value}`;
+  return prefixed.slice(0, 7).toLowerCase();
+};
+const sanitizeHexColor = (value: string | undefined, fallback: string) => {
+  if (!value) return fallback;
+  const normalized = normalizeHexValue(value);
+  return HEX_COLOR_PATTERN.test(normalized) ? normalized : fallback;
+};
+const DEFAULT_NAVBAR_BACKGROUND = "#111111";
+const DEFAULT_NAVBAR_TEXT = "#ffffff";
 
 const NavbarControlsPopup = ({
   isOpen,
@@ -23,6 +63,44 @@ const NavbarControlsPopup = ({
   onNavigationItemsChange: (items: NavigationItem[]) => void;
 }) => {
   const { t, i18n } = useTranslation();
+  const backgroundColorSafe = sanitizeHexColor(
+    navbarSettings.backgroundColor,
+    DEFAULT_NAVBAR_BACKGROUND
+  );
+  const textColorSafe = sanitizeHexColor(
+    navbarSettings.textColor,
+    DEFAULT_NAVBAR_TEXT
+  );
+  const [backgroundColorInput, setBackgroundColorInput] = useState(
+    backgroundColorSafe
+  );
+  const [textColorInput, setTextColorInput] = useState(textColorSafe);
+
+  useEffect(() => {
+    setBackgroundColorInput(backgroundColorSafe);
+  }, [backgroundColorSafe]);
+
+  useEffect(() => {
+    setTextColorInput(textColorSafe);
+  }, [textColorSafe]);
+
+  const handleBackgroundColorCommit = useCallback(
+    (color: string) => {
+      const normalized = color.toLowerCase();
+      setBackgroundColorInput(normalized);
+      onNavbarSettingsChange("backgroundColor", normalized);
+    },
+    [onNavbarSettingsChange]
+  );
+
+  const handleTextColorCommit = useCallback(
+    (color: string) => {
+      const normalized = color.toLowerCase();
+      setTextColorInput(normalized);
+      onNavbarSettingsChange("textColor", normalized);
+    },
+    [onNavbarSettingsChange]
+  );
 
   const handleLogoUpload = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -244,22 +322,27 @@ const NavbarControlsPopup = ({
 
             <div className="color-input-group">
               <label>Background Color:</label>
-              <div className="color-input-container">
-                <input
-                  type="color"
-                  value={navbarSettings.backgroundColor}
-                  onChange={(e) =>
-                    onNavbarSettingsChange("backgroundColor", e.target.value)
-                  }
-                  className="color-input"
+              <div
+                className="color-input-container"
+                style={COLOR_PICKER_CONTAINER_STYLE}
+              >
+                <HexColorPicker
+                  color={backgroundColorSafe}
+                  onChange={handleBackgroundColorCommit}
+                  style={HEX_COLOR_PICKER_STYLE}
                 />
-                <input
-                  type="text"
-                  value={navbarSettings.backgroundColor}
-                  onChange={(e) =>
-                    onNavbarSettingsChange("backgroundColor", e.target.value)
-                  }
+                <HexColorInput
+                  prefixed
+                  color={backgroundColorInput}
+                  onChange={(value) => {
+                    const normalized = normalizeHexValue(value);
+                    setBackgroundColorInput(normalized);
+                    if (HEX_COLOR_PATTERN.test(normalized)) {
+                      handleBackgroundColorCommit(normalized);
+                    }
+                  }}
                   className="color-text-input"
+                  style={HEX_COLOR_INPUT_STYLE}
                   placeholder="#1d1d1f"
                 />
               </div>
@@ -267,22 +350,27 @@ const NavbarControlsPopup = ({
 
             <div className="color-input-group">
               <label>Text Color:</label>
-              <div className="color-input-container">
-                <input
-                  type="color"
-                  value={navbarSettings.textColor}
-                  onChange={(e) =>
-                    onNavbarSettingsChange("textColor", e.target.value)
-                  }
-                  className="color-input"
+              <div
+                className="color-input-container"
+                style={COLOR_PICKER_CONTAINER_STYLE}
+              >
+                <HexColorPicker
+                  color={textColorSafe}
+                  onChange={handleTextColorCommit}
+                  style={HEX_COLOR_PICKER_STYLE}
                 />
-                <input
-                  type="text"
-                  value={navbarSettings.textColor}
-                  onChange={(e) =>
-                    onNavbarSettingsChange("textColor", e.target.value)
-                  }
+                <HexColorInput
+                  prefixed
+                  color={textColorInput}
+                  onChange={(value) => {
+                    const normalized = normalizeHexValue(value);
+                    setTextColorInput(normalized);
+                    if (HEX_COLOR_PATTERN.test(normalized)) {
+                      handleTextColorCommit(normalized);
+                    }
+                  }}
                   className="color-text-input"
+                  style={HEX_COLOR_INPUT_STYLE}
                   placeholder="#f5f5f7"
                 />
               </div>

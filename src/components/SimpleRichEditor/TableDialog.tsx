@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -13,7 +13,41 @@ import {
   Typography,
 } from "@mui/material";
 import { TableChart } from "@mui/icons-material";
+import type { CSSProperties } from "react";
+import { HexColorInput, HexColorPicker } from "react-colorful";
 import type { TableDialogProps } from "./types";
+
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const COLOR_PICKER_CONTAINER_STYLE: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  width: "100%",
+};
+const HEX_COLOR_PICKER_STYLE: CSSProperties = {
+  width: "100%",
+  minHeight: 140,
+  borderRadius: 8,
+};
+const HEX_COLOR_INPUT_STYLE: CSSProperties = {
+  width: "100%",
+  padding: "8px 12px",
+  borderRadius: 8,
+  border: "1px solid #d0d5dd",
+  fontFamily: "inherit",
+  fontSize: "0.875rem",
+  boxSizing: "border-box",
+};
+const normalizeHexValue = (value: string): string => {
+  const prefixed = value.startsWith("#") ? value : `#${value}`;
+  return prefixed.slice(0, 7).toLowerCase();
+};
+const sanitizeHexColor = (value: string | undefined, fallback: string) => {
+  if (!value) return fallback;
+  const normalized = normalizeHexValue(value);
+  return HEX_COLOR_PATTERN.test(normalized) ? normalized : fallback;
+};
+const DEFAULT_BORDER_COLOR = "#1e88e5";
 
 const QUICK_SIZES: Array<[number, number]> = [
   [2, 2],
@@ -41,15 +75,32 @@ const TableDialog: React.FC<TableDialogProps> = ({
   onBorderStyleChange,
   onQuickSizeSelect,
   onInsert,
-}) => (
-  <Dialog
-    open={open}
-    onClose={onClose}
-    maxWidth="md"
-    fullWidth
-    sx={{ zIndex: 1400 }}
-    PaperProps={{ sx: { zIndex: 1400 } }}
-  >
+}) => {
+  const borderColorSafe = sanitizeHexColor(borderColor, DEFAULT_BORDER_COLOR);
+  const [borderColorInput, setBorderColorInput] = useState(borderColorSafe);
+
+  useEffect(() => {
+    setBorderColorInput(borderColorSafe);
+  }, [borderColorSafe]);
+
+  const handleBorderColorCommit = (color: string) => {
+    const normalized = color.toLowerCase();
+    setBorderColorInput(normalized);
+    onBorderColorChange(normalized);
+  };
+
+  const effectiveBorderColor =
+    borderStyle === "none" ? "transparent" : borderColorSafe;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      sx={{ zIndex: 1400 }}
+      PaperProps={{ sx: { zIndex: 1400 } }}
+    >
     <DialogTitle>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <TableChart color="primary" />
@@ -84,15 +135,30 @@ const TableDialog: React.FC<TableDialogProps> = ({
         </Box>
 
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
-          <TextField
-            label="Border Color"
-            type="color"
-            value={borderColor}
-            onChange={(event) => onBorderColorChange(event.target.value)}
-            sx={{ width: 140 }}
-            size="small"
-            InputLabelProps={{ shrink: true }}
-          />
+          <Box sx={{ width: 200, minWidth: 180 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Border Color
+            </Typography>
+            <Box sx={COLOR_PICKER_CONTAINER_STYLE}>
+              <HexColorPicker
+                color={borderColorSafe}
+                onChange={handleBorderColorCommit}
+                style={HEX_COLOR_PICKER_STYLE}
+              />
+              <HexColorInput
+                prefixed
+                color={borderColorInput}
+                onChange={(value) => {
+                  const normalized = normalizeHexValue(value);
+                  setBorderColorInput(normalized);
+                  if (HEX_COLOR_PATTERN.test(normalized)) {
+                    handleBorderColorCommit(normalized);
+                  }
+                }}
+                style={HEX_COLOR_INPUT_STYLE}
+              />
+            </Box>
+          </Box>
           <TextField
             label="Border Width (px)"
             type="number"
@@ -152,9 +218,7 @@ const TableDialog: React.FC<TableDialogProps> = ({
                           key={colIndex}
                           style={{
                             border: showBorders
-                              ? `${borderWidth || "0"}px ${borderStyle} ${
-                                  borderStyle === "none" ? "transparent" : borderColor
-                                }`
+                              ? `${borderWidth || "0"}px ${borderStyle} ${effectiveBorderColor}`
                               : "1px solid transparent",
                             padding: "4px 8px",
                             backgroundColor: "#f5f5f5",
@@ -170,9 +234,7 @@ const TableDialog: React.FC<TableDialogProps> = ({
                           key={colIndex}
                           style={{
                             border: showBorders
-                              ? `${borderWidth || "0"}px ${borderStyle} ${
-                                  borderStyle === "none" ? "transparent" : borderColor
-                                }`
+                              ? `${borderWidth || "0"}px ${borderStyle} ${effectiveBorderColor}`
                               : "1px solid transparent",
                             padding: "4px 8px",
                             minWidth: "60px",
@@ -258,7 +320,8 @@ const TableDialog: React.FC<TableDialogProps> = ({
         Insert Table ({rows}×{cols})
       </Button>
     </DialogActions>
-  </Dialog>
-);
+    </Dialog>
+  );
+};
 
 export default TableDialog;

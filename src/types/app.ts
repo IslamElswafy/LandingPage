@@ -132,6 +132,9 @@ export interface FooterSettings {
     github: string;
   };
   customText: string;
+  leftLogoUrl?: string; // Logo URL/base64 for all devices
+  middleContent?: string; // Rich HTML content for the middle section (English)
+  middleContentAr?: string; // Rich HTML content for the middle section (Arabic)
 }
 
 export interface PageBackgroundSettings {

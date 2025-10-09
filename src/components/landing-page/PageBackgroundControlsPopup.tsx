@@ -1,5 +1,40 @@
-import type { ChangeEvent } from "react";
+import { useEffect, useState } from "react";
+import type { ChangeEvent, CSSProperties } from "react";
+import { HexColorInput, HexColorPicker } from "react-colorful";
 import type { PageBackgroundSettings } from "../../types/app";
+
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+const COLOR_PICKER_CONTAINER_STYLE: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  width: "100%",
+};
+const HEX_COLOR_PICKER_STYLE: CSSProperties = {
+  width: "100%",
+  minHeight: 140,
+  borderRadius: "12px",
+};
+const HEX_COLOR_INPUT_STYLE: CSSProperties = {
+  width: "100%",
+  padding: "8px 12px",
+  borderRadius: "8px",
+  border: "1px solid #d0d5dd",
+  fontFamily: "inherit",
+  fontSize: "0.875rem",
+  boxSizing: "border-box",
+};
+const normalizeHexValue = (value: string): string => {
+  const prefixed = value.startsWith("#") ? value : `#${value}`;
+  return prefixed.slice(0, 7).toLowerCase();
+};
+const sanitizeHexColor = (value: string | undefined, fallback: string) => {
+  if (!value) return fallback;
+  const normalized = normalizeHexValue(value);
+  return HEX_COLOR_PATTERN.test(normalized) ? normalized : fallback;
+};
+const DEFAULT_SOLID_COLOR = "#111111";
+const DEFAULT_GRADIENT_COLORS: [string, string] = ["#667eea", "#764ba2"];
 const PageBackgroundControlsPopup = ({
   isOpen,
   onClose,
@@ -14,7 +49,52 @@ const PageBackgroundControlsPopup = ({
     value: PageBackgroundSettings[keyof PageBackgroundSettings]
   ) => void;
 }) => {
-  if (!isOpen) return null;
+  const solidColorSafe = sanitizeHexColor(
+    pageBackgroundSettings.solidColor,
+    DEFAULT_SOLID_COLOR
+  );
+  const gradientColorSafe1 = sanitizeHexColor(
+    pageBackgroundSettings.gradientColors?.[0],
+    DEFAULT_GRADIENT_COLORS[0]
+  );
+  const gradientColorSafe2 = sanitizeHexColor(
+    pageBackgroundSettings.gradientColors?.[1],
+    DEFAULT_GRADIENT_COLORS[1]
+  );
+  const [solidColorInput, setSolidColorInput] = useState(solidColorSafe);
+  const [gradientColorInputs, setGradientColorInputs] = useState<
+    [string, string]
+  >([gradientColorSafe1, gradientColorSafe2]);
+
+  useEffect(() => {
+    setSolidColorInput(solidColorSafe);
+  }, [solidColorSafe]);
+
+  useEffect(() => {
+    setGradientColorInputs([gradientColorSafe1, gradientColorSafe2]);
+  }, [gradientColorSafe1, gradientColorSafe2]);
+
+  const handleSolidColorCommit = (color: string) => {
+    const normalized = color.toLowerCase();
+    setSolidColorInput(normalized);
+    onPageBackgroundSettingsChange("solidColor", normalized);
+  };
+
+  const handleGradientColorCommit = (index: 0 | 1, color: string) => {
+    const normalized = color.toLowerCase();
+    setGradientColorInputs((prev) => {
+      const next = [...prev] as [string, string];
+      next[index] = normalized;
+      return next;
+    });
+    const existing = pageBackgroundSettings.gradientColors;
+    const currentColors =
+      existing && existing.length >= 2
+        ? [...existing]
+        : [...DEFAULT_GRADIENT_COLORS];
+    currentColors[index] = normalized;
+    onPageBackgroundSettingsChange("gradientColors", currentColors);
+  };
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,6 +108,8 @@ const PageBackgroundControlsPopup = ({
       reader.readAsDataURL(file);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="admin-popup-overlay" onClick={onClose}>
@@ -87,28 +169,27 @@ const PageBackgroundControlsPopup = ({
               <h4>Solid Color Settings</h4>
               <div className="color-input-group">
                 <label>Background Color:</label>
-                <div className="color-input-container">
-                  <input
-                    type="color"
-                    value={pageBackgroundSettings.solidColor}
-                    onChange={(e) =>
-                      onPageBackgroundSettingsChange(
-                        "solidColor",
-                        e.target.value
-                      )
-                    }
-                    className="color-input"
+                <div
+                  className="color-input-container"
+                  style={COLOR_PICKER_CONTAINER_STYLE}
+                >
+                  <HexColorPicker
+                    color={solidColorSafe}
+                    onChange={handleSolidColorCommit}
+                    style={HEX_COLOR_PICKER_STYLE}
                   />
-                  <input
-                    type="text"
-                    value={pageBackgroundSettings.solidColor}
-                    onChange={(e) =>
-                      onPageBackgroundSettingsChange(
-                        "solidColor",
-                        e.target.value
-                      )
-                    }
+                  <HexColorInput
+                    prefixed
+                    color={solidColorInput}
+                    onChange={(value) => {
+                      const normalized = normalizeHexValue(value);
+                      setSolidColorInput(normalized);
+                      if (HEX_COLOR_PATTERN.test(normalized)) {
+                        handleSolidColorCommit(normalized);
+                      }
+                    }}
                     className="color-text-input"
+                    style={HEX_COLOR_INPUT_STYLE}
                   />
                 </div>
               </div>
@@ -120,77 +201,46 @@ const PageBackgroundControlsPopup = ({
               <h4>Gradient Settings</h4>
 
               <div className="gradient-inputs">
-                <div className="gradient-color-input">
-                  <label>Color 1:</label>
-                  <div className="color-input-container">
-                    <input
-                      type="color"
-                      value={pageBackgroundSettings.gradientColors[0]}
-                      onChange={(e) => {
-                        const newColors = [
-                          ...pageBackgroundSettings.gradientColors,
-                        ];
-                        newColors[0] = e.target.value;
-                        onPageBackgroundSettingsChange(
-                          "gradientColors",
-                          newColors
-                        );
-                      }}
-                      className="color-input"
-                    />
-                    <input
-                      type="text"
-                      value={pageBackgroundSettings.gradientColors[0]}
-                      onChange={(e) => {
-                        const newColors = [
-                          ...pageBackgroundSettings.gradientColors,
-                        ];
-                        newColors[0] = e.target.value;
-                        onPageBackgroundSettingsChange(
-                          "gradientColors",
-                          newColors
-                        );
-                      }}
-                      className="color-text-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="gradient-color-input">
-                  <label>Color 2:</label>
-                  <div className="color-input-container">
-                    <input
-                      type="color"
-                      value={pageBackgroundSettings.gradientColors[1]}
-                      onChange={(e) => {
-                        const newColors = [
-                          ...pageBackgroundSettings.gradientColors,
-                        ];
-                        newColors[1] = e.target.value;
-                        onPageBackgroundSettingsChange(
-                          "gradientColors",
-                          newColors
-                        );
-                      }}
-                      className="color-input"
-                    />
-                    <input
-                      type="text"
-                      value={pageBackgroundSettings.gradientColors[1]}
-                      onChange={(e) => {
-                        const newColors = [
-                          ...pageBackgroundSettings.gradientColors,
-                        ];
-                        newColors[1] = e.target.value;
-                        onPageBackgroundSettingsChange(
-                          "gradientColors",
-                          newColors
-                        );
-                      }}
-                      className="color-text-input"
-                    />
-                  </div>
-                </div>
+                {([0, 1] as const).map((index) => {
+                  const label = index === 0 ? "Color 1:" : "Color 2:";
+                  const safeColor =
+                    index === 0 ? gradientColorSafe1 : gradientColorSafe2;
+                  const inputValue = gradientColorInputs[index];
+                  return (
+                    <div className="gradient-color-input" key={index}>
+                      <label>{label}</label>
+                      <div
+                        className="color-input-container"
+                        style={COLOR_PICKER_CONTAINER_STYLE}
+                      >
+                        <HexColorPicker
+                          color={safeColor}
+                          onChange={(color) =>
+                            handleGradientColorCommit(index, color)
+                          }
+                          style={HEX_COLOR_PICKER_STYLE}
+                        />
+                        <HexColorInput
+                          prefixed
+                          color={inputValue}
+                          onChange={(value) => {
+                            const normalized = normalizeHexValue(value);
+                            setGradientColorInputs((prev) => {
+                              const next = [...prev] as [string, string];
+                              next[index] = normalized;
+                              return next;
+                            });
+                            if (HEX_COLOR_PATTERN.test(normalized)) {
+                              handleGradientColorCommit(index, normalized);
+                            }
+                          }}
+                          className="color-text-input"
+                          style={HEX_COLOR_INPUT_STYLE}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               <label>
