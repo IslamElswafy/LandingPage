@@ -131,6 +131,10 @@ const FooterControlsPopup = ({
     onFooterSettingsChange("textColor", normalized);
   };
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <div className="admin-popup-overlay" onClick={onClose}>
       <div

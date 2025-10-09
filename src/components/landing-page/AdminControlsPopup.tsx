@@ -56,6 +56,7 @@ const DEFAULT_SOLID_COLOR = "#111111";
 const DEFAULT_GRADIENT_COLORS: [string, string] = ["#667eea", "#764ba2"];
 const DEFAULT_BUTTON_BACKGROUND = "#000000";
 const DEFAULT_BUTTON_TEXT = "#ffffff";
+const DEFAULT_BORDER_COLOR = "#1e88e5";
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
 const COLOR_PICKER_CONTAINER_STYLE: CSSProperties = {
@@ -188,12 +189,19 @@ const AdminControlsPopup = ({
     selectedBlock?.readMoreButtonTextColor,
     DEFAULT_BUTTON_TEXT
   );
+  const blockBorderColorSafe = sanitizeHexColor(
+    currentSettings.borderColor,
+    DEFAULT_BORDER_COLOR
+  );
   const [solidColorInput, setSolidColorInput] = useState(solidColorSafe);
   const [gradientColorInputs, setGradientColorInputs] = useState<
     [string, string]
   >([gradientColorSafe1, gradientColorSafe2]);
   const [buttonBgInput, setButtonBgInput] = useState(buttonBackgroundColorSafe);
   const [buttonTextInput, setButtonTextInput] = useState(buttonTextColorSafe);
+  const [blockBorderColorInput, setBlockBorderColorInput] = useState(
+    blockBorderColorSafe
+  );
 
   useEffect(() => {
     if (selectedBlock?.width && selectedBlock?.height) {
@@ -349,13 +357,6 @@ const AdminControlsPopup = ({
     currentSettings.borderSides !== undefined
       ? currentSettings.borderSides
       : BORDER_SIDES;
-  const blockBorderColorSafe = sanitizeHexColor(
-    currentSettings.borderColor,
-    DEFAULT_BORDER_COLOR
-  );
-  const [blockBorderColorInput, setBlockBorderColorInput] = useState(
-    blockBorderColorSafe
-  );
   const borderColorValue = blockBorderColorSafe;
   const borderWidthValue = currentSettings.borderWidth ?? 1;
 
