@@ -191,14 +191,28 @@ const DynamicBlock = ({
     const opacity =
       styleSettings.opacity !== undefined ? styleSettings.opacity / 100 : 1;
 
-    const sizeStyle: CSSProperties = block.isManuallyResized
-      ? {
-          width: block.width ? `${block.width}px` : "auto",
-          height: block.height ? `${block.height}px` : "auto",
-          position: "relative" as const,
-          zIndex: 10,
-        }
-      : {};
+    const sizeStyle: CSSProperties = {};
+
+    if (block.isManuallyResized || block.isFullWidth) {
+      sizeStyle.width = block.isFullWidth
+        ? "100%"
+        : block.width
+        ? `${block.width}px`
+        : "auto";
+      if (block.height) {
+        sizeStyle.height = `${block.height}px`;
+      }
+      sizeStyle.position = "relative";
+      sizeStyle.zIndex = 10;
+    }
+
+    if (!block.isFullWidth && block.gridColumnSpan) {
+      sizeStyle.gridColumnEnd = `span ${block.gridColumnSpan}`;
+    }
+
+    if (block.gridRowSpan) {
+      sizeStyle.gridRowEnd = `span ${block.gridRowSpan}`;
+    }
 
     return {
       ...baseStyle,

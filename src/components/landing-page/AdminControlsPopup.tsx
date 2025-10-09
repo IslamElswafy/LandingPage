@@ -122,6 +122,8 @@ const AdminControlsPopup = ({
   onShowHandlesChange,
   enableDrag,
   onEnableDragChange,
+  autoSnapLayout,
+  onAutoSnapLayoutChange,
   onResetAllCards,
   onDeleteAllBlocks,
   onAddNewBlock,
@@ -140,6 +142,8 @@ const AdminControlsPopup = ({
   onShowHandlesChange: (value: boolean) => void;
   enableDrag: boolean;
   onEnableDragChange: (value: boolean) => void;
+  autoSnapLayout: boolean;
+  onAutoSnapLayoutChange: (value: boolean) => void;
   onResetAllCards: () => void;
   onDeleteAllBlocks: () => void;
   onAddNewBlock: () => void;
@@ -1177,6 +1181,15 @@ const AdminControlsPopup = ({
                 onChange={(e) => onEnableDragChange(e.target.checked)}
               />
               Enable drag & drop
+            </label>
+
+            <label>
+              <input
+                type="checkbox"
+                checked={autoSnapLayout}
+                onChange={(e) => onAutoSnapLayoutChange(e.target.checked)}
+              />
+              Auto-adjust layout
             </label>
           </div>
 

@@ -926,6 +926,11 @@ header:not(.apple-header) nav a:hover {
 
   /* Align items to start of their grid area */
   align-items: start;
+
+  /* Maintain equal breathing room around the grid */
+  padding: var(--gap);
+  box-sizing: border-box;
+  border-radius: calc(var(--radius) * 1.2);
 }
 
 /* Responsive grid adjustments */

@@ -38,6 +38,8 @@ export interface BlockData {
   gradientDirection?: string;
   width?: number;
   height?: number;
+  gridColumnSpan?: number;
+  gridRowSpan?: number;
   x?: number;
   y?: number;
   isManuallyResized?: boolean;

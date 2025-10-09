@@ -29,11 +29,34 @@ export function useMasonryGrid(
      * based on its current height and width
      */
     const resizeGridItems = () => {
-      const cards = grid.querySelectorAll<HTMLElement>('.card');
+      const cards = Array.from(
+        grid.querySelectorAll<HTMLElement>('.card')
+      );
       const gridStyles = window.getComputedStyle(grid);
       const gridTemplateColumns = gridStyles.gridTemplateColumns;
-      const columnWidths = gridTemplateColumns.split(' ').map(w => parseFloat(w));
-      const columnWidth = columnWidths[0] || 220; // First column width or default
+      const parsedColumns = gridTemplateColumns
+        .split(' ')
+        .map(value => parseFloat(value))
+        .filter(value => Number.isFinite(value) && value > 0);
+      let columnWidth = parsedColumns[0];
+
+      if (!columnWidth || !Number.isFinite(columnWidth)) {
+        const referenceCard =
+          cards.find(
+            card =>
+              !card.classList.contains('full-width') &&
+              !card.classList.contains('manually-resized')
+          ) ??
+          cards.find(card => !card.classList.contains('full-width'));
+
+        if (referenceCard) {
+          columnWidth = referenceCard.getBoundingClientRect().width;
+        }
+      }
+
+      if (!columnWidth || !Number.isFinite(columnWidth)) {
+        columnWidth = 220;
+      }
 
       cards.forEach(card => {
         const cardRect = card.getBoundingClientRect();
@@ -43,7 +66,14 @@ export function useMasonryGrid(
         const rowSpan = Math.ceil((cardHeight + gap) / (rowHeight + gap));
         card.style.gridRowEnd = `span ${rowSpan}`;
 
+        if (card.classList.contains('full-width')) {
+          card.style.gridColumnStart = '1';
+          card.style.gridColumnEnd = '-1';
+          return;
+        }
+
         // Calculate column span for manually resized cards with explicit width
+        card.style.gridColumnStart = '';
         if (card.classList.contains('manually-resized') && card.style.width) {
           const explicitWidth = parseFloat(card.style.width);
           if (!isNaN(explicitWidth)) {

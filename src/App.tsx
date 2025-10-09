@@ -166,6 +166,7 @@ function App() {
   const [autoRotate, setAutoRotate] = useState(false);
   const [showHandles, setShowHandles] = useState(false);
   const [enableDrag, setEnableDrag] = useState(true);
+  const [autoSnapLayout, setAutoSnapLayout] = useState(true);
   const [heroVisible, setHeroVisible] = useState(true);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<"home" | "contact" | "about">(
@@ -418,9 +419,28 @@ function App() {
     initialAspectRatio: 1,
   });
 
+  const DEFAULT_ROW_HEIGHT = 10;
+  const DEFAULT_GRID_GAP = 16;
+
   // Initialize masonry grid hook (10px row height, 16px gap)
   // Hook automatically recalculates layout when cards resize
-  const masonryGridRef = useMasonryGrid(10, 16);
+  const masonryGridRef = useMasonryGrid(DEFAULT_ROW_HEIGHT, DEFAULT_GRID_GAP);
+
+  useEffect(() => {
+    if (!autoSnapLayout) {
+      setBlocks((prev) =>
+        prev.map((block) =>
+          block.gridColumnSpan || block.gridRowSpan
+            ? {
+                ...block,
+                gridColumnSpan: undefined,
+                gridRowSpan: undefined,
+              }
+            : block
+        )
+      );
+    }
+  }, [autoSnapLayout]);
 
   // Visitor tracking functionality
   const trackVisitor = () => {
@@ -627,6 +647,8 @@ function App() {
               isFullWidth: false,
               width: undefined,
               height: undefined,
+              gridColumnSpan: undefined,
+              gridRowSpan: undefined,
             }
           : block
       )
@@ -812,6 +834,8 @@ function App() {
         isFullWidth: false,
         width: undefined,
         height: undefined,
+        gridColumnSpan: undefined,
+        gridRowSpan: undefined,
       }))
     );
   };
@@ -1056,9 +1080,92 @@ function App() {
 
   // Mouse event handlers for resize
   useEffect(() => {
+    if (!resizeState.isResizing) {
+      return;
+    }
+
+    const throttleMs = 16; // ~60fps
+    const minHeight = 120;
+    const minWidth = 220;
     let rafId: number | null = null;
     let lastTime = 0;
-    const throttleMs = 16; // ~60fps
+
+    const getGridMetrics = () => {
+      const grid = document.querySelector<HTMLElement>(".grid");
+      if (!grid) {
+        return null;
+      }
+
+      const styles = window.getComputedStyle(grid);
+      const paddingLeft = parseFloat(styles.paddingLeft || "0") || 0;
+      const paddingRight = parseFloat(styles.paddingRight || "0") || 0;
+      const contentWidth = Math.max(
+        0,
+        grid.clientWidth - paddingLeft - paddingRight
+      );
+      const columnGap =
+        parseFloat(styles.columnGap || styles.gap || `${DEFAULT_GRID_GAP}`) ||
+        DEFAULT_GRID_GAP;
+      const rowGap =
+        parseFloat(styles.rowGap || styles.gap || `${columnGap}`) || columnGap;
+      let rowHeight = parseFloat(styles.gridAutoRows || `${DEFAULT_ROW_HEIGHT}`);
+      if (!Number.isFinite(rowHeight) || rowHeight <= 0) {
+        rowHeight = DEFAULT_ROW_HEIGHT;
+      }
+
+      let baseColumnWidth: number | null = null;
+      const templateColumns = styles.gridTemplateColumns;
+      if (templateColumns && templateColumns !== "none") {
+        const numeric = templateColumns
+          .split(" ")
+          .map((value) => parseFloat(value))
+          .filter((value) => Number.isFinite(value) && value > 0);
+        if (numeric.length > 0) {
+          baseColumnWidth = numeric[0];
+        }
+      }
+
+      if (!baseColumnWidth || !Number.isFinite(baseColumnWidth)) {
+        const cards = Array.from(
+          grid.querySelectorAll<HTMLElement>(".card:not(.full-width)")
+        );
+        const sampleCard = cards.find(
+          (card) => !card.classList.contains("manually-resized")
+        );
+        const referenceCard = sampleCard ?? cards[0];
+        if (referenceCard) {
+          baseColumnWidth = referenceCard.getBoundingClientRect().width;
+        }
+      }
+
+      if (!baseColumnWidth || baseColumnWidth <= 0) {
+        const defaultMinWidth = 220;
+        const approxColumns = Math.max(
+          1,
+          Math.round(
+            (contentWidth + columnGap) / (defaultMinWidth + columnGap)
+          )
+        );
+        baseColumnWidth = Math.max(
+          defaultMinWidth,
+          (contentWidth - columnGap * (approxColumns - 1)) / approxColumns
+        );
+      }
+
+      const maxColumns = Math.max(
+        1,
+        Math.floor((contentWidth + columnGap) / (baseColumnWidth + columnGap))
+      );
+
+      return {
+        contentWidth,
+        columnGap,
+        rowGap,
+        rowHeight,
+        baseColumnWidth,
+        maxColumns,
+      };
+    };
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!resizeState.isResizing || !resizeState.currentBlockId) return;
@@ -1069,101 +1176,147 @@ function App() {
       }
       lastTime = now;
 
-      // Cancel any pending animation frame
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
       }
 
-      // Use requestAnimationFrame for smooth updates
       rafId = requestAnimationFrame(() => {
         const deltaX = e.clientX - resizeState.startX;
         const deltaY = e.clientY - resizeState.startY;
 
-      let newWidth = resizeState.startWidth;
-      let newHeight = resizeState.startHeight;
+        let newWidth = resizeState.startWidth;
+        let newHeight = resizeState.startHeight;
 
-      // Calculate new dimensions based on resize direction
-      const isCornerHandle = ["se", "sw", "ne", "nw"].includes(
-        resizeState.direction
-      );
-
-      switch (resizeState.direction) {
-        case "e":
-          newWidth = resizeState.startWidth + deltaX;
-          break;
-        case "w":
-          newWidth = resizeState.startWidth - deltaX;
-          break;
-        case "s":
-          newHeight = resizeState.startHeight + deltaY;
-          break;
-        case "n":
-          newHeight = resizeState.startHeight - deltaY;
-          break;
-        case "se":
-          if (resizeState.preserveAspectRatio) {
-            // Use the larger delta to determine new size
-            const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-            newWidth = resizeState.startWidth + delta * Math.sign(deltaX);
-            newHeight = newWidth * resizeState.initialAspectRatio;
-          } else {
+        switch (resizeState.direction) {
+          case "e":
             newWidth = resizeState.startWidth + deltaX;
-            newHeight = resizeState.startHeight + deltaY;
-          }
-          break;
-        case "sw":
-          if (resizeState.preserveAspectRatio) {
-            const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-            newWidth = resizeState.startWidth - delta * Math.sign(deltaX);
-            newHeight = newWidth * resizeState.initialAspectRatio;
-          } else {
+            break;
+          case "w":
             newWidth = resizeState.startWidth - deltaX;
+            break;
+          case "s":
             newHeight = resizeState.startHeight + deltaY;
-          }
-          break;
-        case "ne":
-          if (resizeState.preserveAspectRatio) {
-            const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-            newWidth = resizeState.startWidth + delta * Math.sign(deltaX);
-            newHeight = newWidth * resizeState.initialAspectRatio;
-          } else {
-            newWidth = resizeState.startWidth + deltaX;
+            break;
+          case "n":
             newHeight = resizeState.startHeight - deltaY;
-          }
-          break;
-        case "nw":
+            break;
+          case "se":
+            if (resizeState.preserveAspectRatio) {
+              const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+              newWidth = resizeState.startWidth + delta * Math.sign(deltaX);
+              newHeight = newWidth * resizeState.initialAspectRatio;
+            } else {
+              newWidth = resizeState.startWidth + deltaX;
+              newHeight = resizeState.startHeight + deltaY;
+            }
+            break;
+          case "sw":
+            if (resizeState.preserveAspectRatio) {
+              const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+              newWidth = resizeState.startWidth - delta * Math.sign(deltaX);
+              newHeight = newWidth * resizeState.initialAspectRatio;
+            } else {
+              newWidth = resizeState.startWidth - deltaX;
+              newHeight = resizeState.startHeight + deltaY;
+            }
+            break;
+          case "ne":
+            if (resizeState.preserveAspectRatio) {
+              const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+              newWidth = resizeState.startWidth + delta * Math.sign(deltaX);
+              newHeight = newWidth * resizeState.initialAspectRatio;
+            } else {
+              newWidth = resizeState.startWidth + deltaX;
+              newHeight = resizeState.startHeight - deltaY;
+            }
+            break;
+          case "nw":
+            if (resizeState.preserveAspectRatio) {
+              const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+              newWidth = resizeState.startWidth - delta * Math.sign(deltaX);
+              newHeight = newWidth * resizeState.initialAspectRatio;
+            } else {
+              newWidth = resizeState.startWidth - deltaX;
+              newHeight = resizeState.startHeight - deltaY;
+            }
+            break;
+        }
+
+        newWidth = Math.max(newWidth, minWidth);
+        newHeight = Math.max(newHeight, minHeight);
+
+        const metrics = getGridMetrics();
+        const contentWidth = metrics?.contentWidth ?? resizeState.startWidth;
+        const columnGap = metrics?.columnGap ?? DEFAULT_GRID_GAP;
+        const rowGap = metrics?.rowGap ?? columnGap;
+        const rowHeight = metrics?.rowHeight ?? DEFAULT_ROW_HEIGHT;
+        const baseColumnWidth =
+          metrics?.baseColumnWidth ?? minWidth;
+
+        let adjustedWidth = newWidth;
+        let adjustedHeight = newHeight;
+        let columnSpan: number | undefined;
+        let rowSpan: number | undefined;
+
+        if (autoSnapLayout && metrics) {
+          columnSpan = Math.max(
+            1,
+            Math.round(
+              (newWidth + columnGap) /
+                (metrics.baseColumnWidth + columnGap)
+            )
+          );
+          columnSpan = Math.min(columnSpan, metrics.maxColumns);
+          adjustedWidth =
+            columnSpan * metrics.baseColumnWidth +
+            Math.max(0, columnSpan - 1) * columnGap;
+
           if (resizeState.preserveAspectRatio) {
-            const delta = Math.max(Math.abs(deltaX), Math.abs(deltaY));
-            newWidth = resizeState.startWidth - delta * Math.sign(deltaX);
-            newHeight = newWidth * resizeState.initialAspectRatio;
+            adjustedHeight = adjustedWidth * resizeState.initialAspectRatio;
           } else {
-            newWidth = resizeState.startWidth - deltaX;
-            newHeight = resizeState.startHeight - deltaY;
+            adjustedHeight = newHeight;
           }
-          break;
-      }
 
-      // Get container width for full-width detection
-      const container = document.querySelector(".grid");
-      const containerWidth = container ? container.clientWidth : 1100;
-      const fullWidthThreshold = containerWidth * 0.85; // 85% of container width
+          rowSpan = Math.max(
+            1,
+            Math.round(
+              (adjustedHeight + rowGap) / (rowHeight + rowGap)
+            )
+          );
+          adjustedHeight =
+            rowSpan * rowHeight + Math.max(0, rowSpan - 1) * rowGap;
+          adjustedHeight = Math.max(adjustedHeight, minHeight);
+        } else {
+          adjustedWidth = Math.max(newWidth, baseColumnWidth);
+          adjustedHeight = Math.max(newHeight, minHeight);
+        }
 
-      // Determine if block should be full-width
-      const shouldBeFullWidth = newWidth >= fullWidthThreshold;
+        adjustedWidth = Math.min(adjustedWidth, contentWidth);
 
-      // Update block dimensions
-      setBlocks((prev) =>
-        prev.map((block) =>
-          block.id === resizeState.currentBlockId
-            ? {
-                ...block,
-                width: shouldBeFullWidth ? containerWidth : newWidth,
-                height: newHeight,
-                isFullWidth: shouldBeFullWidth,
-              }
-            : block
-        )
-      );
+        const shouldBeFullWidth =
+          metrics &&
+          (columnSpan
+            ? columnSpan >= metrics.maxColumns
+            : adjustedWidth >= contentWidth * 0.95);
+
+        setBlocks((prev) =>
+          prev.map((block) =>
+            block.id === resizeState.currentBlockId
+              ? {
+                  ...block,
+                  width: shouldBeFullWidth
+                    ? contentWidth
+                    : Math.round(adjustedWidth),
+                  height: Math.round(adjustedHeight),
+                  isFullWidth: Boolean(shouldBeFullWidth),
+                  gridColumnSpan:
+                    shouldBeFullWidth || !columnSpan ? undefined : columnSpan,
+                  gridRowSpan:
+                    shouldBeFullWidth || !autoSnapLayout ? undefined : rowSpan,
+                }
+              : block
+          )
+        );
       });
     };
 
@@ -1175,23 +1328,21 @@ function App() {
       }
     };
 
-    if (resizeState.isResizing) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = `${resizeState.direction}-resize`;
-      document.body.style.userSelect = "none";
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.body.style.cursor = `${resizeState.direction}-resize`;
+    document.body.style.userSelect = "none";
 
-      return () => {
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-        if (rafId !== null) {
-          cancelAnimationFrame(rafId);
-        }
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-      };
-    }
-  }, [resizeState]);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [resizeState, autoSnapLayout]);
 
   // Create dynamic navbar styles
   const navbarStyle: React.CSSProperties = {
@@ -1693,6 +1844,8 @@ function App() {
               onShowHandlesChange={setShowHandles}
               enableDrag={enableDrag}
               onEnableDragChange={setEnableDrag}
+              autoSnapLayout={autoSnapLayout}
+              onAutoSnapLayoutChange={setAutoSnapLayout}
               onResetAllCards={handleResetAllCards}
               onDeleteAllBlocks={handleDeleteAllBlocks}
               onAddNewBlock={handleAddNewBlock}

@@ -37,6 +37,7 @@ const createRowResizePlugin = () => {
         handle.className = "table-row-resize-handle";
         handle.contentEditable = "false";
         handle.setAttribute("data-row-index", String(index));
+        handle.setAttribute("draggable", "false");
 
         // Position it absolutely at the bottom of the row
         handle.style.position = "absolute";
@@ -46,9 +47,24 @@ const createRowResizePlugin = () => {
         handle.style.height = "8px";
         handle.style.cursor = "row-resize";
         handle.style.zIndex = "10";
+        handle.style.pointerEvents = "auto";
 
         // Make the row position relative to contain the absolute handle
         row.style.position = "relative";
+
+        // Add mousedown event listener directly to the handle
+        handle.addEventListener("mousedown", (e: MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          resizingRow = row;
+          startY = e.clientY;
+          startHeight = row.offsetHeight;
+
+          document.addEventListener("mousemove", handleMouseMove);
+          document.addEventListener("mouseup", handleMouseUp);
+          document.body.style.cursor = "row-resize";
+        });
 
         // Append handle to the row
         row.appendChild(handle);
@@ -95,34 +111,6 @@ const createRowResizePlugin = () => {
           document.removeEventListener("mouseup", handleMouseUp);
         },
       };
-    },
-    props: {
-      handleDOMEvents: {
-        mousedown(view, event) {
-          const target = event.target as HTMLElement;
-
-          if (target.classList.contains("table-row-resize-handle")) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            // Find the row being resized
-            const row = target.closest("tr") as HTMLTableRowElement;
-            if (!row) return false;
-
-            resizingRow = row;
-            startY = event.clientY;
-            startHeight = row.offsetHeight;
-
-            document.addEventListener("mousemove", handleMouseMove);
-            document.addEventListener("mouseup", handleMouseUp);
-            document.body.style.cursor = "row-resize";
-
-            return true;
-          }
-
-          return false;
-        },
-      },
     },
   });
 };
