@@ -915,8 +915,8 @@ header:not(.apple-header) nav a:hover {
   /* Auto-fill columns that are at least 220px wide */
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 
-  /* Dense packing to fill gaps */
-  grid-auto-flow: dense;
+  /* Row-based flow with dense packing - maintains left-to-right reading order */
+  grid-auto-flow: row dense;
 
   /* Small base row height - JS calculates spans dynamically */
   grid-auto-rows: 10px;
