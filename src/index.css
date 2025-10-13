@@ -915,8 +915,8 @@ header:not(.apple-header) nav a:hover {
   /* Auto-fill columns that are at least 220px wide */
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 
-  /* Row-based flow with dense packing - maintains left-to-right reading order */
-  grid-auto-flow: row dense;
+  /* Dense packing fills gaps while maintaining left-to-right, top-to-bottom order */
+  grid-auto-flow: dense;
 
   /* Small base row height - JS calculates spans dynamically */
   grid-auto-rows: 10px;
@@ -924,13 +924,17 @@ header:not(.apple-header) nav a:hover {
   /* Gap between cards */
   gap: var(--gap);
 
-  /* Align items to start of their grid area */
-  align-items: start;
+  /* Align ALL items to start - ensures cards align to grid lines */
+  align-items: stretch;
+  justify-items: stretch;
 
   /* Maintain equal breathing room around the grid */
   padding: var(--gap);
   box-sizing: border-box;
   border-radius: calc(var(--radius) * 1.2);
+
+  /* Ensure consistent baseline alignment */
+  align-content: start;
 }
 
 /* Responsive grid adjustments */
@@ -957,7 +961,7 @@ header:not(.apple-header) nav a:hover {
 
   /* Card visual styles */
 
-  height: 120px;
+  min-height: 120px;
   padding: 14px;
   color: #fff;
   background: #111;
@@ -973,20 +977,30 @@ header:not(.apple-header) nav a:hover {
   flex-direction: column;
   justify-content: flex-end;
 
-  /* Smooth transitions - added height and width for dynamic resizing */
+  /* Smooth transitions - NO transitions for grid properties to prevent layout shifts */
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
-    border-color 0.15s,
-    height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-color 0.15s;
+
+  /* Prevent content overflow during resize */
+  overflow: hidden;
 }
 
 /* Manually resized cards - can span multiple columns for width control */
 .card.manually-resized {
-  outline: 2px dashed rgba(59, 130, 246, 0.5);
-  outline-offset: 4px;
-  /* Width will be set via inline styles, grid-column-end calculated by JS */
+  /* No visual indicator - cards resize cleanly without borders */
+  /* Width is controlled by grid-column-end span, not explicit width */
+  /* Remove transitions to prevent visual glitches */
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  /* Ensure the card fills its grid area completely */
+  width: 100%;
+  box-sizing: border-box;
+
+  /* Align to grid - prevents sub-pixel misalignment */
+  align-self: stretch;
+  justify-self: stretch;
 }
 
 /* Full-width cards - span all columns */
@@ -1072,7 +1086,13 @@ header:not(.apple-header) nav a:hover {
   background: #000000e5;
 }
 
+/* Simple, consistent hover animation for all cards */
 .card:hover {
+  transform: translateY(-2px);
+}
+
+/* Ensure manually resized cards also get the same hover animation */
+.card.manually-resized:hover {
   transform: translateY(-2px);
 }
 
@@ -1278,7 +1298,7 @@ header:not(.apple-header) nav a:hover {
   border: 1px solid #333;
 }
 
-/* Animation presets */
+/* Animation presets - work for both regular and manually resized cards */
 .animate-bounce:hover {
   animation: bounce 0.6s ease;
 }

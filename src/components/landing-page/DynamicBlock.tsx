@@ -193,17 +193,21 @@ const DynamicBlock = ({
 
     const sizeStyle: CSSProperties = {};
 
-    if (block.isManuallyResized || block.isFullWidth) {
-      sizeStyle.width = block.isFullWidth
-        ? "100%"
-        : block.width
-        ? `${block.width}px`
-        : "auto";
+    // Handle full-width cards
+    if (block.isFullWidth) {
+      sizeStyle.width = "100%";
       if (block.height) {
         sizeStyle.height = `${block.height}px`;
       }
-      sizeStyle.position = "relative";
-      sizeStyle.zIndex = 10;
+    }
+    // Handle manually resized cards - DON'T set width, let grid-column-end handle it
+    else if (block.isManuallyResized) {
+      // Only set height for manually resized cards
+      if (block.height) {
+        sizeStyle.height = `${block.height}px`;
+      }
+      // Width will be controlled by grid-column-end span set by the masonry hook
+      // Don't set position/zIndex - let it stay in normal flow
     }
 
     if (!block.isFullWidth && block.gridColumnSpan) {

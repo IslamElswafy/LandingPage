@@ -1322,9 +1322,51 @@ function App() {
 
     const handleMouseUp = () => {
       if (resizeState.isResizing) {
+        const resizedBlockId = resizeState.currentBlockId;
+
         setResizeState((prev) => ({ ...prev, isResizing: false }));
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
+
+        // Comprehensive cleanup: Normalize and recalculate layout after resize
+        setTimeout(() => {
+          const grid = document.querySelector<HTMLElement>('.grid');
+          if (grid && resizedBlockId) {
+            // Find the resized card
+            const cards = grid.querySelectorAll<HTMLElement>('.card');
+
+            // Force complete layout recalculation
+            cards.forEach(card => {
+              // Clear any temporary grid positioning
+              const computedStyle = window.getComputedStyle(card);
+
+              // Force reflow to ensure browser has latest dimensions
+              void card.offsetHeight;
+              void card.offsetWidth;
+
+              // Log card state for debugging
+              const isManuallyResized = card.classList.contains('manually-resized');
+              if (isManuallyResized) {
+                console.log('[Cleanup] Card state:', {
+                  explicitHeight: card.style.height,
+                  explicitWidth: card.style.width,
+                  actualHeight: card.offsetHeight,
+                  actualWidth: card.offsetWidth,
+                  gridRowEnd: card.style.gridRowEnd,
+                  gridColumnEnd: card.style.gridColumnEnd,
+                });
+              }
+            });
+
+            // Trigger multiple recalculation events to ensure sync
+            window.dispatchEvent(new Event('resize'));
+
+            // Force another recalculation after a short delay
+            setTimeout(() => {
+              window.dispatchEvent(new Event('resize'));
+            }, 100);
+          }
+        }, 50);
       }
     };
 
